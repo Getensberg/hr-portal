@@ -1,0 +1,233 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         Role     @default(EMPLOYEE)
+  department   String?
+  position     String?
+  createdAt    DateTime @default(now())
+
+  surveyResponses   SurveyResponse[]
+  requests          Request[]
+  onboardingTasks   OnboardingTaskProgress[]
+  mentorFor         OnboardingPlan[]        @relation("Mentor")
+  onboardingPlan    OnboardingPlan?         @relation("Newcomer")
+  referrals         Referral[]
+}
+
+enum Role {
+  EMPLOYEE
+  HR_ADMIN
+}
+
+// --- Self-service: документы и заявки ---
+
+model DocumentTemplate {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String              // путь к исходному шаблону (Word/PDF)
+  fields      Json                // схема плейсхолдеров: [{ key: "fullName", label: "ФИО" }, ...]
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requests    Request[]
+}
+
+// Объединённая модель заявок: справки, отпуска/отгулы/командировки, техника/доступы
+model Request {
+  id          String       @id @default(cuid())
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  type        RequestType
+  template    DocumentTemplate? @relation(fields: [templateId], references: [id])
+  templateId  String?              // заполняется только для типа DOCUMENT
+  status      RequestStatus @default(PENDING)
+  payload     Json?                // тип-специфичные данные: даты отпуска, тип техники и т.д.
+  note        String?
+  requestedAt DateTime     @default(now())
+  completedAt DateTime?
+}
+
+enum RequestType {
+  DOCUMENT        // справки и т.п., см. template
+  LEAVE           // отпуск/отгул
+  BUSINESS_TRIP   // командировка
+  EQUIPMENT       // заявка на технику
+  ACCESS          // заявка на доступ/пропуск
+}
+
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+// --- База знаний / новости / регламенты (единая модель контента) ---
+
+model ContentItem {
+  id        String      @id @default(cuid())
+  title     String
+  content   String
+  type      ContentType
+  category  String?
+  createdBy String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum ContentType {
+  KNOWLEDGE_ARTICLE
+  NEWS_POST
+  POLICY_DOCUMENT
+}
+
+// --- Пульс-опросы и ящик предложений ---
+
+model PulseSurvey {
+  id          String   @id @default(cuid())
+  title       String
+  frequency   SurveyFrequency
+  isAnonymous Boolean  @default(true)
+  isSuggestionBox Boolean @default(false)  // true = ящик предложений (свободный текст, без вопросов)
+  startDate   DateTime
+  endDate     DateTime?
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  questions   SurveyQuestion[]
+  responses   SurveyResponse[]
+  completions SurveyCompletion[]
+}
+
+enum SurveyFrequency {
+  ONCE
+  WEEKLY
+  BIWEEKLY
+}
+
+model SurveyQuestion {
+  id       String   @id @default(cuid())
+  survey   PulseSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId String
+  text     String
+  type     QuestionType
+  order    Int
+}
+
+enum QuestionType {
+  SCALE_1_5
+  YES_NO
+  TEXT
+}
+
+model SurveyResponse {
+  id          String   @id @default(cuid())
+  survey      PulseSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId    String
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?             // null, если опрос анонимный
+  submittedAt DateTime @default(now())
+
+  answers     SurveyAnswer[]
+}
+
+model SurveyAnswer {
+  id         String   @id @default(cuid())
+  response   SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId String
+  questionId String
+  value      String
+}
+
+// Отдельно от содержимого ответов: факт прохождения (для напоминаний), не сопоставим с ответом по времени
+model SurveyCompletion {
+  id         String   @id @default(cuid())
+  survey     PulseSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId   String
+  userId     String
+  completedAt DateTime @default(now())
+
+  @@unique([surveyId, userId])
+}
+
+// --- Онбординг ---
+
+model OnboardingPlan {
+  id          String   @id @default(cuid())
+  newcomer    User     @relation("Newcomer", fields: [newcomerId], references: [id], onDelete: Cascade)
+  newcomerId  String   @unique
+  mentor      User?    @relation("Mentor", fields: [mentorId], references: [id])
+  mentorId    String?
+  startDate   DateTime @default(now())
+  endDate     DateTime?          // конец испытательного срока
+
+  tasks       OnboardingTask[]
+}
+
+model OnboardingTask {
+  id          String   @id @default(cuid())
+  plan        OnboardingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId      String
+  title       String
+  description String?
+  dueDate     DateTime?
+  order       Int
+
+  progress    OnboardingTaskProgress[]
+}
+
+model OnboardingTaskProgress {
+  id          String   @id @default(cuid())
+  task        OnboardingTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  isDone      Boolean  @default(false)
+  completedAt DateTime?
+
+  @@unique([taskId, userId])
+}
+
+// --- Внутренний рекрутинг ---
+
+model JobPosting {
+  id          String   @id @default(cuid())
+  title       String
+  department  String?
+  description String
+  isActive    Boolean  @default(true)
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  referrals   Referral[]
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  jobPosting     JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId   String
+  referrer       User     @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+  referrerId     String
+  candidateName  String
+  candidateContact String
+  comment        String?
+  createdAt      DateTime @default(now())
+}
