@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RequestType, RequestStatus } from "@/generated/prisma/client";
+import type { RequestType, RequestStatus, ContentType } from "@/generated/prisma/client";
 
 export interface RequestItem {
   id: string;
@@ -12,10 +12,20 @@ export interface RequestItem {
   user?: { fullName: string; email: string; department: string | null };
 }
 
+export interface ContentItem {
+  id: string;
+  title: string;
+  content: string;
+  type: ContentType;
+  category: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
-  tagTypes: ["Request"],
+  tagTypes: ["Request", "Content"],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
       query: () => "/requests",
@@ -33,6 +43,28 @@ export const apiSlice = createApi({
       query: ({ id, status }) => ({ url: `/requests/${id}`, method: "PATCH", body: { status } }),
       invalidatesTags: ["Request"],
     }),
+    getContent: builder.query<ContentItem[], { type?: string; category?: string; q?: string }>({
+      query: (params) => {
+        const search = new URLSearchParams();
+        if (params.type) search.set("type", params.type);
+        if (params.category) search.set("category", params.category);
+        if (params.q) search.set("q", params.q);
+        return `/content?${search.toString()}`;
+      },
+      providesTags: ["Content"],
+    }),
+    createContent: builder.mutation<ContentItem, Partial<ContentItem>>({
+      query: (body) => ({ url: "/content", method: "POST", body }),
+      invalidatesTags: ["Content"],
+    }),
+    updateContent: builder.mutation<ContentItem, { id: string } & Partial<ContentItem>>({
+      query: ({ id, ...body }) => ({ url: `/content/${id}`, method: "PATCH", body }),
+      invalidatesTags: ["Content"],
+    }),
+    deleteContent: builder.mutation<{ id: string }, string>({
+      query: (id) => ({ url: `/content/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Content"],
+    }),
   }),
 });
 
@@ -41,4 +73,8 @@ export const {
   useCreateRequestMutation,
   useGetAllRequestsQuery,
   useUpdateRequestStatusMutation,
+  useGetContentQuery,
+  useCreateContentMutation,
+  useUpdateContentMutation,
+  useDeleteContentMutation,
 } = apiSlice;
