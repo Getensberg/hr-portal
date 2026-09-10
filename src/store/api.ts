@@ -83,10 +83,30 @@ export interface SurveyResults {
   questions: SurveyResultQuestion[];
 }
 
+export interface JobPostingItem {
+  id: string;
+  title: string;
+  department: string | null;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  referralsCount?: number;
+}
+
+export interface ReferralItem {
+  id: string;
+  candidateName: string;
+  candidateContact: string;
+  comment: string | null;
+  createdAt: string;
+  jobPosting?: { title: string };
+  referrer?: { fullName: string; email: string };
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
-  tagTypes: ["Request", "Content", "Survey", "Onboarding"],
+  tagTypes: ["Request", "Content", "Survey", "Onboarding", "Job", "Referral"],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
       query: () => "/requests",
@@ -169,6 +189,38 @@ export const apiSlice = createApi({
     query: ({ taskId, done }) => ({ url: `/onboarding/tasks/${taskId}`, method: "PATCH", body: { done } }),
     invalidatesTags: ["Onboarding"],
   }),
+  getActiveJobs: builder.query<JobPostingItem[], void>({
+  query: () => "/jobs",
+  providesTags: ["Job"],
+  }),
+  getAdminJobs: builder.query<JobPostingItem[], void>({
+    query: () => "/jobs/admin",
+    providesTags: ["Job"],
+  }),
+  createJob: builder.mutation<JobPostingItem, Partial<JobPostingItem>>({
+    query: (body) => ({ url: "/jobs", method: "POST", body }),
+    invalidatesTags: ["Job"],
+  }),
+  updateJob: builder.mutation<JobPostingItem, { id: string } & Partial<JobPostingItem>>({
+    query: ({ id, ...body }) => ({ url: `/jobs/${id}`, method: "PATCH", body }),
+    invalidatesTags: ["Job"],
+  }),
+  deleteJob: builder.mutation<{ id: string }, string>({
+    query: (id) => ({ url: `/jobs/${id}`, method: "DELETE" }),
+    invalidatesTags: ["Job"],
+  }),
+  createReferral: builder.mutation<ReferralItem, { jobId: string; candidateName: string; candidateContact: string; comment?: string }>({
+    query: ({ jobId, ...body }) => ({ url: `/jobs/${jobId}/referrals`, method: "POST", body }),
+    invalidatesTags: ["Referral"],
+  }),
+  getMyReferrals: builder.query<ReferralItem[], void>({
+    query: () => "/referrals/me",
+    providesTags: ["Referral"],
+  }),
+  getAdminReferrals: builder.query<ReferralItem[], void>({
+    query: () => "/referrals/admin",
+    providesTags: ["Referral"],
+  }),
   }),
 });
 
@@ -192,4 +244,12 @@ export const {
   useAddOnboardingTaskMutation,
   useGetMyOnboardingQuery,
   useToggleOnboardingTaskMutation,
+  useGetActiveJobsQuery,
+  useGetAdminJobsQuery,
+  useCreateJobMutation,
+  useUpdateJobMutation,
+  useDeleteJobMutation,
+  useCreateReferralMutation,
+  useGetMyReferralsQuery,
+  useGetAdminReferralsQuery,
 } = apiSlice;
