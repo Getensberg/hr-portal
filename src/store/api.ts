@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { RequestType, RequestStatus, ContentType } from "@/generated/prisma/client";
+import type { SurveyFrequency, QuestionType } from "@/generated/prisma/client";
 
 export interface RequestItem {
   id: string;
@@ -22,10 +23,41 @@ export interface ContentItem {
   updatedAt: string;
 }
 
+export interface SurveyQuestionItem {
+  id: string;
+  text: string;
+  type: QuestionType;
+}
+
+export interface SurveyItem {
+  id: string;
+  title: string;
+  isAnonymous: boolean;
+  isSuggestionBox: boolean;
+  questions: SurveyQuestionItem[];
+  completed?: boolean;
+  completionsCount?: number;
+}
+
+export interface SurveyResultQuestion {
+  id: string;
+  text: string;
+  type: QuestionType;
+  average?: number;
+  counts?: Record<string, number>;
+  texts?: string[];
+}
+
+export interface SurveyResults {
+  survey: { id: string; title: string; isAnonymous: boolean };
+  completionsCount: number;
+  questions: SurveyResultQuestion[];
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
-  tagTypes: ["Request", "Content"],
+  tagTypes: ["Request", "Content", "Survey"],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
       query: () => "/requests",
@@ -65,6 +97,26 @@ export const apiSlice = createApi({
       query: (id) => ({ url: `/content/${id}`, method: "DELETE" }),
       invalidatesTags: ["Content"],
     }),
+    getActiveSurveys: builder.query<SurveyItem[], void>({
+      query: () => "/surveys",
+      providesTags: ["Survey"],
+    }),
+    getAdminSurveys: builder.query<SurveyItem[], void>({
+      query: () => "/surveys/admin",
+      providesTags: ["Survey"],
+    }),
+    createSurvey: builder.mutation<SurveyItem, any>({
+      query: (body) => ({ url: "/surveys", method: "POST", body }),
+      invalidatesTags: ["Survey"],
+    }),
+    submitSurvey: builder.mutation<{ ok: boolean }, { id: string; answers: { questionId: string; value: string }[] }>({
+      query: ({ id, answers }) => ({ url: `/surveys/${id}/submit`, method: "POST", body: { answers } }),
+      invalidatesTags: ["Survey"],
+    }),
+    getSurveyResults: builder.query<SurveyResults, string>({
+      query: (id) => `/surveys/${id}/results`,
+      providesTags: ["Survey"],
+    }),
   }),
 });
 
@@ -77,4 +129,9 @@ export const {
   useCreateContentMutation,
   useUpdateContentMutation,
   useDeleteContentMutation,
+  useGetActiveSurveysQuery,
+  useGetAdminSurveysQuery,
+  useCreateSurveyMutation,
+  useSubmitSurveyMutation,
+  useGetSurveyResultsQuery,
 } = apiSlice;
