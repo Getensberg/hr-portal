@@ -48,6 +48,35 @@ export interface SurveyResultQuestion {
   texts?: string[];
 }
 
+export interface UserOption {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+export interface OnboardingTaskItem {
+  id: string;
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  done?: boolean;
+}
+
+export interface OnboardingPlanItem {
+  id: string;
+  newcomer: { id: string; fullName: string; email: string };
+  mentor: { id: string; fullName: string; email: string } | null;
+  startDate: string;
+  endDate: string | null;
+  tasks: OnboardingTaskItem[];
+}
+
+export interface MyOnboarding {
+  plan: { id: string; mentor: { fullName: string; email: string } | null; startDate: string; endDate: string | null } | null;
+  tasks: OnboardingTaskItem[];
+}
+
 export interface SurveyResults {
   survey: { id: string; title: string; isAnonymous: boolean };
   completionsCount: number;
@@ -57,7 +86,7 @@ export interface SurveyResults {
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
-  tagTypes: ["Request", "Content", "Survey"],
+  tagTypes: ["Request", "Content", "Survey", "Onboarding"],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
       query: () => "/requests",
@@ -117,6 +146,29 @@ export const apiSlice = createApi({
       query: (id) => `/surveys/${id}/results`,
       providesTags: ["Survey"],
     }),
+    getUsers: builder.query<UserOption[], void>({
+  query: () => "/users",
+  }),
+  getOnboardingAdmin: builder.query<OnboardingPlanItem[], void>({
+    query: () => "/onboarding/admin",
+    providesTags: ["Onboarding"],
+  }),
+  createOnboardingPlan: builder.mutation<OnboardingPlanItem, any>({
+    query: (body) => ({ url: "/onboarding", method: "POST", body }),
+    invalidatesTags: ["Onboarding"],
+  }),
+  addOnboardingTask: builder.mutation<OnboardingTaskItem, { planId: string; title: string; description?: string; dueDate?: string | null }>({
+    query: ({ planId, ...body }) => ({ url: `/onboarding/${planId}/tasks`, method: "POST", body }),
+    invalidatesTags: ["Onboarding"],
+  }),
+  getMyOnboarding: builder.query<MyOnboarding, void>({
+    query: () => "/onboarding/me",
+    providesTags: ["Onboarding"],
+  }),
+  toggleOnboardingTask: builder.mutation<{ ok: boolean }, { taskId: string; done: boolean }>({
+    query: ({ taskId, done }) => ({ url: `/onboarding/tasks/${taskId}`, method: "PATCH", body: { done } }),
+    invalidatesTags: ["Onboarding"],
+  }),
   }),
 });
 
@@ -134,4 +186,10 @@ export const {
   useCreateSurveyMutation,
   useSubmitSurveyMutation,
   useGetSurveyResultsQuery,
+  useGetUsersQuery,
+  useGetOnboardingAdminQuery,
+  useCreateOnboardingPlanMutation,
+  useAddOnboardingTaskMutation,
+  useGetMyOnboardingQuery,
+  useToggleOnboardingTaskMutation,
 } = apiSlice;
