@@ -1,39 +1,41 @@
 "use client";
 import { useGetMyOnboardingQuery, useToggleOnboardingTaskMutation } from "@/store/api";
+import { PageShell } from "@/components/PageShell";
+import { Card, CardTitle } from "@/components/Card";
+import styles from "./onboarding.module.css";
 
 export default function OnboardingPage() {
   const { data, isLoading } = useGetMyOnboardingQuery();
   const [toggleTask] = useToggleOnboardingTaskMutation();
 
-  if (isLoading) return <p>Загрузка...</p>;
+  if (isLoading) return <p className="text-s">Загрузка...</p>;
 
   if (!data?.plan) {
     return (
-      <div style={{ maxWidth: 600, margin: "40px auto" }}>
-        <h1>Онбординг</h1>
-        <p>Для вас пока не создан план адаптации.</p>
-      </div>
+      <PageShell title="Онбординг">
+        <Card><p className="text-s">Для вас пока не создан план адаптации.</p></Card>
+      </PageShell>
     );
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: "40px auto" }}>
-      <h1>Онбординг</h1>
-      <p>Наставник: {data.plan.mentor ? `${data.plan.mentor.fullName} (${data.plan.mentor.email})` : "не назначен"}</p>
+    <PageShell title="Онбординг">
+      <Card>
+        <p className="text-s">
+          Наставник: {data.plan.mentor ? `${data.plan.mentor.fullName} (${data.plan.mentor.email})` : "не назначен"}
+        </p>
+      </Card>
 
-      <h2>Чек-лист задач</h2>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {data.tasks.map((t) => (
-          <li key={t.id} style={{ marginBottom: 8 }}>
-            <label>
-              <input type="checkbox" checked={t.done} onChange={(e) => toggleTask({ taskId: t.id, done: e.target.checked })} />{" "}
-              <span style={{ textDecoration: t.done ? "line-through" : "none" }}>{t.title}</span>
-              {t.description ? ` — ${t.description}` : ""}
-            </label>
-          </li>
-        ))}
-        {data.tasks.length === 0 && <li>Пока нет задач в плане</li>}
-      </ul>
-    </div>
+      <CardTitle>Чек-лист задач</CardTitle>
+      {data.tasks.map((t) => (
+        <div key={t.id} className={styles.taskRow}>
+          <input type="checkbox" checked={t.done} onChange={(e) => toggleTask({ taskId: t.id, done: e.target.checked })} />
+          <span className={`text-s ${t.done ? styles.taskDone : ""}`}>
+            {t.title}{t.description ? ` — ${t.description}` : ""}
+          </span>
+        </div>
+      ))}
+      {data.tasks.length === 0 && <p className="text-s">Пока нет задач в плане</p>}
+    </PageShell>
   );
 }

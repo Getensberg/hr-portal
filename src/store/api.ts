@@ -231,6 +231,14 @@ export const apiSlice = createApi({
   getOrgStructure: builder.query<Record<string, OrgUser[]>, void>({
   query: () => "/org",
 }),
+deleteRequest: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/requests/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Request"],
+}),
+deleteSurvey: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/surveys/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Survey"],
+}),
   }),
 });
 
@@ -263,4 +271,6 @@ export const {
   useGetMyReferralsQuery,
   useGetAdminReferralsQuery,
   useGetOrgStructureQuery,
+  useDeleteRequestMutation,
+  useDeleteSurveyMutation,
 } = apiSlice;

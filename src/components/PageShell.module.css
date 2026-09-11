@@ -6,3 +6,6 @@
 .pageTitle {
   margin-bottom: 16px;
 }
+.wide {
+  max-width: 880px;
+}

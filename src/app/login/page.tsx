@@ -1,6 +1,8 @@
 "use client";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { Button } from "@/components/Button";
+import styles from "./login.module.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,12 +17,12 @@ export default function LoginPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 320, margin: "80px auto" }}>
-      <h1>Вход</h1>
-      <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" /><br />
-      <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Пароль" /><br />
-      <button type="submit">Войти</button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <h1 className="text-h1">Вход</h1>
+      <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+      <input className="input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Пароль" />
+      <Button type="submit">Войти</Button>
+      {error && <p className={styles.error}>{error}</p>}
     </form>
   );
 }

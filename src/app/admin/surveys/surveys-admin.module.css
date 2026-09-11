@@ -1,0 +1,8 @@
+.form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+.checkboxRow { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+.checkboxRow label { display: flex; gap: 6px; align-items: center; font-size: 14px; color: var(--color-text-secondary); }
+.dateRow { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+.dateRow label { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--color-text-secondary); }
+.questionRow { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.itemRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.results { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--color-text-muted); }

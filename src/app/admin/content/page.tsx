@@ -8,6 +8,10 @@ import {
   useUpdateContentMutation,
   useDeleteContentMutation,
 } from "@/store/api";
+import { PageShell } from "@/components/PageShell";
+import { Card } from "@/components/Card";
+import { Button } from "@/components/Button";
+import styles from "./content-admin.module.css";
 
 const TYPE_OPTIONS = ["KNOWLEDGE_ARTICLE", "NEWS_POST", "POLICY_DOCUMENT"];
 
@@ -33,7 +37,7 @@ export default function AdminContentPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
-    return <p>Загрузка...</p>;
+    return <p className="text-s">Загрузка...</p>;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -44,9 +48,7 @@ export default function AdminContentPage() {
     } else {
       await createContent({ title, content, type: type as any, category });
     }
-    setTitle("");
-    setContent("");
-    setCategory("");
+    setTitle(""); setContent(""); setCategory("");
   }
 
   function startEdit(item: any) {
@@ -58,29 +60,37 @@ export default function AdminContentPage() {
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: "40px auto" }}>
-      <h1>Управление базой знаний</h1>
-
-      <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Заголовок" style={{ width: "100%" }} /><br />
-        <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Текст" rows={4} style={{ width: "100%", marginTop: 8 }} /><br />
-        <select value={type} onChange={(e) => setType(e.target.value)} style={{ marginTop: 8 }}>
-          {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Категория" style={{ marginLeft: 8 }} />
-        <button type="submit" style={{ marginLeft: 8 }}>{editingId ? "Сохранить" : "Добавить"}</button>
-        {editingId && <button type="button" onClick={() => setEditingId(null)} style={{ marginLeft: 8 }}>Отмена</button>}
+    <PageShell title="Управление базой знаний" wide>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Заголовок" />
+        <textarea className="textarea" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Текст" rows={4} />
+        <div className={styles.formRow}>
+          <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
+            {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Категория" />
+        </div>
+        <div>
+          <Button type="submit">{editingId ? "Сохранить" : "Добавить"}</Button>
+          {editingId && (
+            <Button type="button" variant="secondary" onClick={() => setEditingId(null)} style={{ marginLeft: 8 }}>
+              Отмена
+            </Button>
+          )}
+        </div>
       </form>
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {items?.map((item) => (
-          <li key={item.id} style={{ border: "1px solid #ccc", padding: 12, marginBottom: 8 }}>
-            <strong>{item.title}</strong> [{item.type}]
-            <button onClick={() => startEdit(item)} style={{ marginLeft: 8 }}>Изменить</button>
-            <button onClick={() => deleteContent(item.id)} style={{ marginLeft: 8 }}>Удалить</button>
-          </li>
-        ))}
-      </ul>
-    </div>
+      {items?.map((item) => (
+        <Card key={item.id}>
+          <div className={styles.itemRow}>
+            <span className="text-s"><strong>{item.title}</strong> · {item.type}</span>
+            <div className={styles.itemActions}>
+              <Button variant="secondary" onClick={() => startEdit(item)}>Изменить</Button>
+              <Button variant="danger" onClick={() => deleteContent(item.id)}>Удалить</Button>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </PageShell>
   );
 }

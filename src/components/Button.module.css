@@ -21,3 +21,6 @@
 .secondary { background: var(--color-white); color: var(--color-text-primary); border-color: var(--color-text-muted); }
 .secondary:hover:not(:disabled) { background: var(--color-bg-card); }
 .secondary:disabled { color: var(--color-text-muted); cursor: not-allowed; }
+
+.danger { background: var(--color-white); color: var(--color-danger); border-color: var(--color-danger); }
+.danger:hover:not(:disabled) { background: var(--color-danger); color: var(--color-white); }

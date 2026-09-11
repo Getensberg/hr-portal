@@ -9,6 +9,10 @@ import {
   useDeleteJobMutation,
   useGetAdminReferralsQuery,
 } from "@/store/api";
+import { PageShell } from "@/components/PageShell";
+import { Card, CardTitle } from "@/components/Card";
+import { Button } from "@/components/Button";
+import styles from "./jobs-admin.module.css";
 
 export default function AdminJobsPage() {
   const { data: session, status } = useSession();
@@ -31,7 +35,7 @@ export default function AdminJobsPage() {
   const [description, setDescription] = useState("");
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
-    return <p>Загрузка...</p>;
+    return <p className="text-s">Загрузка...</p>;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -41,35 +45,36 @@ export default function AdminJobsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto" }}>
-      <h1>Вакансии и рекомендации</h1>
-
-      <form onSubmit={handleSubmit} style={{ marginBottom: 24, border: "1px solid #ccc", padding: 16 }}>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название вакансии" style={{ width: "100%" }} /><br />
-        <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Отдел" style={{ marginTop: 8 }} /><br />
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Описание" rows={3} style={{ width: "100%", marginTop: 8 }} /><br />
-        <button type="submit" style={{ marginTop: 8 }}>Создать вакансию</button>
+    <PageShell title="Вакансии и рекомендации" wide>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название вакансии" />
+        <input className="input" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Отдел" />
+        <textarea className="textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Описание" rows={3} />
+        <Button type="submit">Создать вакансию</Button>
       </form>
 
-      <h2>Вакансии</h2>
+      <CardTitle>Вакансии</CardTitle>
       {jobs?.map((j) => (
-        <div key={j.id} style={{ border: "1px solid #ccc", padding: 12, marginBottom: 8 }}>
-          <strong>{j.title}</strong> {j.department ? `· ${j.department}` : ""} — рекомендаций: {j.referralsCount ?? 0}
-          <br />
-          <label>
-            <input type="checkbox" checked={j.isActive} onChange={(e) => updateJob({ id: j.id, isActive: e.target.checked })} /> Активна
-          </label>
-          <button onClick={() => deleteJob(j.id)} style={{ marginLeft: 8 }}>Удалить</button>
-        </div>
+        <Card key={j.id}>
+          <div className={styles.itemRow}>
+            <span className="text-s"><strong>{j.title}</strong>{j.department ? ` · ${j.department}` : ""} — рекомендаций: {j.referralsCount ?? 0}</span>
+            <div className={styles.itemRow}>
+              <label className={styles.checkbox}>
+                <input type="checkbox" checked={j.isActive} onChange={(e) => updateJob({ id: j.id, isActive: e.target.checked })} /> Активна
+              </label>
+              <Button variant="danger" onClick={() => deleteJob(j.id)}>Удалить</Button>
+            </div>
+          </div>
+        </Card>
       ))}
 
-      <h2>Все рекомендации</h2>
+      <CardTitle>Все рекомендации</CardTitle>
       <ul>
         {referrals?.map((r) => (
-          <li key={r.id}>{r.candidateName} ({r.candidateContact}) — на «{r.jobPosting?.title}», рекомендовал: {r.referrer?.fullName}</li>
+          <li key={r.id} className="text-s">{r.candidateName} ({r.candidateContact}) — на «{r.jobPosting?.title}», рекомендовал: {r.referrer?.fullName}</li>
         ))}
-        {referrals?.length === 0 && <li>Пока нет рекомендаций</li>}
+        {referrals?.length === 0 && <li className="text-xs">Пока нет рекомендаций</li>}
       </ul>
-    </div>
+    </PageShell>
   );
 }

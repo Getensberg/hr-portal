@@ -9,6 +9,10 @@ import {
   useAddOnboardingTaskMutation,
 } from "@/store/api";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
+import { PageShell } from "@/components/PageShell";
+import { Card, CardTitle } from "@/components/Card";
+import { Button } from "@/components/Button";
+import styles from "./onboarding-admin.module.css";
 
 export default function AdminOnboardingPage() {
   const { data: session, status } = useSession();
@@ -32,13 +36,12 @@ export default function AdminOnboardingPage() {
   const [taskDrafts, setTaskDrafts] = useState<Record<string, { title: string; description: string; dueDate: string }>>({});
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
-    return <p>Загрузка...</p>;
+    return <p className="text-s">Загрузка...</p>;
   }
 
   async function handleCreatePlan(e: React.FormEvent) {
     e.preventDefault();
     if (!newcomerId) return alert("Выбери новичка");
-
     const startIso = startDate ? parseRuDate(startDate) : null;
     if (startDate && !startIso) return alert("Дата начала в формате дд.мм.гггг");
     const endIso = endDate ? parseRuDate(endDate) : null;
@@ -63,42 +66,41 @@ export default function AdminOnboardingPage() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto" }}>
-      <h1>Онбординг</h1>
-
-      <form onSubmit={handleCreatePlan} style={{ marginBottom: 32, border: "1px solid #ccc", padding: 16 }}>
-        <h3>Новый план</h3>
-        <select value={newcomerId} onChange={(e) => setNewcomerId(e.target.value)}>
-          <option value="">Выбрать новичка</option>
-          {users?.map((u) => <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>)}
-        </select>
-        <select value={mentorId} onChange={(e) => setMentorId(e.target.value)} style={{ marginLeft: 8 }}>
-          <option value="">Без наставника</option>
-          {users?.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-        </select>
-        <br /><br />
-        <label>Начало (дд.мм.гггг): <input value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="10.09.2026" maxLength={10} /></label>
-        <label style={{ marginLeft: 16 }}>Конец, необязательно: <input value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="10.12.2026" maxLength={10} /></label>
-        <br /><br />
-        <button type="submit">Создать план</button>
+    <PageShell title="Онбординг" wide>
+      <form onSubmit={handleCreatePlan} className={styles.form}>
+        <div className={styles.formRow}>
+          <select className="input" value={newcomerId} onChange={(e) => setNewcomerId(e.target.value)}>
+            <option value="">Выбрать новичка</option>
+            {users?.map((u) => <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>)}
+          </select>
+          <select className="input" value={mentorId} onChange={(e) => setMentorId(e.target.value)}>
+            <option value="">Без наставника</option>
+            {users?.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
+          </select>
+        </div>
+        <div className={styles.formRow}>
+          <input className="input" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="Начало: 10.09.2026" maxLength={10} />
+          <input className="input" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="Конец (необязательно)" maxLength={10} />
+        </div>
+        <Button type="submit">Создать план</Button>
       </form>
 
-      <h2>Существующие планы</h2>
       {plans?.map((p) => (
-        <div key={p.id} style={{ border: "1px solid #ccc", padding: 16, marginBottom: 16 }}>
-          <strong>{p.newcomer.fullName}</strong> — наставник: {p.mentor?.fullName ?? "не назначен"}
+        <Card key={p.id}>
+          <CardTitle>{p.newcomer.fullName}</CardTitle>
+          <p className="text-xs">Наставник: {p.mentor?.fullName ?? "не назначен"}</p>
           <ul>
-            {p.tasks.map((t) => <li key={t.id}>{t.title}</li>)}
-            {p.tasks.length === 0 && <li>Пока нет задач</li>}
+            {p.tasks.map((t) => <li key={t.id} className="text-s">{t.title}</li>)}
+            {p.tasks.length === 0 && <li className="text-xs">Пока нет задач</li>}
           </ul>
-          <div>
-            <input placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
-            <input placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} style={{ marginLeft: 8 }} />
-            <input placeholder="дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} style={{ marginLeft: 8, width: 100 }} />
-            <button onClick={() => handleAddTask(p.id)} style={{ marginLeft: 8 }}>+ Добавить задачу</button>
+          <div className={styles.taskForm}>
+            <input className="input" placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
+            <input className="input" placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} />
+            <input className="input" placeholder="дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} />
+            <Button type="button" variant="secondary" onClick={() => handleAddTask(p.id)}>+ Добавить задачу</Button>
           </div>
-        </div>
+        </Card>
       ))}
-    </div>
+    </PageShell>
   );
 }

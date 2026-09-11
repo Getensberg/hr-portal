@@ -1,6 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useGetMyRequestsQuery, useCreateRequestMutation } from "@/store/api";
+import { PageShell } from "@/components/PageShell";
+import { Card } from "@/components/Card";
+import { Button } from "@/components/Button";
+import { StatusBadge } from "@/components/StatusBadge";
+import styles from "./requests.module.css";
 
 const TYPE_LABELS: Record<string, string> = {
   DOCUMENT: "Справка",
@@ -8,11 +13,6 @@ const TYPE_LABELS: Record<string, string> = {
   BUSINESS_TRIP: "Командировка",
   EQUIPMENT: "Техника",
   ACCESS: "Доступ",
-};
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: "На рассмотрении",
-  IN_PROGRESS: "В работе",
-  DONE: "Готово",
 };
 
 export default function RequestsPage() {
@@ -28,37 +28,37 @@ export default function RequestsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: "40px auto" }}>
-      <h1>Мои заявки</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: 32 }}>
-        <select value={type} onChange={(e) => setType(e.target.value)}>
+    <PageShell title="Мои заявки">
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
           {Object.entries(TYPE_LABELS).map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
         </select>
-        <br />
         <textarea
+          className="textarea"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Детали заявки (например, даты отпуска)"
           rows={3}
-          style={{ width: "100%", marginTop: 8 }}
         />
-        <button type="submit" disabled={creating} style={{ marginTop: 8 }}>
-          Отправить заявку
-        </button>
+        <Button type="submit" disabled={creating}>Отправить заявку</Button>
       </form>
 
-      <h2>История</h2>
-      {isLoading && <p>Загрузка...</p>}
-      <ul>
-        {requests?.map((r) => (
-          <li key={r.id}>
-            <strong>{TYPE_LABELS[r.type]}</strong> — {STATUS_LABELS[r.status]}
-            {r.payload?.description ? ` — ${r.payload.description}` : ""}
-          </li>
-        ))}
-      </ul>
-    </div>
+      <h2 className="text-h2">История</h2>
+      {isLoading && <p className="text-s">Загрузка...</p>}
+      {requests?.map((r) => (
+        <Card key={r.id}>
+          <div className={styles.historyRow}>
+            <span className="text-s">
+              <strong>{TYPE_LABELS[r.type]}</strong>
+              {r.payload?.description ? ` — ${r.payload.description}` : ""}
+            </span>
+            <StatusBadge status={r.status} />
+          </div>
+        </Card>
+      ))}
+      {requests?.length === 0 && <p className="text-s">Пока нет заявок</p>}
+    </PageShell>
   );
 }

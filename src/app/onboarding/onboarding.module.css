@@ -1,0 +1,2 @@
+.taskRow { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.taskDone { text-decoration: line-through; color: var(--color-text-muted); }

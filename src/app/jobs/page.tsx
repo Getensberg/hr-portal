@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useGetActiveJobsQuery, useCreateReferralMutation, useGetMyReferralsQuery } from "@/store/api";
+import { PageShell } from "@/components/PageShell";
+import { Card, CardTitle } from "@/components/Card";
+import { Button } from "@/components/Button";
+import styles from "./jobs.module.css";
 
 export default function JobsPage() {
   const { data: jobs, isLoading } = useGetActiveJobsQuery();
@@ -17,37 +21,36 @@ export default function JobsPage() {
     setOpenJobId(null);
   }
 
-  if (isLoading) return <p>Загрузка...</p>;
+  if (isLoading) return <p className="text-s">Загрузка...</p>;
 
   return (
-    <div style={{ maxWidth: 700, margin: "40px auto" }}>
-      <h1>Вакансии</h1>
-      {jobs?.length === 0 && <p>Сейчас нет открытых вакансий</p>}
+    <PageShell title="Вакансии">
+      {jobs?.length === 0 && <p className="text-s">Сейчас нет открытых вакансий</p>}
       {jobs?.map((j) => (
-        <div key={j.id} style={{ border: "1px solid #ccc", padding: 16, marginBottom: 12 }}>
-          <h3>{j.title} {j.department ? `· ${j.department}` : ""}</h3>
-          <p>{j.description}</p>
+        <Card key={j.id}>
+          <CardTitle>{j.title}{j.department ? ` · ${j.department}` : ""}</CardTitle>
+          <p className="text-s">{j.description}</p>
           {openJobId === j.id ? (
-            <div>
-              <input placeholder="Имя кандидата" value={form.candidateName} onChange={(e) => setForm({ ...form, candidateName: e.target.value })} /><br />
-              <input placeholder="Контакт (телефон/почта/телеграм)" value={form.candidateContact} onChange={(e) => setForm({ ...form, candidateContact: e.target.value })} style={{ marginTop: 8 }} /><br />
-              <textarea placeholder="Комментарий (необязательно)" value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} rows={2} style={{ marginTop: 8, width: "100%" }} /><br />
-              <button onClick={() => handleSubmit(j.id)} style={{ marginTop: 8 }}>Отправить рекомендацию</button>
-              <button onClick={() => setOpenJobId(null)} style={{ marginLeft: 8 }}>Отмена</button>
+            <div className={styles.referralForm}>
+              <input className="input" placeholder="Имя кандидата" value={form.candidateName} onChange={(e) => setForm({ ...form, candidateName: e.target.value })} />
+              <input className="input" placeholder="Контакт (телефон/почта/телеграм)" value={form.candidateContact} onChange={(e) => setForm({ ...form, candidateContact: e.target.value })} />
+              <textarea className="textarea" placeholder="Комментарий (необязательно)" value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} rows={2} />
+              <div className={styles.actions}>
+                <Button onClick={() => handleSubmit(j.id)}>Отправить рекомендацию</Button>
+                <Button variant="secondary" onClick={() => setOpenJobId(null)}>Отмена</Button>
+              </div>
             </div>
           ) : (
-            <button onClick={() => setOpenJobId(j.id)}>Порекомендовать</button>
+            <Button variant="secondary" onClick={() => setOpenJobId(j.id)}>Порекомендовать</Button>
           )}
-        </div>
+        </Card>
       ))}
 
-      <h2>Мои рекомендации</h2>
+      <CardTitle>Мои рекомендации</CardTitle>
       <ul>
-        {myReferrals?.map((r) => (
-          <li key={r.id}>{r.candidateName} — на «{r.jobPosting?.title}»</li>
-        ))}
-        {myReferrals?.length === 0 && <li>Пока нет рекомендаций</li>}
+        {myReferrals?.map((r) => <li key={r.id} className="text-s">{r.candidateName} — на «{r.jobPosting?.title}»</li>)}
+        {myReferrals?.length === 0 && <li className="text-xs">Пока нет рекомендаций</li>}
       </ul>
-    </div>
+    </PageShell>
   );
 }

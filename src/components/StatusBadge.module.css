@@ -1,0 +1,11 @@
+.badge {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  display: inline-block;
+}
+.pending { background: var(--color-bg-card); color: var(--color-text-secondary); }
+.inProgress { background: #FFF3CD; color: #7A5B00; }
+.done { background: #E6F9E1; color: #157A00; }

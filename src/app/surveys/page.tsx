@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useGetActiveSurveysQuery, useSubmitSurveyMutation } from "@/store/api";
+import { PageShell } from "@/components/PageShell";
+import { Card, CardTitle } from "@/components/Card";
+import { Button } from "@/components/Button";
+import styles from "./surveys.module.css";
 
 export default function SurveysPage() {
   const { data: surveys, isLoading } = useGetActiveSurveysQuery();
@@ -12,52 +16,48 @@ export default function SurveysPage() {
   }
 
   async function handleSubmit(surveyId: string, questions: { id: string }[]) {
-    const surveyAnswers = questions.map((q) => ({
-      questionId: q.id,
-      value: answers[surveyId]?.[q.id] ?? "",
-    }));
+    const surveyAnswers = questions.map((q) => ({ questionId: q.id, value: answers[surveyId]?.[q.id] ?? "" }));
     await submitSurvey({ id: surveyId, answers: surveyAnswers });
   }
 
-  if (isLoading) return <p>Загрузка...</p>;
+  if (isLoading) return <p className="text-s">Загрузка...</p>;
 
   return (
-    <div style={{ maxWidth: 600, margin: "40px auto" }}>
-      <h1>Опросы</h1>
-      {surveys?.length === 0 && <p>Сейчас нет активных опросов</p>}
+    <PageShell title="Опросы">
+      {surveys?.length === 0 && <p className="text-s">Сейчас нет активных опросов</p>}
       {surveys?.map((s) => (
-        <div key={s.id} style={{ border: "1px solid #ccc", padding: 16, marginBottom: 16 }}>
-          <h3>{s.title} {s.isAnonymous && <span style={{ fontSize: 12, color: "#666" }}>(анонимно)</span>}</h3>
+        <Card key={s.id}>
+          <CardTitle>{s.title} {s.isAnonymous && <span className="text-xs">(анонимно)</span>}</CardTitle>
           {s.completed ? (
-            <p>Спасибо, вы уже прошли этот опрос.</p>
+            <p className="text-s">Спасибо, вы уже прошли этот опрос.</p>
           ) : (
             <>
               {s.questions.map((q) => (
-                <div key={q.id} style={{ marginBottom: 8 }}>
-                  <label>{q.text}</label><br />
+                <div key={q.id} className={styles.question}>
+                  <label className="text-s">{q.text}</label>
                   {q.type === "SCALE_1_5" && (
-                    <select onChange={(e) => setAnswer(s.id, q.id, e.target.value)} defaultValue="">
+                    <select className="input" onChange={(e) => setAnswer(s.id, q.id, e.target.value)} defaultValue="">
                       <option value="" disabled>Выбрать</option>
                       {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
                     </select>
                   )}
                   {q.type === "YES_NO" && (
-                    <select onChange={(e) => setAnswer(s.id, q.id, e.target.value)} defaultValue="">
+                    <select className="input" onChange={(e) => setAnswer(s.id, q.id, e.target.value)} defaultValue="">
                       <option value="" disabled>Выбрать</option>
                       <option value="yes">Да</option>
                       <option value="no">Нет</option>
                     </select>
                   )}
                   {q.type === "TEXT" && (
-                    <textarea rows={2} style={{ width: "100%" }} onChange={(e) => setAnswer(s.id, q.id, e.target.value)} />
+                    <textarea className="textarea" rows={2} onChange={(e) => setAnswer(s.id, q.id, e.target.value)} />
                   )}
                 </div>
               ))}
-              <button onClick={() => handleSubmit(s.id, s.questions)}>Отправить ответ</button>
+              <Button onClick={() => handleSubmit(s.id, s.questions)}>Отправить ответ</Button>
             </>
           )}
-        </div>
+        </Card>
       ))}
-    </div>
+    </PageShell>
   );
 }

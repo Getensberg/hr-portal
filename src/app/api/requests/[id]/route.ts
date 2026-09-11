@@ -23,3 +23,17 @@ export async function PATCH(
   });
   return NextResponse.json(updated);
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "HR_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  await prisma.request.delete({ where: { id } });
+  return NextResponse.json({ id, deleted: true });
+}

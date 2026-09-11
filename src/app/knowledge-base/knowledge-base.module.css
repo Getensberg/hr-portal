@@ -1,0 +1,17 @@
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.controls select { flex: 0 0 180px; }
+.controls input { flex: 1; min-width: 200px; }
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.itemBody {
+  margin-top: 12px;
+}
