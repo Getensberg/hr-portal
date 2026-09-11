@@ -7,6 +7,7 @@
 .tileLink {
   text-decoration: none;
   color: inherit;
+  display: flex;
 }
 .sectionTitle {
   margin-bottom: 12px;

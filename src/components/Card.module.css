@@ -4,6 +4,10 @@
   padding: 24px;
   margin-bottom: 16px;
   border: 1px solid var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 .cardTitle {
   font-weight: 600;
