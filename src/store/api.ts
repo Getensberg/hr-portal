@@ -103,6 +103,13 @@ export interface ReferralItem {
   referrer?: { fullName: string; email: string };
 }
 
+export interface OrgUser {
+  fullName: string;
+  position: string | null;
+  department: string | null;
+  email: string;
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
@@ -221,6 +228,9 @@ export const apiSlice = createApi({
     query: () => "/referrals/admin",
     providesTags: ["Referral"],
   }),
+  getOrgStructure: builder.query<Record<string, OrgUser[]>, void>({
+  query: () => "/org",
+}),
   }),
 });
 
@@ -252,4 +262,5 @@ export const {
   useCreateReferralMutation,
   useGetMyReferralsQuery,
   useGetAdminReferralsQuery,
+  useGetOrgStructureQuery,
 } = apiSlice;

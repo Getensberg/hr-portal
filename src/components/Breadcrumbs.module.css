@@ -1,0 +1,9 @@
+.breadcrumbs {
+  padding: 10px 24px;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-alt);
+}
+.breadcrumbs a { color: var(--color-text-primary); text-decoration: none; }
+.breadcrumbs a:hover { text-decoration: underline; }
+.sep { margin: 0 6px; color: var(--color-text-muted); }
