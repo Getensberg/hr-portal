@@ -231,3 +231,13 @@ model Referral {
   comment        String?
   createdAt      DateTime @default(now())
 }
+
+model OrgDocument {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String?
+  fileName    String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+}

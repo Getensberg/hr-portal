@@ -12,7 +12,7 @@ const EMPLOYEE_TILES = [
   { href: "/surveys", title: "Опросы", desc: "Pulse-опросы и ящик предложений" },
   { href: "/onboarding", title: "Онбординг", desc: "Чек-лист задач и наставник" },
   { href: "/jobs", title: "Вакансии", desc: "Открытые позиции и рекомендации" },
-  { href: "/org", title: "Оргструктура", desc: "Отделы и сотрудники компании" },
+  { href: "/profile", title: "Профиль", desc: "Личный кабинет и оргструктура компании" },
 ];
 
 export default function HomePage() {
