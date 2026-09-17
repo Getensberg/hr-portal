@@ -23,6 +23,8 @@ export interface ContentItem {
   content: string;
   type: ContentType;
   category: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -342,17 +344,17 @@ export const apiSlice = createApi({
       query: () => "/org",
       providesTags: ["Org"],
     }),
-    createOrgDocument: builder.mutation<
-      OrgDocumentItem,
-      { title: string; description?: string }
-    >({
-      query: (body) => ({ url: "/org", method: "POST", body }),
-      invalidatesTags: ["Org"],
-    }),
+createOrgDocument: builder.mutation<OrgDocumentItem, { title: string; description?: string; fileUrl?: string; fileName?: string }>({
+  query: (body) => ({ url: "/org", method: "POST", body }),
+  invalidatesTags: ["Org"],
+}),
     deleteOrgDocument: builder.mutation<{ id: string }, string>({
       query: (id) => ({ url: `/org/${id}`, method: "DELETE" }),
       invalidatesTags: ["Org"],
     }),
+    uploadFile: builder.mutation<{ url: string; name: string }, FormData>({
+  query: (formData) => ({ url: "/upload", method: "POST", body: formData }),
+}),
   }),
 });
 
@@ -390,5 +392,6 @@ export const {
   useGetProfileQuery,
   useGetOrgDocumentsQuery,
   useCreateOrgDocumentMutation,
-  useDeleteOrgDocumentMutation,
+  useDeleteOrgDocumentMutation, 
+  useUploadFileMutation,
 } = apiSlice;

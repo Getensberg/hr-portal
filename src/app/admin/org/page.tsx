@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useGetOrgDocumentsQuery, useCreateOrgDocumentMutation, useDeleteOrgDocumentMutation } from "@/store/api";
+import { useGetOrgDocumentsQuery, useCreateOrgDocumentMutation, useDeleteOrgDocumentMutation, useUploadFileMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -21,9 +21,11 @@ export default function AdminOrgPage() {
   const { data: docs } = useGetOrgDocumentsQuery();
   const [createDoc] = useCreateOrgDocumentMutation();
   const [deleteDoc] = useDeleteOrgDocumentMutation();
+  const [uploadFile] = useUploadFileMutation();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
@@ -32,8 +34,19 @@ export default function AdminOrgPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title) return;
-    await createDoc({ title, description });
-    setTitle(""); setDescription("");
+
+    let fileUrl: string | undefined;
+    let fileName: string | undefined;
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploaded = await uploadFile(formData).unwrap();
+      fileUrl = uploaded.url;
+      fileName = uploaded.name;
+    }
+
+    await createDoc({ title, description, fileUrl, fileName });
+    setTitle(""); setDescription(""); setFile(null);
   }
 
   function handleDelete(id: string) {
@@ -42,16 +55,10 @@ export default function AdminOrgPage() {
 
   return (
     <PageShell title="Оргструктура — управление" wide>
-      <Card>
-        <p className="text-xs">
-          Загрузка файла появится позже, после подключения файлового хранилища — структура уже
-          готова принять его без переделок. Пока можно вести записи с названием и описанием.
-        </p>
-      </Card>
-
       <form onSubmit={handleSubmit} className={styles.form}>
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название (например, «Схема отделов 2026»)" />
         <textarea className="textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Описание (необязательно)" rows={3} />
+        <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
         <Button type="submit">Добавить</Button>
       </form>
 
@@ -61,6 +68,7 @@ export default function AdminOrgPage() {
             <div>
               <CardTitle>{d.title}</CardTitle>
               {d.description && <p className="text-xs">{d.description}</p>}
+              {d.fileUrl && <p className="text-xs">📎 {d.fileName}</p>}
             </div>
             <Button variant="danger" onClick={() => handleDelete(d.id)}>Удалить</Button>
           </div>

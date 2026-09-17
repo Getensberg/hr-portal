@@ -7,6 +7,7 @@ import {
   useCreateContentMutation,
   useUpdateContentMutation,
   useDeleteContentMutation,
+  useUploadFileMutation,
 } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/Card";
@@ -29,11 +30,13 @@ export default function AdminContentPage() {
   const [createContent] = useCreateContentMutation();
   const [updateContent] = useUpdateContentMutation();
   const [deleteContent] = useDeleteContentMutation();
+  const [uploadFile] = useUploadFileMutation();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [type, setType] = useState(TYPE_OPTIONS[0]);
   const [category, setCategory] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
@@ -42,13 +45,24 @@ export default function AdminContentPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    let fileUrl: string | undefined;
+    let fileName: string | undefined;
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploaded = await uploadFile(formData).unwrap();
+      fileUrl = uploaded.url;
+      fileName = uploaded.name;
+    }
+
     if (editingId) {
-      await updateContent({ id: editingId, title, content, type: type as any, category });
+      await updateContent({ id: editingId, title, content, type: type as any, category, fileUrl, fileName });
       setEditingId(null);
     } else {
-      await createContent({ title, content, type: type as any, category });
+      await createContent({ title, content, type: type as any, category, fileUrl, fileName });
     }
-    setTitle(""); setContent(""); setCategory("");
+    setTitle(""); setContent(""); setCategory(""); setFile(null);
   }
 
   function startEdit(item: any) {
@@ -57,6 +71,7 @@ export default function AdminContentPage() {
     setContent(item.content);
     setType(item.type);
     setCategory(item.category ?? "");
+    setFile(null);
   }
 
   return (
@@ -70,10 +85,12 @@ export default function AdminContentPage() {
           </select>
           <input className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Категория" />
         </div>
+        <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        {editingId && !file && <p className="text-xs">Файл не выбран — старый (если был) останется без изменений</p>}
         <div>
           <Button type="submit">{editingId ? "Сохранить" : "Добавить"}</Button>
           {editingId && (
-            <Button type="button" variant="secondary" onClick={() => setEditingId(null)} style={{ marginLeft: 8 }}>
+            <Button type="button" variant="secondary" onClick={() => { setEditingId(null); setFile(null); }} style={{ marginLeft: 8 }}>
               Отмена
             </Button>
           )}
@@ -83,7 +100,10 @@ export default function AdminContentPage() {
       {items?.map((item) => (
         <Card key={item.id}>
           <div className={styles.itemRow}>
-            <span className="text-s"><strong>{item.title}</strong> · {item.type}</span>
+            <span className="text-s">
+              <strong>{item.title}</strong> · {item.type}
+              {item.fileUrl && <> · 📎 {item.fileName}</>}
+            </span>
             <div className={styles.itemActions}>
               <Button variant="secondary" onClick={() => startEdit(item)}>Изменить</Button>
               <Button variant="danger" onClick={() => deleteContent(item.id)}>Удалить</Button>

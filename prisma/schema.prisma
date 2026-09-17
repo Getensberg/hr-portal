@@ -83,14 +83,16 @@ enum RequestStatus {
 // --- База знаний / новости / регламенты (единая модель контента) ---
 
 model ContentItem {
-  id        String      @id @default(cuid())
-  title     String
-  content   String
-  type      ContentType
-  category  String?
-  createdBy String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id          String      @id @default(cuid())
+  title       String
+  content     String
+  type        ContentType
+  category    String?
+  fileUrl     String?
+  fileName    String?
+  createdBy   String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 enum ContentType {
@@ -241,3 +243,4 @@ model OrgDocument {
   createdBy   String
   createdAt   DateTime @default(now())
 }
+

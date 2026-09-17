@@ -19,7 +19,13 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const created = await prisma.orgDocument.create({
-    data: { title: body.title, description: body.description || null, createdBy: session.user.id },
+    data: {
+      title: body.title,
+      description: body.description || null,
+      fileUrl: body.fileUrl || null,
+      fileName: body.fileName || null,
+      createdBy: session.user.id,
+    },
   });
   return NextResponse.json(created, { status: 201 });
 }

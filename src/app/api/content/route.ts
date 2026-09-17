@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       type: body.type,
       category: body.category ?? null,
       createdBy: session.user.id,
+      ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
     },
   });
   return NextResponse.json(created, { status: 201 });

@@ -38,7 +38,16 @@ export default function KnowledgeBasePage() {
             <span className="text-h4">{item.title}{item.category ? ` · ${item.category}` : ""}</span>
             <span className="text-xs">{TYPE_LABELS[item.type]}</span>
           </div>
-          {openId === item.id && <p className={`${styles.itemBody} text-s`}>{item.content}</p>}
+          {openId === item.id && (
+            <>
+              <p className={`${styles.itemBody} text-s`}>{item.content}</p>
+              {item.fileUrl && (
+                <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
+                  📎 Скачать файл{item.fileName ? `: ${item.fileName}` : ""}
+                </a>
+              )}
+            </>
+          )}
         </Card>
       ))}
       {items?.length === 0 && <p className="text-s">Ничего не найдено</p>}

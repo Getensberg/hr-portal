@@ -15,14 +15,15 @@ export async function PATCH(
 
   const body = await req.json();
   const updated = await prisma.contentItem.update({
-    where: { id },
-    data: {
-      title: body.title,
-      content: body.content,
-      type: body.type,
-      category: body.category ?? null,
-    },
-  });
+  where: { id },
+  data: {
+    title: body.title,
+    content: body.content,
+    type: body.type,
+    category: body.category ?? null,
+    ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
+  },
+});
   return NextResponse.json(updated);
 }
 
