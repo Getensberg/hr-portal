@@ -90,6 +90,7 @@ model ContentItem {
   category    String?
   fileUrl     String?
   fileName    String?
+  imageUrl    String?
   createdBy   String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

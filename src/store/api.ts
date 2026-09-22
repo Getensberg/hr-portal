@@ -25,6 +25,7 @@ export interface ContentItem {
   category: string | null;
   fileUrl?: string | null;
   fileName?: string | null;
+  imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -353,6 +354,10 @@ createOrgDocument: builder.mutation<OrgDocumentItem, { title: string; descriptio
     uploadFile: builder.mutation<{ url: string; name: string }, FormData>({
   query: (formData) => ({ url: "/upload", method: "POST", body: formData }),
 }),
+getContentById: builder.query<ContentItem, string>({
+  query: (id) => `/content/${id}`,
+  providesTags: ["Content"],
+}),
 
   }),
 });
@@ -393,4 +398,5 @@ export const {
   useCreateOrgDocumentMutation,
   useDeleteOrgDocumentMutation, 
   useUploadFileMutation,
+  useGetContentByIdQuery,
 } = apiSlice;

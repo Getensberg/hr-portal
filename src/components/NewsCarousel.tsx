@@ -8,6 +8,7 @@ interface NewsItem {
   title: string;
   content: string;
   createdAt: string;
+  imageUrl?: string | null;
 }
 
 export function NewsCarousel({ items }: { items: NewsItem[] }) {
@@ -29,7 +30,8 @@ export function NewsCarousel({ items }: { items: NewsItem[] }) {
       </div>
       <div className={styles.scrollArea} ref={scrollRef}>
         {items.map((item) => (
-          <Link key={item.id} href="/knowledge-base?type=NEWS_POST" className={styles.card}>
+          <Link key={item.id} href={`/news/${item.id}`} className={styles.card}>
+            {item.imageUrl && <img src={item.imageUrl} alt="" className={styles.thumb} />}
             <span className={styles.cardTitle}>{item.title}</span>
             <span className={styles.cardPreview}>{item.content}</span>
             <span className={styles.cardDate}>

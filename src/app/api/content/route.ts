@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get("type");
   const category = searchParams.get("category");
   const q = searchParams.get("q");
+  const limit = searchParams.get("limit");
 
   const items = await prisma.contentItem.findMany({
     where: {
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
         : {}),
     },
     orderBy: { createdAt: "desc" },
+    ...(limit ? { take: Number(limit) } : {}),
   });
   return NextResponse.json(items);
 }
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
       category: body.category ?? null,
       createdBy: session.user.id,
       ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
+      ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),
     },
   });
   return NextResponse.json(created, { status: 201 });

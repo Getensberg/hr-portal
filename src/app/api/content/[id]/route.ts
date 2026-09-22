@@ -3,33 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { searchParams } = new URL(req.url);
-  const type = searchParams.get("type");
-  const category = searchParams.get("category");
-  const q = searchParams.get("q");
-  const limit = searchParams.get("limit");
-
-  const items = await prisma.contentItem.findMany({
-    where: {
-      ...(type ? { type: type as any } : {}),
-      ...(category ? { category } : {}),
-      ...(q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" } },
-              { content: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    ...(limit ? { take: Number(limit) } : {}),
-  });
-  return NextResponse.json(items);
+  const item = await prisma.contentItem.findUnique({ where: { id } });
+  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(item);
 }
 
 export async function PATCH(
@@ -44,15 +28,16 @@ export async function PATCH(
 
   const body = await req.json();
   const updated = await prisma.contentItem.update({
-  where: { id },
-  data: {
-    title: body.title,
-    content: body.content,
-    type: body.type,
-    category: body.category ?? null,
-    ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
-  },
-});
+    where: { id },
+    data: {
+      title: body.title,
+      content: body.content,
+      type: body.type,
+      category: body.category ?? null,
+      ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
+      ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),
+    },
+  });
   return NextResponse.json(updated);
 }
 
