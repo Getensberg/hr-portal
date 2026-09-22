@@ -1,8 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useGetContentQuery } from "@/store/api";
 import { Card, CardTitle } from "@/components/Card";
 import { PageShell } from "@/components/PageShell";
+import { NewsCarousel } from "@/components/NewsCarousel";
 import buttonStyles from "@/components/Button.module.css";
 import styles from "./home.module.css";
 
@@ -17,6 +19,7 @@ const EMPLOYEE_TILES = [
 
 export default function HomePage() {
   const { data: session } = useSession();
+  const { data: news } = useGetContentQuery({ type: "NEWS_POST", limit: 6 }, { skip: !session });
 
   if (!session) {
     return (
@@ -31,6 +34,9 @@ export default function HomePage() {
 
   return (
     <PageShell title={`Привет, ${session.user.name?.split(" ")[0] ?? ""}!`}>
+      <h2 className={`${styles.sectionTitle} text-h2`}>Новости</h2>
+      <NewsCarousel items={news ?? []} />
+
       <div className={styles.grid}>
         {EMPLOYEE_TILES.map((t) => (
           <Link key={t.href} href={t.href} className={styles.tileLink}>
@@ -41,7 +47,6 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
-
     </PageShell>
   );
 }

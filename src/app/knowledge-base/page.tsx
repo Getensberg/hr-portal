@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGetContentQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/Card";
@@ -11,10 +12,16 @@ const TYPE_LABELS: Record<string, string> = {
   POLICY_DOCUMENT: "Регламент",
 };
 
-export default function KnowledgeBasePage() {
+function KnowledgeBaseContent() {
+  const searchParams = useSearchParams();
   const [type, setType] = useState("");
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initial = searchParams.get("type");
+    if (initial) setType(initial);
+  }, [searchParams]);
 
   const { data: items, isLoading } = useGetContentQuery({ type: type || undefined, q: q || undefined });
 
@@ -52,5 +59,13 @@ export default function KnowledgeBasePage() {
       ))}
       {items?.length === 0 && <p className="text-s">Ничего не найдено</p>}
     </PageShell>
+  );
+}
+
+export default function KnowledgeBasePage() {
+  return (
+    <Suspense fallback={<p className="text-s">Загрузка...</p>}>
+      <KnowledgeBaseContent />
+    </Suspense>
   );
 }

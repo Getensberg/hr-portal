@@ -15,7 +15,7 @@
   --radius-md: 16px;
   --radius-sm: 10px;
 
-  --font-sans: var(--font-montserrat), "Segoe UI", Arial, sans-serif;
+  --font-sans: "Montserrat", "Segoe UI", Arial, sans-serif;
 }
 
 * {

@@ -174,19 +174,17 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ["Request"],
     }),
-    getContent: builder.query<
-      ContentItem[],
-      { type?: string; category?: string; q?: string }
-    >({
-      query: (params) => {
-        const search = new URLSearchParams();
-        if (params.type) search.set("type", params.type);
-        if (params.category) search.set("category", params.category);
-        if (params.q) search.set("q", params.q);
-        return `/content?${search.toString()}`;
-      },
-      providesTags: ["Content"],
-    }),
+getContent: builder.query<ContentItem[], { type?: string; category?: string; q?: string; limit?: number }>({
+  query: (params) => {
+    const search = new URLSearchParams();
+    if (params.type) search.set("type", params.type);
+    if (params.category) search.set("category", params.category);
+    if (params.q) search.set("q", params.q);
+    if (params.limit) search.set("limit", String(params.limit));
+    return `/content?${search.toString()}`;
+  },
+  providesTags: ["Content"],
+}),
     createContent: builder.mutation<ContentItem, Partial<ContentItem>>({
       query: (body) => ({ url: "/content", method: "POST", body }),
       invalidatesTags: ["Content"],
@@ -355,6 +353,7 @@ createOrgDocument: builder.mutation<OrgDocumentItem, { title: string; descriptio
     uploadFile: builder.mutation<{ url: string; name: string }, FormData>({
   query: (formData) => ({ url: "/upload", method: "POST", body: formData }),
 }),
+
   }),
 });
 

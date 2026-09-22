@@ -3,6 +3,35 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get("type");
+  const category = searchParams.get("category");
+  const q = searchParams.get("q");
+  const limit = searchParams.get("limit");
+
+  const items = await prisma.contentItem.findMany({
+    where: {
+      ...(type ? { type: type as any } : {}),
+      ...(category ? { category } : {}),
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: "insensitive" } },
+              { content: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    ...(limit ? { take: Number(limit) } : {}),
+  });
+  return NextResponse.json(items);
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
