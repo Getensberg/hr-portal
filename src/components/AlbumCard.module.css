@@ -8,7 +8,7 @@
   padding: 20px;
   margin-bottom: 16px;
 }
-.thumb { width: 100%; height: 160px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: 12px; }
+.thumb { width: 100%; height: 280px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: 12px; }
 .desc {
   margin-top: 8px;
   display: -webkit-box;
