@@ -14,7 +14,13 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./content-admin.module.css";
 
-const TYPE_OPTIONS = ["KNOWLEDGE_ARTICLE", "NEWS_POST", "POLICY_DOCUMENT"];
+const TYPE_OPTIONS = ["KNOWLEDGE_ARTICLE", "NEWS_POST", "POLICY_DOCUMENT", "GALLERY_ALBUM"];
+const TYPE_LABELS: Record<string, string> = {
+  KNOWLEDGE_ARTICLE: "Статья",
+  NEWS_POST: "Новость",
+  POLICY_DOCUMENT: "Регламент",
+  GALLERY_ALBUM: "Фотоальбом",
+};
 
 export default function AdminContentPage() {
   const { data: session, status } = useSession();
@@ -36,44 +42,50 @@ export default function AdminContentPage() {
   const [content, setContent] = useState("");
   const [type, setType] = useState(TYPE_OPTIONS[0]);
   const [category, setCategory] = useState("");
+  const [driveLink, setDriveLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [image, setImage] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [image, setImage] = useState<File | null>(null);
+  const isAlbum = type === "GALLERY_ALBUM";
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
   }
 
- async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
 
-  let fileUrl: string | undefined;
-  let fileName: string | undefined;
-  if (file) {
-    const formData = new FormData();
-    formData.append("file", file);
-    const uploaded = await uploadFile(formData).unwrap();
-    fileUrl = uploaded.url;
-    fileName = uploaded.name;
+    let fileUrl: string | undefined;
+    let fileName: string | undefined;
+    if (isAlbum) {
+      fileUrl = driveLink;
+      fileName = "Google Drive";
+    } else if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploaded = await uploadFile(formData).unwrap();
+      fileUrl = uploaded.url;
+      fileName = uploaded.name;
+    }
+
+    let imageUrl: string | undefined;
+    if (image) {
+      const formData = new FormData();
+      formData.append("file", image);
+      const uploaded = await uploadFile(formData).unwrap();
+      imageUrl = uploaded.url;
+    }
+
+    if (editingId) {
+      await updateContent({ id: editingId, title, content, type: type as any, category, fileUrl, fileName, imageUrl });
+      setEditingId(null);
+    } else {
+      await createContent({ title, content, type: type as any, category, fileUrl, fileName, imageUrl });
+    }
+    setTitle(""); setContent(""); setCategory(""); setFile(null); setImage(null); setDriveLink("");
   }
 
-  let imageUrl: string | undefined;
-  if (image) {
-    const formData = new FormData();
-    formData.append("file", image);
-    const uploaded = await uploadFile(formData).unwrap();
-    imageUrl = uploaded.url;
-  }
-
-  if (editingId) {
-    await updateContent({ id: editingId, title, content, type: type as any, category, fileUrl, fileName, imageUrl });
-    setEditingId(null);
-  } else {
-    await createContent({ title, content, type: type as any, category, fileUrl, fileName, imageUrl });
-  }
-  setTitle(""); setContent(""); setCategory(""); setFile(null); setImage(null);
-}
   function startEdit(item: any) {
     setEditingId(item.id);
     setTitle(item.title);
@@ -81,33 +93,51 @@ export default function AdminContentPage() {
     setType(item.type);
     setCategory(item.category ?? "");
     setFile(null);
+    setImage(null);
+    setDriveLink(item.type === "GALLERY_ALBUM" ? (item.fileUrl ?? "") : "");
   }
 
   return (
     <PageShell title="Управление базой знаний" wide>
       <form onSubmit={handleSubmit} className={styles.form}>
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Заголовок" />
-        <textarea className="textarea" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Текст" rows={4} />
+        <textarea
+          className="textarea"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder={isAlbum ? "Короткое описание альбома" : "Текст"}
+          rows={4}
+        />
         <div className={styles.formRow}>
           <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
-            {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+            {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
           </select>
           <input className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Категория" />
         </div>
-        <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        {editingId && !file && <p className="text-xs">Файл не выбран — старый (если был) останется без изменений</p>}
+
+        {isAlbum ? (
+          <input
+            className="input"
+            value={driveLink}
+            onChange={(e) => setDriveLink(e.target.value)}
+            placeholder="Ссылка на папку в Google Drive"
+          />
+        ) : (
+          <div>
+            <label className="text-xs">Файл-приложение (документ)</label>
+            <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+        )}
+
         <div>
-  <label className="text-xs">Файл-приложение (документ)</label>
-  <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-</div>
-<div>
-  <label className="text-xs">Картинка-баннер (необязательно, для новостей)</label>
-  <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
-</div>
+          <label className="text-xs">{isAlbum ? "Обложка альбома" : "Картинка-баннер (необязательно, для новостей)"}</label>
+          <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
+        </div>
+
         <div>
           <Button type="submit">{editingId ? "Сохранить" : "Добавить"}</Button>
           {editingId && (
-            <Button type="button" variant="secondary" onClick={() => { setEditingId(null); setFile(null); }} style={{ marginLeft: 8 }}>
+            <Button type="button" variant="secondary" onClick={() => { setEditingId(null); setDriveLink(""); }} style={{ marginLeft: 8 }}>
               Отмена
             </Button>
           )}
@@ -118,8 +148,9 @@ export default function AdminContentPage() {
         <Card key={item.id}>
           <div className={styles.itemRow}>
             <span className="text-s">
-              <strong>{item.title}</strong> · {item.type}
-              {item.fileUrl && <> · 📎 {item.fileName}</>}
+              <strong>{item.title}</strong> · {TYPE_LABELS[item.type]}
+              {item.fileUrl && item.type !== "GALLERY_ALBUM" && <> · 📎 {item.fileName}</>}
+              {item.imageUrl && <> · 🖼</>}
             </span>
             <div className={styles.itemActions}>
               <Button variant="secondary" onClick={() => startEdit(item)}>Изменить</Button>

@@ -15,6 +15,7 @@ const LABELS: Record<string, string> = {
   org: "Оргструктура",
   news: "Новости",
   profile: "Профиль",
+  gallery: "Галерея",
 };
 
 export function Breadcrumbs() {
