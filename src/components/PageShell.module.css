@@ -1,11 +1,17 @@
 .shell {
-  max-width: 760px;
+  max-width: 900px;
   margin: 40px auto;
-  padding: 0 24px;
+  padding: 0 32px;
+}
+.wide {
+  max-width: 1200px;
 }
 .pageTitle {
   margin-bottom: 16px;
 }
-.wide {
-  max-width: 880px;
+@media (max-width: 640px) {
+  .shell {
+    margin: 24px auto;
+    padding: 0 16px;
+  }
 }

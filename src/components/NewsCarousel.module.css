@@ -20,7 +20,8 @@
 }
 .scrollArea::-webkit-scrollbar { display: none; }
 .card {
-  flex: 0 0 280px;
+  flex: 0 0 320px;
+  min-height: 280px;
   scroll-snap-align: start;
   background: var(--color-bg-card);
   border: 1px solid var(--color-text-muted);
@@ -41,7 +42,7 @@
   font-size: 14px;
   color: var(--color-text-secondary);
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex: 1;
@@ -49,7 +50,7 @@
 
 .thumb {
   width: 100%;
-  height: 120px;
+  height: 160px;
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 12px;
