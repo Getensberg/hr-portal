@@ -41,6 +41,7 @@ export default function AdminRequestsPage() {
             <th>Сотрудник</th>
             <th>Тип</th>
             <th>Детали</th>
+            <th>Файлы</th>
             <th>Статус</th>
             <th></th>
           </tr>
@@ -51,6 +52,15 @@ export default function AdminRequestsPage() {
               <td>{r.user?.fullName}</td>
               <td>{r.type}</td>
               <td>{r.payload?.description ?? "—"}</td>
+              <td>
+                {r.files && r.files.length > 0
+                  ? r.files.map((f, i) => (
+                      <a key={i} href={f.url} target="_blank" rel="noopener noreferrer" style={{ marginRight: 8 }}>
+                        📎
+                      </a>
+                    ))
+                  : "—"}
+              </td>
               <td>
                 <select
                   className={styles.select}

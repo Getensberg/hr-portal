@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useGetMyRequestsQuery, useCreateRequestMutation } from "@/store/api";
+import { useGetMyRequestsQuery, useCreateRequestMutation, useUploadFileMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -18,13 +18,28 @@ const TYPE_LABELS: Record<string, string> = {
 export default function RequestsPage() {
   const { data: requests, isLoading } = useGetMyRequestsQuery();
   const [createRequest, { isLoading: creating }] = useCreateRequestMutation();
+  const [uploadFile] = useUploadFileMutation();
   const [type, setType] = useState("DOCUMENT");
   const [description, setDescription] = useState("");
+  const [files, setFiles] = useState<FileList | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await createRequest({ type: type as any, payload: { description } });
+
+    let uploadedFiles: { url: string; name: string }[] | undefined;
+    if (files && files.length > 0) {
+      uploadedFiles = [];
+      for (const f of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", f);
+        const uploaded = await uploadFile(formData).unwrap();
+        uploadedFiles.push({ url: uploaded.url, name: uploaded.name });
+      }
+    }
+
+    await createRequest({ type: type as any, payload: { description }, files: uploadedFiles });
     setDescription("");
+    setFiles(null);
   }
 
   return (
@@ -42,6 +57,10 @@ export default function RequestsPage() {
           placeholder="Детали заявки (например, даты отпуска)"
           rows={3}
         />
+        <div>
+          <label className="text-xs">Приложить документы (необязательно)</label>
+          <input type="file" multiple onChange={(e) => setFiles(e.target.files)} />
+        </div>
         <Button type="submit" disabled={creating}>Отправить заявку</Button>
       </form>
 
@@ -56,6 +75,13 @@ export default function RequestsPage() {
             </span>
             <StatusBadge status={r.status} />
           </div>
+          {r.files && r.files.length > 0 && (
+            <div className={styles.filesRow}>
+              {r.files.map((f, i) => (
+                <a key={i} href={f.url} target="_blank" rel="noopener noreferrer">📎 {f.name}</a>
+              ))}
+            </div>
+          )}
         </Card>
       ))}
       {requests?.length === 0 && <p className="text-s">Пока нет заявок</p>}

@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
       type: body.type,
       payload: body.payload ?? {},
+      files: body.files,
       note: body.note ?? null,
     },
   });

@@ -58,9 +58,10 @@ model Request {
   userId      String
   type        RequestType
   template    DocumentTemplate? @relation(fields: [templateId], references: [id])
-  templateId  String?              // заполняется только для типа DOCUMENT
+  templateId  String?
   status      RequestStatus @default(PENDING)
-  payload     Json?                // тип-специфичные данные: даты отпуска, тип техники и т.д.
+  payload     Json?
+  files       Json?
   note        String?
   requestedAt DateTime     @default(now())
   completedAt DateTime?

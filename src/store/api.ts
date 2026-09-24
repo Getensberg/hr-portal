@@ -11,6 +11,7 @@ export interface RequestItem {
   type: RequestType;
   status: RequestStatus;
   payload: Record<string, any> | null;
+  files?: ContentFile[] | null;
   note: string | null;
   requestedAt: string;
   completedAt: string | null;
