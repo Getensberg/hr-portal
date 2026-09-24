@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
+  const types = searchParams.get("types");
   const category = searchParams.get("category");
   const q = searchParams.get("q");
   const limit = searchParams.get("limit");
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
   const items = await prisma.contentItem.findMany({
     where: {
       ...(type ? { type: type as any } : {}),
+      ...(types ? { type: { in: types.split(",") as any[] } } : {}),
       ...(category ? { category } : {}),
       ...(q
         ? {
@@ -48,6 +50,7 @@ export async function POST(req: NextRequest) {
       createdBy: session.user.id,
       ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
       ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),
+      ...(body.files !== undefined ? { files: body.files } : {}),
     },
   });
   return NextResponse.json(created, { status: 201 });

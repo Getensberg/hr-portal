@@ -16,9 +16,10 @@ const EMPLOYEE_TILES = [
   { href: "/profile", title: "Профиль", desc: "Личный кабинет и оргструктура компании" },
 ];
 
+
 export default function HomePage() {
   const { data: session } = useSession();
-  const { data: news } = useGetContentQuery({ type: "NEWS_POST", limit: 6 }, { skip: !session });
+  const { data: news } = useGetContentQuery({ types: ["NEWS_POST", "KNOWLEDGE_ARTICLE"], limit: 6 }, { skip: !session });
 
   if (!session) {
     return (

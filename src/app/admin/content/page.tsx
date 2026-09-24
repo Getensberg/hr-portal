@@ -44,10 +44,12 @@ export default function AdminContentPage() {
   const [category, setCategory] = useState("");
   const [driveLink, setDriveLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<FileList | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const isAlbum = type === "GALLERY_ALBUM";
+  const isDocument = type === "POLICY_DOCUMENT";
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
@@ -58,9 +60,19 @@ export default function AdminContentPage() {
 
     let fileUrl: string | undefined;
     let fileName: string | undefined;
+    let uploadedFiles: { url: string; name: string }[] | undefined;
+
     if (isAlbum) {
       fileUrl = driveLink;
       fileName = "Google Drive";
+    } else if (isDocument && files && files.length > 0) {
+      uploadedFiles = [];
+      for (const f of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", f);
+        const uploaded = await uploadFile(formData).unwrap();
+        uploadedFiles.push({ url: uploaded.url, name: uploaded.name });
+      }
     } else if (file) {
       const formData = new FormData();
       formData.append("file", file);
@@ -78,12 +90,31 @@ export default function AdminContentPage() {
     }
 
     if (editingId) {
-      await updateContent({ id: editingId, title, content, type: type as any, category, fileUrl, fileName, imageUrl });
+      await updateContent({
+        id: editingId,
+        title,
+        content,
+        type: type as any,
+        category,
+        fileUrl,
+        fileName,
+        files: uploadedFiles,
+        imageUrl,
+      });
       setEditingId(null);
     } else {
-      await createContent({ title, content, type: type as any, category, fileUrl, fileName, imageUrl });
+      await createContent({
+        title,
+        content,
+        type: type as any,
+        category,
+        fileUrl,
+        fileName,
+        files: uploadedFiles,
+        imageUrl,
+      });
     }
-    setTitle(""); setContent(""); setCategory(""); setFile(null); setImage(null); setDriveLink("");
+    setTitle(""); setContent(""); setCategory(""); setFile(null); setFiles(null); setImage(null); setDriveLink("");
   }
 
   function startEdit(item: any) {
@@ -93,6 +124,7 @@ export default function AdminContentPage() {
     setType(item.type);
     setCategory(item.category ?? "");
     setFile(null);
+    setFiles(null);
     setImage(null);
     setDriveLink(item.type === "GALLERY_ALBUM" ? (item.fileUrl ?? "") : "");
   }
@@ -122,6 +154,11 @@ export default function AdminContentPage() {
             onChange={(e) => setDriveLink(e.target.value)}
             placeholder="Ссылка на папку в Google Drive"
           />
+        ) : isDocument ? (
+          <div>
+            <label className="text-xs">Файлы (можно выбрать несколько)</label>
+            <input type="file" multiple onChange={(e) => setFiles(e.target.files)} />
+          </div>
         ) : (
           <div>
             <label className="text-xs">Файл-приложение (документ)</label>
@@ -150,6 +187,7 @@ export default function AdminContentPage() {
             <span className="text-s">
               <strong>{item.title}</strong> · {TYPE_LABELS[item.type]}
               {item.fileUrl && item.type !== "GALLERY_ALBUM" && <> · 📎 {item.fileName}</>}
+              {item.files && item.files.length > 0 && <> · 📎 {item.files.length} файл(ов)</>}
               {item.imageUrl && <> · 🖼</>}
             </span>
             <div className={styles.itemActions}>

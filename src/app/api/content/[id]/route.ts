@@ -36,6 +36,7 @@ export async function PATCH(
       category: body.category ?? null,
       ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
       ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),
+      ...(body.files !== undefined ? { files: body.files } : {}),
     },
   });
   return NextResponse.json(updated);

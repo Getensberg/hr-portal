@@ -17,6 +17,11 @@ export interface RequestItem {
   user?: { fullName: string; email: string; department: string | null };
 }
 
+export interface ContentFile {
+  url: string;
+  name: string;
+}
+
 export interface ContentItem {
   id: string;
   title: string;
@@ -25,6 +30,7 @@ export interface ContentItem {
   category: string | null;
   fileUrl?: string | null;
   fileName?: string | null;
+  files?: ContentFile[] | null;
   imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -175,10 +181,11 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ["Request"],
     }),
-getContent: builder.query<ContentItem[], { type?: string; category?: string; q?: string; limit?: number }>({
+getContent: builder.query<ContentItem[], { type?: string; types?: string[]; category?: string; q?: string; limit?: number }>({
   query: (params) => {
     const search = new URLSearchParams();
     if (params.type) search.set("type", params.type);
+    if (params.types) search.set("types", params.types.join(","));
     if (params.category) search.set("category", params.category);
     if (params.q) search.set("q", params.q);
     if (params.limit) search.set("limit", String(params.limit));

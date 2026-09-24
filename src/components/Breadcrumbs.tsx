@@ -13,9 +13,18 @@ const LABELS: Record<string, string> = {
   admin: "Админка",
   content: "Контент",
   org: "Оргструктура",
-  news: "Новости",
+  news: "Новости и статьи",
   profile: "Профиль",
+  documents: "Документы",
   gallery: "Галерея",
+};
+
+// Разделы, которые логически живут внутри базы знаний,
+// хотя физически их адрес не вложен (/news, а не /knowledge-base/news)
+const VIRTUAL_PARENTS: Record<string, { href: string; label: string }> = {
+  news: { href: "/knowledge-base", label: "База знаний" },
+  documents: { href: "/knowledge-base", label: "База знаний" },
+  gallery: { href: "/knowledge-base", label: "База знаний" },
 };
 
 export function Breadcrumbs() {
@@ -27,11 +36,18 @@ export function Breadcrumbs() {
   if (pathname === "/" || pathname === "/login") return null;
 
   const segments = pathname.split("/").filter(Boolean);
+  const virtualParent = VIRTUAL_PARENTS[segments[0]];
   let href = "";
 
   return (
     <nav className={styles.breadcrumbs}>
       <Link href="/">Главная</Link>
+      {virtualParent && (
+        <span>
+          <span className={styles.sep}>›</span>
+          <Link href={virtualParent.href}>{virtualParent.label}</Link>
+        </span>
+      )}
       {segments.map((seg, i) => {
         href += `/${seg}`;
         const isLast = i === segments.length - 1;

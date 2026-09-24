@@ -1,0 +1,17 @@
+.controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.controls select { flex: 0 0 200px; }
+.controls input { flex: 1; min-width: 200px; }
+
+.folder { margin-bottom: 32px; }
+.folderTitle { margin-bottom: 8px; color: var(--color-text-tertiary); }
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  background: var(--color-white);
+}
+.fileLinks { display: flex; gap: 12px; flex-wrap: wrap; }
