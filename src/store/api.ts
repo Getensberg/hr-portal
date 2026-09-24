@@ -156,6 +156,7 @@ export const apiSlice = createApi({
     "Job",
     "Referral",
     "Org",
+    "User",
   ],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
@@ -239,9 +240,18 @@ getContent: builder.query<ContentItem[], { type?: string; types?: string[]; cate
       query: (id) => `/surveys/${id}/results`,
       providesTags: ["Survey"],
     }),
-    getUsers: builder.query<UserOption[], void>({
-      query: () => "/users",
-    }),
+getUsers: builder.query<UserOption[], void>({
+  query: () => "/users",
+  providesTags: ["User"],
+}), 
+createUser: builder.mutation<
+  { user: UserOption; tempPassword: string },
+  { fullName: string; email: string; department?: string; position?: string; role: string }
+>({
+  query: (body) => ({ url: "/users", method: "POST", body }),
+  invalidatesTags: ["User"],
+}),
+
     getOnboardingAdmin: builder.query<OnboardingPlanItem[], void>({
       query: () => "/onboarding/admin",
       providesTags: ["Onboarding"],
@@ -366,6 +376,7 @@ getContentById: builder.query<ContentItem, string>({
   providesTags: ["Content"],
 }),
 
+
   }),
 });
 
@@ -406,4 +417,5 @@ export const {
   useDeleteOrgDocumentMutation, 
   useUploadFileMutation,
   useGetContentByIdQuery,
+  useCreateUserMutation,
 } = apiSlice;

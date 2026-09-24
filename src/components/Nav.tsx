@@ -22,6 +22,7 @@ const ADMIN_LINKS = [
   { href: "/admin/onboarding", label: "Онбординг" },
   { href: "/admin/jobs", label: "Вакансии" },
   { href: "/admin/org", label: "Оргструктура" },
+  { href: "/admin/users", label: "Сотрудники" },
 ];
 
 
