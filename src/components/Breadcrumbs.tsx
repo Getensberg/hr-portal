@@ -19,6 +19,7 @@ const LABELS: Record<string, string> = {
   gallery: "Галерея",
   users: "Сотрудники",
   calendar: "Календарь",
+  settings: "Настройки",
 };
 
 // Разделы, которые логически живут внутри базы знаний,

@@ -12,6 +12,8 @@ import { VACATION_LIMITS, daysInYear, countDays, formatRu } from "@/lib/vacation
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
 import styles from "./calendar-admin.module.css";
+import Link from "next/link";
+import buttonStyles from "@/components/Button.module.css";
 
 const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул" };
 
@@ -65,6 +67,12 @@ export default function AdminCalendarPage() {
         <button className={styles.yearBtn} onClick={() => setYear(year - 1)} aria-label="Предыдущий год">‹</button>
         <span className="text-h3">{year}</span>
         <button className={styles.yearBtn} onClick={() => setYear(year + 1)} aria-label="Следующий год">›</button>
+        <Link
+  href="/admin/calendar/settings"
+  className={`${buttonStyles.btn} ${buttonStyles.secondary} ${styles.settingsLink}`}
+>
+  Праздники и запретные периоды
+</Link>
       </div>
 
       <div className={styles.controls}>

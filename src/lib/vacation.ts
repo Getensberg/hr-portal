@@ -1,3 +1,5 @@
+import { parseRuDate } from "./date";
+
 export const VACATION_LIMITS = { VACATION: 28, DAY_OFF: 3 } as const;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -31,4 +33,64 @@ export function daysInYear(start: Date, end: Date, year: number): number {
 
 export function formatRu(date: Date | string): string {
   return new Date(date).toLocaleDateString("ru-RU", { timeZone: "UTC" });
+}
+
+export interface ParsedHoliday {
+  date: string;
+  name: string;
+}
+
+// Строки вида "01.01.2027 - Новый год" или "01.01.2027-08.01.2027 Новогодние каникулы"
+export function parseHolidayLines(text: string): { items: ParsedHoliday[]; errors: string[] } {
+  const items = new Map<string, string>();
+  const errors: string[] = [];
+
+  text.split("\n").forEach((rawLine, index) => {
+    const line = rawLine.trim();
+    if (!line) return;
+
+    const rangeMatch = line.match(/^(\d{2}\.\d{2}\.\d{4})\s*[-–—]\s*(\d{2}\.\d{2}\.\d{4})\s*[-–—:]?\s*(.*)$/);
+    const singleMatch = line.match(/^(\d{2}\.\d{2}\.\d{4})\s*[-–—:]?\s*(.*)$/);
+
+    let startStr = "";
+    let endStr = "";
+    let name = "";
+    if (rangeMatch) {
+      startStr = rangeMatch[1];
+      endStr = rangeMatch[2];
+      name = rangeMatch[3];
+    } else if (singleMatch) {
+      startStr = singleMatch[1];
+      endStr = singleMatch[1];
+      name = singleMatch[2];
+    } else {
+      errors.push(`Строка ${index + 1}: не удалось разобрать «${line}»`);
+      return;
+    }
+
+    const startISO = parseRuDate(startStr);
+    const endISO = parseRuDate(endStr);
+    const start = startISO ? parseISODate(startISO) : null;
+    const end = endISO ? parseISODate(endISO) : null;
+
+    if (!start || !end || start.getTime() > end.getTime()) {
+      errors.push(`Строка ${index + 1}: некорректная дата в «${line}»`);
+      return;
+    }
+    if (countDays(start, end) > 60) {
+      errors.push(`Строка ${index + 1}: слишком длинный период, максимум 60 дней`);
+      return;
+    }
+
+    for (let t = start.getTime(); t <= end.getTime(); t += DAY_MS) {
+      items.set(new Date(t).toISOString().slice(0, 10), name.trim() || "Нерабочий день");
+    }
+  });
+
+  return {
+    items: Array.from(items.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, name]) => ({ date, name })),
+    errors,
+  };
 }

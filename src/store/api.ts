@@ -175,6 +175,19 @@ export interface UserOption {
   position?: string | null;
 }
 
+export interface HolidayItem {
+  id: string;
+  date: string;
+  name: string;
+}
+
+export interface BlockedPeriodItem {
+  id: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
@@ -188,6 +201,8 @@ export const apiSlice = createApi({
     "Org",
     "User",
     "Vacation",
+    "Holiday",
+    "Blocked",
   ],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
@@ -426,7 +441,30 @@ setVacationStatus: builder.mutation<VacationEntryItem, { id: string; status: "PL
   query: ({ id, status }) => ({ url: `/vacations/${id}`, method: "PATCH", body: { status } }),
   invalidatesTags: ["Vacation"],
 }),
-
+getHolidays: builder.query<HolidayItem[], void>({
+  query: () => "/holidays",
+  providesTags: ["Holiday"],
+}),
+addHolidays: builder.mutation<{ created: number }, { items: { date: string; name: string }[] }>({
+  query: (body) => ({ url: "/holidays", method: "POST", body }),
+  invalidatesTags: ["Holiday"],
+}),
+deleteHoliday: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/holidays/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Holiday"],
+}),
+getBlockedPeriods: builder.query<BlockedPeriodItem[], void>({
+  query: () => "/blocked-periods",
+  providesTags: ["Blocked"],
+}),
+createBlockedPeriod: builder.mutation<BlockedPeriodItem, { startDate: string; endDate: string; reason: string }>({
+  query: (body) => ({ url: "/blocked-periods", method: "POST", body }),
+  invalidatesTags: ["Blocked"],
+}),
+deleteBlockedPeriod: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/blocked-periods/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Blocked"],
+}),
 
   }),
 });
@@ -473,5 +511,11 @@ export const {
   useCreateVacationMutation,
   useDeleteVacationMutation,
   useGetAdminVacationsQuery,
-  useSetVacationStatusMutation,
+  useSetVacationStatusMutation, 
+  useGetHolidaysQuery, 
+  useAddHolidaysMutation, 
+  useDeleteHolidayMutation, 
+  useGetBlockedPeriodsQuery, 
+  useCreateBlockedPeriodMutation, 
+  useDeleteBlockedPeriodMutation
 } = apiSlice;

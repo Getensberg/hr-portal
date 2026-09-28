@@ -1,7 +1,13 @@
 "use client";
 import { useState } from "react";
-import { useGetMyVacationsQuery, useCreateVacationMutation, useDeleteVacationMutation } from "@/store/api";
-import { VACATION_LIMITS, daysInYear, countDays, parseISODate, formatRu } from "@/lib/vacation";
+import {
+  useGetMyVacationsQuery,
+  useCreateVacationMutation,
+  useDeleteVacationMutation,
+  useGetHolidaysQuery,
+  useGetBlockedPeriodsQuery,
+} from "@/store/api";
+import { VACATION_LIMITS, daysInYear, countDays, parseISODate, rangesOverlap, formatRu } from "@/lib/vacation";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
@@ -12,6 +18,8 @@ const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF:
 
 export default function CalendarPage() {
   const { data, isLoading } = useGetMyVacationsQuery();
+  const { data: holidays } = useGetHolidaysQuery();
+  const { data: blocked } = useGetBlockedPeriodsQuery();
   const [createVacation, { isLoading: saving }] = useCreateVacationMutation();
   const [deleteVacation] = useDeleteVacationMutation();
 
@@ -33,14 +41,21 @@ export default function CalendarPage() {
   const yearEntries = entries.filter(
     (e) => daysInYear(new Date(e.startDate), new Date(e.endDate), year) > 0
   );
+  const yearHolidays = (holidays ?? []).filter((h) => new Date(h.date).getUTCFullYear() === year);
+  const yearBlocked = (blocked ?? []).filter(
+    (b) => daysInYear(new Date(b.startDate), new Date(b.endDate), year) > 0
+  );
 
   const startISO = parseRuDate(startInput);
   const endISO = parseRuDate(endInput);
   const startDate = startISO ? parseISODate(startISO) : null;
   const endDate = endISO ? parseISODate(endISO) : null;
-  const previewDays = startDate && endDate && startDate.getTime() <= endDate.getTime()
-    ? countDays(startDate, endDate)
-    : null;
+  const validRange = startDate && endDate && startDate.getTime() <= endDate.getTime();
+  const previewDays = validRange ? countDays(startDate, endDate) : null;
+
+  const overlappingBlocked = validRange
+    ? (blocked ?? []).filter((b) => rangesOverlap(startDate, endDate, new Date(b.startDate), new Date(b.endDate)))
+    : [];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -113,11 +128,43 @@ export default function CalendarPage() {
           placeholder="Комментарий (необязательно)"
         />
         {previewDays !== null && <p className={styles.preview}>Дней в периоде: {previewDays}</p>}
+        {overlappingBlocked.length > 0 && (
+          <p className={styles.warning}>
+            В эти даты брать отпуск не рекомендуется:{" "}
+            {overlappingBlocked
+              .map((b) => `${b.reason} (${formatRu(b.startDate)} – ${formatRu(b.endDate)})`)
+              .join("; ")}
+            . Период внести можно, но согласовать его будет сложнее.
+          </p>
+        )}
         {error && <p className={styles.error}>{error}</p>}
         <div>
           <Button type="submit" disabled={saving}>Добавить период</Button>
         </div>
       </form>
+
+      <div className={styles.infoGrid}>
+        {yearBlocked.length > 0 && (
+          <div className={styles.blockedBox}>
+            <h3>Не рекомендуется брать отпуск</h3>
+            {yearBlocked.map((b) => (
+              <p key={b.id}>{formatRu(b.startDate)} – {formatRu(b.endDate)} · {b.reason}</p>
+            ))}
+          </div>
+        )}
+        <Card>
+          <CardTitle>Праздники и нерабочие дни, {year}</CardTitle>
+          {yearHolidays.length > 0 ? (
+            <ul className={styles.holidayList}>
+              {yearHolidays.map((h) => (
+                <li key={h.id}>{formatRu(h.date)} · {h.name}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs">На этот год праздники ещё не добавлены</p>
+          )}
+        </Card>
+      </div>
 
       <h2 className="text-h2">Мои периоды за {year} год</h2>
       {isLoading && <p className="text-s">Загрузка...</p>}

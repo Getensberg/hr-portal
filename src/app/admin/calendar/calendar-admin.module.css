@@ -32,3 +32,4 @@
 .badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; display: inline-block; }
 .planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-text-muted); }
 .confirmed { background: #E6F9E1; color: #157A00; }
+.settingsLink { margin-left: auto; }
