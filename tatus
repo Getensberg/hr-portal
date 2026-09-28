@@ -1,0 +1,49 @@
+[33mcommit bed7de9c21b0a7ade0396d68152170de20828956[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Getensberg <getensberg@gmail.com>
+Date:   Mon Sep 28 17:32:27 2026 +0300
+
+    feat: edited pageShell
+
+ src/components/PageShell.module.css | 4 [32m++[m[31m--[m
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+[33mcommit ee8e4b349ccf618a2bf6458d629956f1f52515d3[m
+Author: Getensberg <getensberg@gmail.com>
+Date:   Mon Sep 28 17:26:49 2026 +0300
+
+    feat: vacation calendar grids for employee and HR with holidays and blocked periods
+
+ src/app/admin/calendar/page.tsx          |  56 [32m++++++++++[m[31m---[m
+ src/app/calendar/calendar.module.css     |  31 [32m++++[m[31m---[m
+ src/app/calendar/page.tsx                | 107 [32m++++++++++++++[m[31m----------[m
+ src/components/CalendarLegend.tsx        |  24 [32m++++++[m
+ src/components/MonthGrid.module.css      |  25 [32m++++++[m
+ src/components/MonthGrid.tsx             |  92 [32m+++++++++++++++++++++[m
+ src/components/TeamGrid.module.css       |  65 [32m+++++++++++++++[m
+ src/components/TeamGrid.tsx              | 134 [32m+++++++++++++++++++++++++++++++[m
+ src/components/calendarColors.module.css |  13 [32m+++[m
+ src/components/calendarStyles.ts         |  10 [32m+++[m
+ src/lib/useToday.ts                      |  11 [32m+++[m
+ src/lib/vacation.ts                      |  55 [32m++++++++++++[m[31m-[m
+ 12 files changed, 560 insertions(+), 63 deletions(-)
+
+[33mcommit dd4d5d30b6f1f7ee7aa950feef771ee079fad262[m
+Author: Getensberg <getensberg@gmail.com>
+Date:   Mon Sep 28 15:23:59 2026 +0300
+
+    feat: holidays bulk import, blocked periods, yellow warnings on employee calendar
+
+ src/app/admin/calendar/calendar-admin.module.css   |   3 [32m+[m[31m-[m
+ src/app/admin/calendar/page.tsx                    |   8 [32m+[m
+ src/app/admin/calendar/settings/page.tsx           | 199 [32m+++++++++++++++++++++[m
+ .../admin/calendar/settings/settings.module.css    |  29 [32m+++[m
+ src/app/api/blocked-periods/[id]/route.ts          |  22 [32m+++[m
+ src/app/api/blocked-periods/route.ts               |  36 [32m++++[m
+ src/app/api/holidays/[id]/route.ts                 |  22 [32m+++[m
+ src/app/api/holidays/route.ts                      |  38 [32m++++[m
+ src/app/calendar/calendar.module.css               |  23 [32m++[m[31m-[m
+ src/app/calendar/page.tsx                          |  57 [32m+++++[m[31m-[m
+ src/components/Breadcrumbs.tsx                     |   1 [32m+[m
+ src/lib/vacation.ts                                |  62 [32m+++++++[m
+ src/store/api.ts                                   |  48 [32m++++[m[31m-[m
+ 13 files changed, 539 insertions(+), 9 deletions(-)

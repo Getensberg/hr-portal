@@ -9,3 +9,5 @@ export function useToday(): string | null {
   }, []);
   return today;
 }
+
+// файл нужен чтобы не рассинхронились даты в полуночи между браузером и сервером
