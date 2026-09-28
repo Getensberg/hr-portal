@@ -146,6 +146,22 @@ export interface OrgDocumentItem {
   createdAt: string;
 }
 
+export interface VacationEntryItem {
+  id: string;
+  type: "VACATION" | "DAY_OFF";
+  startDate: string;
+  endDate: string;
+  status: "PLANNED" | "CONFIRMED";
+  comment: string | null;
+}
+
+export interface VacationInput {
+  type: string;
+  startDate: string;
+  endDate: string;
+  comment?: string;
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
@@ -158,6 +174,7 @@ export const apiSlice = createApi({
     "Referral",
     "Org",
     "User",
+    "Vacation",
   ],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
@@ -376,6 +393,18 @@ getContentById: builder.query<ContentItem, string>({
   query: (id) => `/content/${id}`,
   providesTags: ["Content"],
 }),
+getMyVacations: builder.query<VacationEntryItem[], void>({
+  query: () => "/vacations",
+  providesTags: ["Vacation"],
+}),
+createVacation: builder.mutation<VacationEntryItem, VacationInput>({
+  query: (body) => ({ url: "/vacations", method: "POST", body }),
+  invalidatesTags: ["Vacation"],
+}),
+deleteVacation: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/vacations/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Vacation"],
+}),
 
 
   }),
@@ -419,4 +448,7 @@ export const {
   useUploadFileMutation,
   useGetContentByIdQuery,
   useCreateUserMutation,
+  useGetMyVacationsQuery, 
+  useCreateVacationMutation,
+  useDeleteVacationMutation,
 } = apiSlice;

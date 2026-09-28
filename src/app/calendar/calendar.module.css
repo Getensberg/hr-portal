@@ -1,0 +1,22 @@
+.yearRow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.yearBtn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-text-muted);
+  background: var(--color-white);
+  cursor: pointer;
+  font-size: 16px;
+}
+.yearBtn:hover { background: var(--color-bg-card); }
+.balances { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.balanceNumber { font-size: 32px; font-weight: 600; color: var(--color-text-primary); margin: 4px 0; }
+.form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+.formRow { display: flex; gap: 12px; flex-wrap: wrap; }
+.formRow > * { flex: 1; min-width: 160px; }
+.preview { font-size: 14px; color: var(--color-text-tertiary); margin: 0; }
+.error { color: var(--color-danger); font-size: 14px; margin: 0; }
+.entryRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.entryActions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
+.planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-text-muted); }
+.confirmed { background: #E6F9E1; color: #157A00; }

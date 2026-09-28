@@ -14,6 +14,7 @@ const EMPLOYEE_TILES = [
   { href: "/onboarding", title: "Онбординг", desc: "Чек-лист задач и наставник" },
   { href: "/jobs", title: "Вакансии", desc: "Открытые позиции и рекомендации" },
   { href: "/profile", title: "Профиль", desc: "Личный кабинет и оргструктура компании" },
+  { href: "/calendar", title: "Календарь", desc: "Отпуска, отгулы и остаток дней" },
 ];
 
 

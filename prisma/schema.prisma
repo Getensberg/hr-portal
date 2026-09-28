@@ -29,11 +29,49 @@ model User {
   mentorFor         OnboardingPlan[]        @relation("Mentor")
   onboardingPlan    OnboardingPlan?         @relation("Newcomer")
   referrals         Referral[]
+  vacationEntries VacationEntry[]
 }
 
 enum Role {
   EMPLOYEE
   HR_ADMIN
+}
+
+// --- Self-service: календарь отпусков и тд ---
+
+enum VacationType {
+  VACATION
+  DAY_OFF
+}
+
+enum VacationStatus {
+  PLANNED
+  CONFIRMED
+}
+
+model VacationEntry {
+  id        String         @id @default(cuid())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      VacationType
+  startDate DateTime       @db.Date
+  endDate   DateTime       @db.Date
+  status    VacationStatus @default(PLANNED)
+  comment   String?
+  createdAt DateTime       @default(now())
+}
+
+model CompanyHoliday {
+  id   String   @id @default(cuid())
+  date DateTime @unique @db.Date
+  name String
+}
+
+model BlockedPeriod {
+  id        String   @id @default(cuid())
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  reason    String
 }
 
 // --- Self-service: документы и заявки ---

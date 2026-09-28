@@ -12,6 +12,7 @@ const EMPLOYEE_LINKS = [
   { href: "/onboarding", label: "Онбординг" },
   { href: "/jobs", label: "Вакансии" },
   { href: "/profile", label: "Профиль" },
+  { href: "/calendar", label: "Календарь" },
 ];
 
 const ADMIN_LINKS = [
