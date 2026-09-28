@@ -155,11 +155,24 @@ export interface VacationEntryItem {
   comment: string | null;
 }
 
+export interface AdminVacationItem extends VacationEntryItem {
+  user: { id: string; fullName: string; department: string | null; email: string };
+}
+
 export interface VacationInput {
   type: string;
   startDate: string;
   endDate: string;
   comment?: string;
+}
+
+export interface UserOption {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  department?: string | null;
+  position?: string | null;
 }
 
 export const apiSlice = createApi({
@@ -405,6 +418,14 @@ deleteVacation: builder.mutation<{ id: string }, string>({
   query: (id) => ({ url: `/vacations/${id}`, method: "DELETE" }),
   invalidatesTags: ["Vacation"],
 }),
+getAdminVacations: builder.query<AdminVacationItem[], number>({
+  query: (year) => `/vacations/admin?year=${year}`,
+  providesTags: ["Vacation"],
+}),
+setVacationStatus: builder.mutation<VacationEntryItem, { id: string; status: "PLANNED" | "CONFIRMED" }>({
+  query: ({ id, status }) => ({ url: `/vacations/${id}`, method: "PATCH", body: { status } }),
+  invalidatesTags: ["Vacation"],
+}),
 
 
   }),
@@ -451,4 +472,6 @@ export const {
   useGetMyVacationsQuery, 
   useCreateVacationMutation,
   useDeleteVacationMutation,
+  useGetAdminVacationsQuery,
+  useSetVacationStatusMutation,
 } = apiSlice;

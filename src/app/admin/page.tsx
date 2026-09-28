@@ -15,6 +15,7 @@ const ADMIN_TILES = [
   { href: "/admin/jobs", title: "Вакансии", desc: "Вакансии и рекомендации" },
   { href: "/admin/org", title: "Оргструктура", desc: "Управление файлом оргструктуры" },
   { href: "/admin/users", title: "Сотрудники", desc: "Создание аккаунтов и список сотрудников" },
+  { href: "/admin/calendar", title: "Календарь", desc: "Отпуска сотрудников, подтверждение, остатки" },
 ];
 
 export default function AdminHomePage() {

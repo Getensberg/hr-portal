@@ -24,6 +24,7 @@ const ADMIN_LINKS = [
   { href: "/admin/jobs", label: "Вакансии" },
   { href: "/admin/org", label: "Оргструктура" },
   { href: "/admin/users", label: "Сотрудники" },
+  { href: "/admin/calendar", label: "Календарь" },
 ];
 
 
