@@ -10,17 +10,23 @@
 .yearBtn:hover { background: var(--color-bg-card); }
 .balances { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
 .balanceNumber { font-size: 32px; font-weight: 600; color: var(--color-text-primary); margin: 4px 0; }
-.form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+@media (max-width: 900px) {
+  .mainGrid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.form { display: flex; flex-direction: column; gap: 12px; }
 .formRow { display: flex; gap: 12px; flex-wrap: wrap; }
-.formRow > * { flex: 1; min-width: 160px; }
+.formRow > * { flex: 1; min-width: 140px; }
 .preview { font-size: 14px; color: var(--color-text-tertiary); margin: 0; }
 .error { color: var(--color-danger); font-size: 14px; margin: 0; }
-.entryRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.entryActions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
-.planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-text-muted); }
-.confirmed { background: #E6F9E1; color: #157A00; }
-
 .warning {
   background: #FFF3CD;
   color: #7A5B00;
@@ -30,6 +36,7 @@
   font-size: 14px;
   margin: 0;
 }
+
 .infoGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 32px; }
 .blockedBox {
   background: #FFF3CD;
@@ -41,3 +48,9 @@
 .blockedBox h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
 .blockedBox p { margin: 4px 0; font-size: 14px; }
 .holidayList { margin: 8px 0 0; padding-left: 18px; font-size: 14px; color: var(--color-text-secondary); }
+
+.entryRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.entryActions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
+.planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-text-muted); }
+.confirmed { background: #E6F9E1; color: #157A00; }

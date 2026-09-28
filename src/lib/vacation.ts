@@ -94,3 +94,56 @@ export function parseHolidayLines(text: string): { items: ParsedHoliday[]; error
     errors,
   };
 }
+
+export const MONTH_NAMES = [
+  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+];
+export const WEEKDAY_SHORT = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+export function daysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+}
+
+// Понедельник = 0, воскресенье = 6
+export function weekdayIndex(date: Date): number {
+  return (date.getUTCDay() + 6) % 7;
+}
+
+// Ключ дня вида "2026-09-10". month от 0 до 11
+export function dayKey(year: number, month: number, day: number): string {
+  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
+}
+
+export function todayKey(): string {
+  const d = new Date();
+  return dayKey(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+// Переход на соседний месяц с учётом смены года
+export function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
+  const total = year * 12 + month + delta;
+  const y = Math.floor(total / 12);
+  return { year: y, month: total - y * 12 };
+}
+
+// Разворачивает периоды в карту "день -> период" только для одного месяца
+export function expandToDayMap<T extends { startDate: string; endDate: string }>(
+  items: T[],
+  year: number,
+  month: number
+): Map<string, T> {
+  const windowStart = Date.UTC(year, month, 1);
+  const windowEnd = Date.UTC(year, month, daysInMonth(year, month));
+  const map = new Map<string, T>();
+
+  for (const item of items) {
+    const from = Math.max(new Date(item.startDate).getTime(), windowStart);
+    const to = Math.min(new Date(item.endDate).getTime(), windowEnd);
+    for (let t = from; t <= to; t += DAY_MS) {
+      const key = new Date(t).toISOString().slice(0, 10);
+      if (!map.has(key)) map.set(key, item);
+    }
+  }
+  return map;
+}

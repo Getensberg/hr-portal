@@ -12,6 +12,7 @@ import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
+import { MonthGrid } from "@/components/MonthGrid";
 import styles from "./calendar.module.css";
 
 const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул" };
@@ -23,7 +24,8 @@ export default function CalendarPage() {
   const [createVacation, { isLoading: saving }] = useCreateVacationMutation();
   const [deleteVacation] = useDeleteVacationMutation();
 
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
   const [type, setType] = useState("VACATION");
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
@@ -56,6 +58,11 @@ export default function CalendarPage() {
   const overlappingBlocked = validRange
     ? (blocked ?? []).filter((b) => rangesOverlap(startDate, endDate, new Date(b.startDate), new Date(b.endDate)))
     : [];
+
+  function handleMonthChange(nextYear: number, nextMonth: number) {
+    setYear(nextYear);
+    setMonth(nextMonth);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,48 +107,64 @@ export default function CalendarPage() {
         })}
       </div>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formRow}>
-          <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="VACATION">Отпуск</option>
-            <option value="DAY_OFF">Отгул</option>
-          </select>
-          <input
-            className="input"
-            value={startInput}
-            onChange={(e) => setStartInput(autoFormatRuDate(e.target.value))}
-            placeholder="Начало: дд.мм.гггг"
-            maxLength={10}
+      <div className={styles.mainGrid}>
+        <Card>
+          <MonthGrid
+            year={year}
+            month={month}
+            onChange={handleMonthChange}
+            entries={entries}
+            holidays={holidays ?? []}
+            blocked={blocked ?? []}
           />
-          <input
-            className="input"
-            value={endInput}
-            onChange={(e) => setEndInput(autoFormatRuDate(e.target.value))}
-            placeholder="Конец: дд.мм.гггг"
-            maxLength={10}
-          />
-        </div>
-        <input
-          className="input"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Комментарий (необязательно)"
-        />
-        {previewDays !== null && <p className={styles.preview}>Дней в периоде: {previewDays}</p>}
-        {overlappingBlocked.length > 0 && (
-          <p className={styles.warning}>
-            В эти даты брать отпуск не рекомендуется:{" "}
-            {overlappingBlocked
-              .map((b) => `${b.reason} (${formatRu(b.startDate)} – ${formatRu(b.endDate)})`)
-              .join("; ")}
-            . Период внести можно, но согласовать его будет сложнее.
-          </p>
-        )}
-        {error && <p className={styles.error}>{error}</p>}
-        <div>
-          <Button type="submit" disabled={saving}>Добавить период</Button>
-        </div>
-      </form>
+        </Card>
+
+        <Card>
+          <CardTitle>Добавить период</CardTitle>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.formRow}>
+              <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="VACATION">Отпуск</option>
+                <option value="DAY_OFF">Отгул</option>
+              </select>
+              <input
+                className="input"
+                value={startInput}
+                onChange={(e) => setStartInput(autoFormatRuDate(e.target.value))}
+                placeholder="Начало: дд.мм.гггг"
+                maxLength={10}
+              />
+              <input
+                className="input"
+                value={endInput}
+                onChange={(e) => setEndInput(autoFormatRuDate(e.target.value))}
+                placeholder="Конец: дд.мм.гггг"
+                maxLength={10}
+              />
+            </div>
+            <input
+              className="input"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Комментарий (необязательно)"
+            />
+            {previewDays !== null && <p className={styles.preview}>Дней в периоде: {previewDays}</p>}
+            {overlappingBlocked.length > 0 && (
+              <p className={styles.warning}>
+                В эти даты брать отпуск не рекомендуется:{" "}
+                {overlappingBlocked
+                  .map((b) => `${b.reason} (${formatRu(b.startDate)} – ${formatRu(b.endDate)})`)
+                  .join("; ")}
+                . Период внести можно, но согласовать его будет сложнее.
+              </p>
+            )}
+            {error && <p className={styles.error}>{error}</p>}
+            <div>
+              <Button type="submit" disabled={saving}>Добавить период</Button>
+            </div>
+          </form>
+        </Card>
+      </div>
 
       <div className={styles.infoGrid}>
         {yearBlocked.length > 0 && (

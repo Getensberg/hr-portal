@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -7,13 +8,15 @@ import {
   useSetVacationStatusMutation,
   useDeleteVacationMutation,
   useGetUsersQuery,
+  useGetHolidaysQuery,
+  useGetBlockedPeriodsQuery,
 } from "@/store/api";
 import { VACATION_LIMITS, daysInYear, countDays, formatRu } from "@/lib/vacation";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
-import styles from "./calendar-admin.module.css";
-import Link from "next/link";
+import { TeamGrid } from "@/components/TeamGrid";
 import buttonStyles from "@/components/Button.module.css";
+import styles from "./calendar-admin.module.css";
 
 const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул" };
 
@@ -27,12 +30,16 @@ export default function AdminCalendarPage() {
     }
   }, [session, status, router]);
 
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
   const [search, setSearch] = useState("");
+  const [department, setDepartment] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   const { data: entriesData, isLoading } = useGetAdminVacationsQuery(year);
   const { data: users } = useGetUsersQuery();
+  const { data: holidays } = useGetHolidaysQuery();
+  const { data: blocked } = useGetBlockedPeriodsQuery();
   const [setVacationStatus] = useSetVacationStatusMutation();
   const [deleteVacation] = useDeleteVacationMutation();
 
@@ -43,13 +50,20 @@ export default function AdminCalendarPage() {
   const entries = entriesData ?? [];
   const query = search.toLowerCase();
 
+  const departments = Array.from(
+    new Set((users ?? []).map((u) => u.department).filter((d): d is string => Boolean(d)))
+  ).sort();
+
+  const filteredUsers = (users ?? []).filter(
+    (u) => (!query || u.fullName.toLowerCase().includes(query)) && (!department || u.department === department)
+  );
+
   const filtered = entries.filter((e) => {
     const matchesName = !query || e.user.fullName.toLowerCase().includes(query);
+    const matchesDepartment = !department || e.user.department === department;
     const matchesStatus = !statusFilter || e.status === statusFilter;
-    return matchesName && matchesStatus;
+    return matchesName && matchesDepartment && matchesStatus;
   });
-
-  const filteredUsers = (users ?? []).filter((u) => !query || u.fullName.toLowerCase().includes(query));
 
   function usedDays(userId: string, kind: string) {
     return entries
@@ -61,6 +75,11 @@ export default function AdminCalendarPage() {
     if (confirm("Удалить эту запись без возможности восстановления?")) deleteVacation(id);
   }
 
+  function handleMonthChange(nextYear: number, nextMonth: number) {
+    setYear(nextYear);
+    setMonth(nextMonth);
+  }
+
   return (
     <PageShell title="Календарь отпусков: все сотрудники" wide>
       <div className={styles.yearRow}>
@@ -68,11 +87,11 @@ export default function AdminCalendarPage() {
         <span className="text-h3">{year}</span>
         <button className={styles.yearBtn} onClick={() => setYear(year + 1)} aria-label="Следующий год">›</button>
         <Link
-  href="/admin/calendar/settings"
-  className={`${buttonStyles.btn} ${buttonStyles.secondary} ${styles.settingsLink}`}
->
-  Праздники и запретные периоды
-</Link>
+          href="/admin/calendar/settings"
+          className={`${buttonStyles.btn} ${buttonStyles.secondary} ${styles.settingsLink}`}
+        >
+          Праздники и запретные периоды
+        </Link>
       </div>
 
       <div className={styles.controls}>
@@ -82,12 +101,27 @@ export default function AdminCalendarPage() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Поиск по сотруднику"
         />
+        <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
+          <option value="">Все отделы</option>
+          {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+        </select>
         <select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="">Все статусы</option>
           <option value="PLANNED">Запланировано</option>
           <option value="CONFIRMED">Подтверждено</option>
         </select>
       </div>
+
+      <h2 className="text-h2">Обзор по месяцам</h2>
+      <TeamGrid
+        year={year}
+        month={month}
+        onChange={handleMonthChange}
+        users={filteredUsers}
+        entries={entries}
+        holidays={holidays ?? []}
+        blocked={blocked ?? []}
+      />
 
       <h2 className="text-h2">Периоды</h2>
       {isLoading && <p className="text-s">Загрузка...</p>}
