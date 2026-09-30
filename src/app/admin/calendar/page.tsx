@@ -11,7 +11,7 @@ import {
   useGetHolidaysQuery,
   useGetBlockedPeriodsQuery,
 } from "@/store/api";
-import { VACATION_LIMITS, daysInYear, countDays, formatRu } from "@/lib/vacation";
+import { VACATION_LIMITS, daysInYear, countDays, formatRu, daysInYearExcludingHolidays } from "@/lib/vacation";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
 import { TeamGrid } from "@/components/TeamGrid";
@@ -49,6 +49,7 @@ export default function AdminCalendarPage() {
 
   const entries = entriesData ?? [];
   const query = search.toLowerCase();
+  const holidaySet = new Set((holidays ?? []).map((h) => h.date.slice(0, 10)));
 
   const departments = Array.from(
     new Set((users ?? []).map((u) => u.department).filter((d): d is string => Boolean(d)))
@@ -65,11 +66,11 @@ export default function AdminCalendarPage() {
     return matchesName && matchesDepartment && matchesStatus;
   });
 
-  function usedDays(userId: string, kind: string) {
-    return entries
-      .filter((e) => e.user.id === userId && e.type === kind)
-      .reduce((sum, e) => sum + daysInYear(new Date(e.startDate), new Date(e.endDate), year), 0);
-  }
+function usedDays(userId: string, kind: string) {
+  return entries
+    .filter((e) => e.user.id === userId && e.type === kind)
+    .reduce((sum, e) => sum + daysInYearExcludingHolidays(new Date(e.startDate), new Date(e.endDate), year, holidaySet), 0);
+}
 
   function handleDelete(id: string) {
     if (confirm("Удалить эту запись без возможности восстановления?")) deleteVacation(id);

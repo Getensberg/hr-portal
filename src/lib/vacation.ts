@@ -31,6 +31,29 @@ export function daysInYear(start: Date, end: Date, year: number): number {
   return countDays(s, e);
 }
 
+export function countWorkingDays(start: Date, end: Date, holidayDates: Set<string>): number {
+  let count = 0;
+  for (let t = start.getTime(); t <= end.getTime(); t += DAY_MS) {
+    const key = new Date(t).toISOString().slice(0, 10);
+    if (!holidayDates.has(key)) count++;
+  }
+  return count;
+}
+
+export function daysInYearExcludingHolidays(
+  start: Date,
+  end: Date,
+  year: number,
+  holidayDates: Set<string>
+): number {
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const yearEnd = new Date(Date.UTC(year, 11, 31));
+  const s = start.getTime() > yearStart.getTime() ? start : yearStart;
+  const e = end.getTime() < yearEnd.getTime() ? end : yearEnd;
+  if (s.getTime() > e.getTime()) return 0;
+  return countWorkingDays(s, e, holidayDates);
+}
+
 export function formatRu(date: Date | string): string {
   return new Date(date).toLocaleDateString("ru-RU", { timeZone: "UTC" });
 }

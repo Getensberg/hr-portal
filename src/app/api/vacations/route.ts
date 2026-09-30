@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { VACATION_LIMITS, parseISODate, rangesOverlap, daysInYear } from "@/lib/vacation";
+import { VACATION_LIMITS, parseISODate, rangesOverlap, daysInYearExcludingHolidays } from "@/lib/vacation";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -35,7 +35,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Дата начала позже даты окончания" }, { status: 400 });
   }
 
-  const existing = await prisma.vacationEntry.findMany({ where: { userId: session.user.id } });
+  const [existing, holidays] = await Promise.all([
+    prisma.vacationEntry.findMany({ where: { userId: session.user.id } }),
+    prisma.companyHoliday.findMany(),
+  ]);
+  const holidaySet = new Set(holidays.map((h) => h.date.toISOString().slice(0, 10)));
 
   // Пересечение с любым уже внесённым периодом (отпуск и отгул нельзя брать в один день)
   const clash = existing.find((e) => rangesOverlap(start, end, e.startDate, e.endDate));
@@ -43,17 +47,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Эти даты пересекаются с уже внесённым периодом" }, { status: 409 });
   }
 
-  // Лимит проверяем отдельно по каждому году, которого касается период
+  // Лимит проверяем отдельно по каждому году, которого касается период. Праздники внутри
+  // периода в счёт не идут — так же, как считаются календарные дни отпуска по ТК РФ.
   const limit = VACATION_LIMITS[type];
   for (let year = start.getUTCFullYear(); year <= end.getUTCFullYear(); year++) {
-    const newDays = daysInYear(start, end, year);
+    const newDays = daysInYearExcludingHolidays(start, end, year, holidaySet);
     const used = existing
       .filter((e) => e.type === type)
-      .reduce((sum, e) => sum + daysInYear(e.startDate, e.endDate, year), 0);
+      .reduce((sum, e) => sum + daysInYearExcludingHolidays(e.startDate, e.endDate, year, holidaySet), 0);
 
     if (used + newDays > limit) {
       return NextResponse.json(
-        { error: `Превышен лимит на ${year} год: осталось ${Math.max(limit - used, 0)} дн., а в периоде ${newDays} дн.` },
+        {
+          error: `Превышен лимит на ${year} год: осталось ${Math.max(limit - used, 0)} дн. (праздники внутри периода не считаются), а в периоде ${newDays} дн.`,
+        },
         { status: 409 }
       );
     }

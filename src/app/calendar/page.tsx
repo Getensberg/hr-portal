@@ -7,7 +7,7 @@ import {
   useGetHolidaysQuery,
   useGetBlockedPeriodsQuery,
 } from "@/store/api";
-import { VACATION_LIMITS, daysInYear, countDays, parseISODate, rangesOverlap, formatRu } from "@/lib/vacation";
+import { VACATION_LIMITS, daysInYear, daysInYearExcludingHolidays, countWorkingDays, countDays, parseISODate, rangesOverlap, formatRu } from "@/lib/vacation";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
@@ -33,12 +33,13 @@ export default function CalendarPage() {
   const [error, setError] = useState("");
 
   const entries = data ?? [];
+  const holidaySet = new Set((holidays ?? []).map((h) => h.date.slice(0, 10)));
 
-  function usedDays(kind: string) {
-    return entries
-      .filter((e) => e.type === kind)
-      .reduce((sum, e) => sum + daysInYear(new Date(e.startDate), new Date(e.endDate), year), 0);
-  }
+function usedDays(kind: string) {
+  return entries
+    .filter((e) => e.type === kind)
+    .reduce((sum, e) => sum + daysInYearExcludingHolidays(new Date(e.startDate), new Date(e.endDate), year, holidaySet), 0);
+}
 
   const yearEntries = entries.filter(
     (e) => daysInYear(new Date(e.startDate), new Date(e.endDate), year) > 0
@@ -53,7 +54,7 @@ export default function CalendarPage() {
   const startDate = startISO ? parseISODate(startISO) : null;
   const endDate = endISO ? parseISODate(endISO) : null;
   const validRange = startDate && endDate && startDate.getTime() <= endDate.getTime();
-  const previewDays = validRange ? countDays(startDate, endDate) : null;
+  const previewDays = validRange ? countWorkingDays(startDate, endDate, holidaySet) : null;
 
   const overlappingBlocked = validRange
     ? (blocked ?? []).filter((b) => rangesOverlap(startDate, endDate, new Date(b.startDate), new Date(b.endDate)))
@@ -148,7 +149,7 @@ export default function CalendarPage() {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Комментарий (необязательно)"
             />
-            {previewDays !== null && <p className={styles.preview}>Дней в периоде: {previewDays}</p>}
+            {previewDays !== null && <p className={styles.preview}>Дней в периоде (без учёта праздников): {previewDays}</p>}
             {overlappingBlocked.length > 0 && (
               <p className={styles.warning}>
                 В эти даты брать отпуск не рекомендуется:{" "}
