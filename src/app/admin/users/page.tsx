@@ -33,13 +33,14 @@ export default function AdminUsersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lastCreated, setLastCreated] = useState<{ email: string; tempPassword: string } | null>(null);
   const [error, setError] = useState("");
+  const [managerId, setManagerId] = useState("");
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
   }
 
   function resetForm() {
-    setFullName(""); setEmail(""); setDepartment(""); setPosition(""); setPhone(""); setRole("EMPLOYEE");
+    setFullName(""); setEmail(""); setDepartment(""); setPosition(""); setPhone(""); setRole("EMPLOYEE"), setManagerId("");
     setEditingId(null);
   }
 
@@ -48,10 +49,10 @@ export default function AdminUsersPage() {
     setError("");
     try {
       if (editingId) {
-        await updateUser({ id: editingId, fullName, email, department, position, phone, role }).unwrap();
+        await updateUser({ id: editingId, fullName, email, department, position, phone, role, managerId: managerId || null }).unwrap();
         resetForm();
       } else {
-        const result = await createUser({ fullName, email, department, position, phone, role }).unwrap();
+        const result = await createUser({ fullName, email, department, position, phone, role, managerId: managerId || null }).unwrap();
         setLastCreated({ email: result.user.email, tempPassword: result.tempPassword });
         resetForm();
       }
@@ -68,6 +69,7 @@ export default function AdminUsersPage() {
     setPosition(u.position ?? "");
     setPhone(u.phone ?? "");
     setRole(u.role);
+    setManagerId(u.managerId ?? "");
     setLastCreated(null);
   }
 
@@ -91,9 +93,17 @@ export default function AdminUsersPage() {
           <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Телефон" />
           <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="EMPLOYEE">Сотрудник</option>
+            <option value="MANAGER">Руководитель</option>
             <option value="HR_ADMIN">HR</option>
           </select>
+          <select className="input" value={managerId} onChange={(e) => setManagerId(e.target.value)}>
+            <option value="">Без руководителя</option>
+            {users
+              ?.filter((u: any) => u.id !== editingId)
+              .map((u: any) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
+          </select>
         </div>
+        
         <div>
           <Button type="submit" disabled={creating}>{editingId ? "Сохранить" : "Создать сотрудника"}</Button>
           {editingId && (

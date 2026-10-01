@@ -7,7 +7,7 @@
 .leadershipTitle { margin-bottom: 12px; color: var(--color-text-tertiary); }
 .columns { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 12px; }
 .column { flex: 0 0 260px; background: var(--color-bg-card); border-radius: var(--radius-sm); padding: 16px; }
-.columnTitle { margin-bottom: 12px; }
+.columnTitle { margin-bottom: 12px; opacity: 100%; }
 .personCard {
   background: var(--color-white);
   border: 1px solid var(--color-text-muted);
@@ -15,6 +15,7 @@
   padding: 10px 12px;
   margin-bottom: 8px;
   cursor: pointer;
+  opacity: 100%;
 }
 .personName { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
 .personPosition { font-size: 12px; color: var(--color-text-tertiary); }

@@ -30,18 +30,39 @@ export async function PATCH(
   });
 }
 
+if (body.managerId) {
+  if (body.managerId === id) {
+    return NextResponse.json({ error: "Нельзя назначить руководителем самого себя" }, { status: 400 });
+  }
+  let current: string | null = body.managerId;
+  const visited = new Set<string>();
+  while (current) {
+    if (current === id) {
+      return NextResponse.json({ error: "Нельзя назначить руководителем собственного подчинённого" }, { status: 400 });
+    }
+    if (visited.has(current)) break;
+    visited.add(current);
+    const node: { managerId: string | null } | null = await prisma.user.findUnique({
+      where: { id: current },
+      select: { managerId: true },
+    });
+    current = node?.managerId ?? null;
+  }
+}
+
   const updated = await prisma.user.update({
-    where: { id },
-    data: {
-      fullName: body.fullName,
-      email: body.email,
-      department: body.department || null,
-      position: body.position || null,
-      phone: body.phone || null,
-      role: body.role,
-    },
-    select: { id: true, fullName: true, email: true, role: true, department: true, position: true, phone: true },
-  });
+  where: { id },
+  data: {
+    fullName: body.fullName,
+    email: body.email,
+    department: body.department || null,
+    position: body.position || null,
+    phone: body.phone || null,
+    role: body.role,
+    managerId: body.managerId || null,
+  },
+  select: { id: true, fullName: true, email: true, role: true, department: true, position: true, phone: true, managerId: true },
+});
   return NextResponse.json(updated);
 }
 

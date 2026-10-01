@@ -70,6 +70,7 @@ export interface UserOption {
   department?: string | null;
   position?: string | null;
   phone?: string | null;
+  managerId?: string | null;
 }
 
 export interface OrgPersonItem {
@@ -318,7 +319,7 @@ getUsers: builder.query<UserOption[], void>({
 }), 
 createUser: builder.mutation<
   { user: UserOption; tempPassword: string },
-  { fullName: string; email: string; department?: string; position?: string; phone?: string; role: string }
+  { fullName: string; email: string; department?: string; position?: string; phone?: string; role: string; managerId?: string | null }
 >({
   query: (body) => ({ url: "/users", method: "POST", body }),
   invalidatesTags: ["User","Department"],

@@ -21,6 +21,7 @@ const ADMIN_TILES = [
 export default function AdminHomePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  
 
   useEffect(() => {
     if (status !== "loading" && (!session || session.user.role !== "HR_ADMIN")) {
