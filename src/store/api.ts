@@ -535,6 +535,10 @@ deleteDepartment: builder.mutation<{ id: string }, string>({
   query: (id) => ({ url: `/departments/${id}`, method: "DELETE" }),
   invalidatesTags: ["Department"],
 }),
+getTeamRequests: builder.query<RequestItem[], void>({
+  query: () => "/requests/team",
+  providesTags: ["Request"],
+}),
 
   }),
 });
@@ -599,4 +603,5 @@ export const {
   useCreateDepartmentMutation, 
   useUpdateDepartmentColorMutation, 
   useDeleteDepartmentMutation,
+  useGetTeamRequestsQuery,
 } = apiSlice;

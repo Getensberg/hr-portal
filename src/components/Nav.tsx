@@ -27,7 +27,6 @@ const ADMIN_LINKS = [
   { href: "/admin/calendar", label: "Календарь" },
 ];
 
-
 export function Nav() {
   const { data: session, status } = useSession();
   if (status === "loading") return null;
@@ -48,6 +47,12 @@ export function Nav() {
           <>
             <span className={styles.divider}>|</span>
             {ADMIN_LINKS.map((l) => <Link key={l.href} href={l.href} className={styles.adminLink}>{l.label}</Link>)}
+          </>
+        )}
+        {session.user.role === "MANAGER" && (
+          <>
+            <span className={styles.divider}>|</span>
+            <Link href="/manager" className={styles.adminLink}>Моя команда</Link>
           </>
         )}
       </div>
