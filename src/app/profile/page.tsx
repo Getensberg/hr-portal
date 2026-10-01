@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
-import { useGetProfileQuery } from "@/store/api";
+import { useGetProfileQuery, useGetMyOrgPersonQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 
 export default function ProfilePage() {
   const { data: profile, isLoading } = useGetProfileQuery();
+  const { data: orgPerson } = useGetMyOrgPersonQuery();
 
   if (isLoading) return <p className="text-s">Загрузка...</p>;
 
@@ -18,6 +19,18 @@ export default function ProfilePage() {
         <p className="text-xs">{profile?.department ?? "Отдел не указан"}</p>
         <p className="text-xs">{profile?.email}</p>
       </Card>
+
+      {orgPerson?.manager && (
+        <Card>
+          <CardTitle>Руководитель</CardTitle>
+          <p className="text-s">
+            {orgPerson.manager.fullName}
+            {orgPerson.manager.position ? ` · ${orgPerson.manager.position}` : ""}
+          </p>
+          {orgPerson.manager.phone && <p className="text-xs">{orgPerson.manager.phone}</p>}
+          {orgPerson.manager.email && <p className="text-xs">{orgPerson.manager.email}</p>}
+        </Card>
+      )}
 
       <Card>
         <CardTitle>Оргструктура компании</CardTitle>

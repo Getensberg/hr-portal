@@ -67,6 +67,24 @@ export interface UserOption {
   fullName: string;
   email: string;
   role: string;
+  department?: string | null;
+  position?: string | null;
+  phone?: string | null;
+}
+
+export interface OrgPersonItem {
+  id: string;
+  fullName: string;
+  position: string | null;
+  department: string | null;
+  phone: string | null;
+  email: string | null;
+  managerId: string | null;
+  linkedUserId: string | null;
+}
+
+export interface MyOrgPerson extends OrgPersonItem {
+  manager: { fullName: string; position: string | null; phone: string | null; email: string | null } | null;
 }
 
 export interface OnboardingTaskItem {
@@ -146,6 +164,12 @@ export interface OrgDocumentItem {
   createdAt: string;
 }
 
+export interface DepartmentItem {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface VacationEntryItem {
   id: string;
   type: "VACATION" | "DAY_OFF";
@@ -203,6 +227,8 @@ export const apiSlice = createApi({
     "Vacation",
     "Holiday",
     "Blocked",
+    "OrgPerson",
+    "Department",
   ],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
@@ -292,10 +318,10 @@ getUsers: builder.query<UserOption[], void>({
 }), 
 createUser: builder.mutation<
   { user: UserOption; tempPassword: string },
-  { fullName: string; email: string; department?: string; position?: string; role: string }
+  { fullName: string; email: string; department?: string; position?: string; phone?: string; role: string }
 >({
   query: (body) => ({ url: "/users", method: "POST", body }),
-  invalidatesTags: ["User"],
+  invalidatesTags: ["User","Department"],
 }),
 
     getOnboardingAdmin: builder.query<OnboardingPlanItem[], void>({
@@ -465,6 +491,49 @@ deleteBlockedPeriod: builder.mutation<{ id: string }, string>({
   query: (id) => ({ url: `/blocked-periods/${id}`, method: "DELETE" }),
   invalidatesTags: ["Blocked"],
 }),
+getOrgPeople: builder.query<OrgPersonItem[], void>({
+  query: () => "/org-people",
+  providesTags: ["OrgPerson"],
+}),
+createOrgPerson: builder.mutation<OrgPersonItem, Partial<OrgPersonItem>>({
+  query: (body) => ({ url: "/org-people", method: "POST", body }),
+  invalidatesTags: ["OrgPerson", "Department"],
+}),
+updateOrgPerson: builder.mutation<OrgPersonItem, { id: string } & Partial<OrgPersonItem>>({
+  query: ({ id, ...body }) => ({ url: `/org-people/${id}`, method: "PATCH", body }),
+  invalidatesTags: ["OrgPerson","Department"],
+}),
+deleteOrgPerson: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/org-people/${id}`, method: "DELETE" }),
+  invalidatesTags: ["OrgPerson"],
+}),
+getMyOrgPerson: builder.query<MyOrgPerson | null, void>({
+  query: () => "/org-people/me",
+}),
+updateUser: builder.mutation<UserOption, { id: string } & Partial<UserOption>>({
+  query: ({ id, ...body }) => ({ url: `/users/${id}`, method: "PATCH", body }),
+  invalidatesTags: ["User","Department"],
+}),
+deleteUser: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/users/${id}`, method: "DELETE" }),
+  invalidatesTags: ["User"],
+}),
+getDepartments: builder.query<DepartmentItem[], void>({
+  query: () => "/departments",
+  providesTags: ["Department"],
+}),
+createDepartment: builder.mutation<DepartmentItem, { name: string; color?: string }>({
+  query: (body) => ({ url: "/departments", method: "POST", body }),
+  invalidatesTags: ["Department"],
+}),
+updateDepartmentColor: builder.mutation<DepartmentItem, { id: string; color: string }>({
+  query: ({ id, color }) => ({ url: `/departments/${id}`, method: "PATCH", body: { color } }),
+  invalidatesTags: ["Department"],
+}),
+deleteDepartment: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/departments/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Department"],
+}),
 
   }),
 });
@@ -517,5 +586,16 @@ export const {
   useDeleteHolidayMutation, 
   useGetBlockedPeriodsQuery, 
   useCreateBlockedPeriodMutation, 
-  useDeleteBlockedPeriodMutation
+  useDeleteBlockedPeriodMutation, 
+  useGetOrgPeopleQuery, 
+  useCreateOrgPersonMutation, 
+  useUpdateOrgPersonMutation, 
+  useDeleteOrgPersonMutation, 
+  useGetMyOrgPersonQuery, 
+  useUpdateUserMutation, 
+  useDeleteUserMutation,
+  useGetDepartmentsQuery, 
+  useCreateDepartmentMutation, 
+  useUpdateDepartmentColorMutation, 
+  useDeleteDepartmentMutation,
 } = apiSlice;

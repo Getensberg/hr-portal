@@ -21,6 +21,7 @@ model User {
   role         Role     @default(EMPLOYEE)
   department   String?
   position     String?
+  phone        String?
   createdAt    DateTime @default(now())
 
   surveyResponses   SurveyResponse[]
@@ -29,12 +30,35 @@ model User {
   mentorFor         OnboardingPlan[]        @relation("Mentor")
   onboardingPlan    OnboardingPlan?         @relation("Newcomer")
   referrals         Referral[]
-  vacationEntries VacationEntry[]
+  vacationEntries   VacationEntry[]
+  orgPerson         OrgPerson?
 }
 
 enum Role {
   EMPLOYEE
   HR_ADMIN
+}
+
+model OrgPerson {
+  id           String      @id @default(cuid())
+  fullName     String
+  position     String?
+  department   String?
+  phone        String?
+  email        String?
+  managerId    String?
+  manager      OrgPerson?  @relation("OrgHierarchy", fields: [managerId], references: [id], onDelete: SetNull)
+  subordinates OrgPerson[] @relation("OrgHierarchy")
+  linkedUserId String?     @unique
+  linkedUser   User?       @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Department {
+  id    String @id @default(cuid())
+  name  String @unique
+  color String @default("#CADCFC")
 }
 
 // --- Self-service: календарь отпусков и тд ---

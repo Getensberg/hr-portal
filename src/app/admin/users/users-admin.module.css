@@ -2,3 +2,5 @@
 .formRow { display: flex; gap: 12px; flex-wrap: wrap; }
 .formRow > * { flex: 1; min-width: 160px; }
 .error { color: var(--color-danger); font-size: 14px; }
+.userRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.userActions { display: flex; gap: 8px; }

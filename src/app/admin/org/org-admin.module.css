@@ -1,2 +1,11 @@
 .form { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 32px; }
+.formRow { display: flex; gap: 12px; flex-wrap: wrap; }
+.formRow > * { flex: 1; min-width: 160px; }
 .itemRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.treeRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-bg-card); flex-wrap: wrap; }
+.treeActions { display: flex; gap: 8px; }
+.error { color: var(--color-danger); font-size: 14px; margin: 0; }
+
+.deptRow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-bg-card); }
+.deptName { flex: 1; }
+.colorInput { width: 40px; height: 32px; border: 1px solid var(--color-text-muted); border-radius: 6px; padding: 2px; cursor: pointer; }
