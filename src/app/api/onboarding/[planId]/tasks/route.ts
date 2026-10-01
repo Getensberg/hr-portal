@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getTeamUserIds } from "@/lib/team";
 
 export async function POST(
   req: NextRequest,
@@ -9,8 +10,16 @@ export async function POST(
 ) {
   const { planId } = await params;
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "HR_ADMIN") {
+  if (!session || (session.user.role !== "HR_ADMIN" && session.user.role !== "MANAGER")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (session.user.role === "MANAGER") {
+    const plan = await prisma.onboardingPlan.findUnique({ where: { id: planId }, select: { newcomerId: true } });
+    const teamIds = await getTeamUserIds(session.user.id);
+    if (!plan || !teamIds.includes(plan.newcomerId)) {
+      return NextResponse.json({ error: "Этот план не из твоей команды" }, { status: 403 });
+    }
   }
 
   const body = await req.json();

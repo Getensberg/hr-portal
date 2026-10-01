@@ -9,6 +9,8 @@ import styles from "../home.module.css";
 
 const MANAGER_TILES = [
   { href: "/manager/requests", title: "Заявки команды", desc: "Заявки сотрудников, которые тебе подчинены" },
+  { href: "/manager/onboarding", title: "Онбординг команды", desc: "Планы адаптации новичков в команде" },
+  { href: "/manager/calendar", title: "Календарь команды", desc: "Отпуска и остатки дней по команде" },
 ];
 
 export default function ManagerHubPage() {

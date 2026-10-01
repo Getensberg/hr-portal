@@ -1,0 +1,7 @@
+.progress { font-size: 13px; color: var(--color-text-tertiary); margin-top: 4px; }
+
+.form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+.formRow { display: flex; gap: 12px; flex-wrap: wrap; }
+.formRow > * { flex: 1; min-width: 160px; }
+.taskForm { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.taskForm > * { flex: 1; min-width: 140px; }

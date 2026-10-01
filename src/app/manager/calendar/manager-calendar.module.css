@@ -1,0 +1,25 @@
+.yearRow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.yearBtn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-text-muted);
+  background: var(--color-white);
+  cursor: pointer;
+  font-size: 16px;
+}
+.yearBtn:hover { background: var(--color-bg-card); }
+.tableWrap { overflow-x: auto; margin-bottom: 40px; }
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  text-align: left;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-text-muted);
+}
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-bg-card);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}

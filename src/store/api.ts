@@ -364,6 +364,10 @@ createUser: builder.mutation<
       }),
       invalidatesTags: ["Onboarding"],
     }),
+    getTeamOnboarding: builder.query<OnboardingPlanItem[], void>({
+  query: () => "/onboarding/team",
+  providesTags: ["Onboarding"],
+}),
     getActiveJobs: builder.query<JobPostingItem[], void>({
       query: () => "/jobs",
       providesTags: ["Job"],
@@ -539,6 +543,10 @@ getTeamRequests: builder.query<RequestItem[], void>({
   query: () => "/requests/team",
   providesTags: ["Request"],
 }),
+getTeamUsers: builder.query<UserOption[], void>({
+  query: () => "/users/team",
+  providesTags: ["User"],
+}),
 
   }),
 });
@@ -604,4 +612,6 @@ export const {
   useUpdateDepartmentColorMutation, 
   useDeleteDepartmentMutation,
   useGetTeamRequestsQuery,
+  useGetTeamOnboardingQuery,
+  useGetTeamUsersQuery,
 } = apiSlice;
