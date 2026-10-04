@@ -18,9 +18,18 @@ export async function GET() {
     include: {
       newcomer: { select: { id: true, fullName: true, email: true } },
       mentor: { select: { id: true, fullName: true, email: true } },
-      tasks: { orderBy: { order: "asc" } },
+      tasks: { orderBy: { order: "asc" }, include: { progress: true } },
     },
     orderBy: { startDate: "desc" },
   });
-  return NextResponse.json(plans);
+
+  // Берём только отметки самого новичка
+  const result = plans.map((plan) => ({
+    ...plan,
+    tasks: plan.tasks.map(({ progress, ...task }) => {
+      const mine = progress.find((p) => p.userId === plan.newcomerId);
+      return { ...task, done: mine?.isDone ?? false, completedAt: mine?.completedAt ?? null };
+    }),
+  }));
+  return NextResponse.json(result);
 }

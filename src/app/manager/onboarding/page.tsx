@@ -7,6 +7,7 @@ import {
   useGetTeamOnboardingQuery,
   useCreateOnboardingPlanMutation,
   useAddOnboardingTaskMutation,
+  useDeleteOnboardingTaskMutation,
 } from "@/store/api";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
@@ -28,6 +29,7 @@ export default function ManagerOnboardingPage() {
   const { data: plans } = useGetTeamOnboardingQuery();
   const [createPlan] = useCreateOnboardingPlanMutation();
   const [addTask] = useAddOnboardingTaskMutation();
+  const [deleteTask] = useDeleteOnboardingTaskMutation();
 
   const [newcomerId, setNewcomerId] = useState("");
   const [mentorId, setMentorId] = useState("");
@@ -36,12 +38,12 @@ export default function ManagerOnboardingPage() {
   const [taskDrafts, setTaskDrafts] = useState<Record<string, { title: string; description: string; dueDate: string }>>({});
   const [error, setError] = useState("");
 
-  const plannedIds = new Set((plans ?? []).map((p) => p.newcomer.id));
-  const availableUsers = (teamUsers ?? []).filter((u) => !plannedIds.has(u.id));
-
   if (status === "loading" || !session || session.user.role !== "MANAGER") {
     return <p className="text-s">Загрузка...</p>;
   }
+
+  const plannedIds = new Set((plans ?? []).map((p) => p.newcomer.id));
+  const availableUsers = (teamUsers ?? []).filter((u) => !plannedIds.has(u.id));
 
   async function handleCreatePlan(e: React.FormEvent) {
     e.preventDefault();
@@ -75,6 +77,10 @@ export default function ManagerOnboardingPage() {
     setTaskDrafts((prev) => ({ ...prev, [planId]: { title: "", description: "", dueDate: "" } }));
   }
 
+  function handleDeleteTask(id: string, title: string) {
+    if (confirm(`Удалить задачу «${title}»? Отметка о выполнении тоже удалится.`)) deleteTask(id);
+  }
+
   return (
     <PageShell title="Онбординг команды" wide>
       <form onSubmit={handleCreatePlan} className={styles.form}>
@@ -96,22 +102,36 @@ export default function ManagerOnboardingPage() {
         <div><Button type="submit">Создать план</Button></div>
       </form>
 
-      {plans?.map((p) => (
-        <Card key={p.id}>
-          <CardTitle>{p.newcomer.fullName}</CardTitle>
-          <p className="text-xs">Наставник: {p.mentor?.fullName ?? "не назначен"}</p>
-          <ul>
-            {p.tasks.map((t) => <li key={t.id} className="text-s">{t.title}</li>)}
-            {p.tasks.length === 0 && <li className="text-xs">Пока нет задач</li>}
-          </ul>
-          <div className={styles.taskForm}>
-            <input className="input" placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
-            <input className="input" placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} />
-            <input className="input" placeholder="дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} />
-            <Button type="button" variant="secondary" onClick={() => handleAddTask(p.id)}>+ Добавить задачу</Button>
-          </div>
-        </Card>
-      ))}
+      {plans?.map((p) => {
+        const doneCount = p.tasks.filter((t) => t.done).length;
+        return (
+          <Card key={p.id}>
+            <CardTitle>{p.newcomer.fullName}</CardTitle>
+            <p className="text-xs">
+              Наставник: {p.mentor?.fullName ?? "не назначен"} · Выполнено {doneCount} из {p.tasks.length}
+            </p>
+            <div>
+              {p.tasks.map((t) => (
+                <div key={t.id} className={styles.taskRow}>
+                  <span className={t.done ? styles.done : styles.pending}>{t.done ? "✓" : "○"}</span>
+                  <span className={`${styles.taskTitle} text-s`}>
+                    {t.title}
+                    {t.done && t.completedAt ? ` · выполнено ${new Date(t.completedAt).toLocaleDateString("ru-RU")}` : ""}
+                  </span>
+                  <Button size="sm" variant="danger" onClick={() => handleDeleteTask(t.id, t.title)}>Удалить</Button>
+                </div>
+              ))}
+              {p.tasks.length === 0 && <p className="text-xs">Пока нет задач</p>}
+            </div>
+            <div className={styles.taskForm}>
+              <input className="input" placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
+              <input className="input" placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} />
+              <input className="input" placeholder="дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} />
+              <Button type="button" variant="secondary" onClick={() => handleAddTask(p.id)}>+ Добавить задачу</Button>
+            </div>
+          </Card>
+        );
+      })}
       {plans?.length === 0 && <p className="text-s">В твоей команде нет новичков с планом онбординга</p>}
     </PageShell>
   );

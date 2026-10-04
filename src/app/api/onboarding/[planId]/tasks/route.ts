@@ -23,7 +23,12 @@ export async function POST(
   }
 
   const body = await req.json();
-  const count = await prisma.onboardingTask.count({ where: { planId } });
+ const last = await prisma.onboardingTask.findFirst({
+  where: { planId },
+  orderBy: { order: "desc" },
+  select: { order: true },
+});
+const nextOrder = last ? last.order + 1 : 0;
 
   const created = await prisma.onboardingTask.create({
     data: {
@@ -31,7 +36,7 @@ export async function POST(
       title: body.title,
       description: body.description || null,
       dueDate: body.dueDate ? new Date(body.dueDate + "T00:00:00") : null,
-      order: count,
+      order: nextOrder,
     },
   });
   return NextResponse.json(created, { status: 201 });

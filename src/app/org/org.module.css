@@ -1,23 +1,81 @@
-.leadership {
-  margin-bottom: 32px;
-  padding: 20px 24px;
-  background: var(--color-bg-card);
+.block {
+  border: 1px solid var(--color-bg-card);
   border-radius: var(--radius-sm);
+  padding: 16px 20px 20px;
+  min-width: 0;
+  max-width: 100%;
 }
-.leadershipTitle { margin-bottom: 12px; color: var(--color-text-tertiary); }
-.columns { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 12px; }
-.column { flex: 0 0 260px; background: var(--color-bg-card); border-radius: var(--radius-sm); padding: 16px; }
-.columnTitle { margin-bottom: 12px; opacity: 100%; }
+.leadership { margin-bottom: 24px; background: rgba(0, 0, 0, 0.04); }
+.depts { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; margin-bottom: 8px; }
+.blockTitle { margin: 0 0 16px; text-align: center; }
+.blockScroll { overflow-x: auto; padding-bottom: 8px; }
+
+.roots { display: flex; gap: 24px; align-items: flex-start; width: max-content; margin: 0 auto; }
+.rootItem { display: flex; flex-direction: column; align-items: center; }
+
 .personCard {
+  width: 180px;
   background: var(--color-white);
   border: 1px solid var(--color-text-muted);
   border-radius: 8px;
   padding: 10px 12px;
-  margin-bottom: 8px;
   cursor: pointer;
-  opacity: 100%;
+  text-align: left;
 }
+.personCard:hover { border-color: var(--color-text-primary); }
 .personName { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
-.personPosition { font-size: 12px; color: var(--color-text-tertiary); }
-.contacts { margin-top: 8px; font-size: 13px; color: var(--color-text-secondary); }
+.personPosition { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+.contacts {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-bg-card);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  word-break: break-word;
+}
+
+/* Ветки и линии-соединители */
+.branch {
+  --org-line: var(--color-text-muted);
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 20px 0 0;
+  position: relative;
+}
+.branch::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 20px;
+  border-left: 1px solid var(--org-line);
+}
+.item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 8px 0;
+}
+.item::before,
+.item::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 20px;
+  border-top: 1px solid var(--org-line);
+}
+.item::before { right: 50%; }
+.item::after { left: 50%; border-left: 1px solid var(--org-line); }
+.item:only-child { padding-top: 0; }
+.item:only-child::before,
+.item:only-child::after { display: none; }
+.item:first-child::before,
+.item:last-child::after { border: 0 none; }
+.item:last-child::before { border-right: 1px solid var(--org-line); border-radius: 0 6px 0 0; }
+.item:first-child::after { border-radius: 6px 0 0 0; }
+
 .filesSection { margin-top: 48px; }

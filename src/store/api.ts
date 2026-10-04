@@ -94,6 +94,7 @@ export interface OnboardingTaskItem {
   description: string | null;
   dueDate: string | null;
   done?: boolean;
+  completedAt?: string | null;
 }
 
 export interface OnboardingPlanItem {
@@ -547,6 +548,10 @@ getTeamUsers: builder.query<UserOption[], void>({
   query: () => "/users/team",
   providesTags: ["User"],
 }),
+deleteOnboardingTask: builder.mutation<{ id: string }, string>({
+  query: (taskId) => ({ url: `/onboarding/tasks/${taskId}`, method: "DELETE" }),
+  invalidatesTags: ["Onboarding"],
+}),
 
   }),
 });
@@ -614,4 +619,5 @@ export const {
   useGetTeamRequestsQuery,
   useGetTeamOnboardingQuery,
   useGetTeamUsersQuery,
+  useDeleteOnboardingTaskMutation,
 } = apiSlice;
