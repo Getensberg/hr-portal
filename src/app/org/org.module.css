@@ -5,6 +5,7 @@
   min-width: 0;
   max-width: 100%;
 }
+.blockLarge { flex: 1 1 100%; }
 .leadership { margin-bottom: 24px; background: rgba(0, 0, 0, 0.04); }
 .depts { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; margin-bottom: 8px; }
 .blockTitle { margin: 0 0 16px; text-align: center; }

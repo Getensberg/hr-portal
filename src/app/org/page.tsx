@@ -7,6 +7,9 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import styles from "./org.module.css";
 
+// Отдел с таким числом людей и больше занимает отдельную строку на всю ширину
+const LARGE_DEPARTMENT_SIZE = 8;
+
 function PersonCard({ node }: { node: OrgPersonNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -58,7 +61,20 @@ export default function OrgPage() {
   const colorMap = new Map((departmentMeta ?? []).map((d) => [d.name, d.color]));
   const all = people ?? [];
   const leadership = buildTree(all, (p) => !p.department);
-  const departments = orderDepartments(all);
+
+  // Численность каждого отдела
+  const sizeOf = new Map<string, number>();
+  all.forEach((p) => {
+    if (p.department) sizeOf.set(p.department, (sizeOf.get(p.department) ?? 0) + 1);
+  });
+
+  // Сначала крупные отделы, при равной численности действует порядок по иерархии
+  const hierarchyOrder = orderDepartments(all);
+  const hierarchyIndex = new Map(hierarchyOrder.map((d, i) => [d, i]));
+  const departments = [...hierarchyOrder].sort((a, b) => {
+    const diff = (sizeOf.get(b) ?? 0) - (sizeOf.get(a) ?? 0);
+    return diff !== 0 ? diff : (hierarchyIndex.get(a) ?? 0) - (hierarchyIndex.get(b) ?? 0);
+  });
 
   return (
     <PageShell title="Оргструктура" wide>
@@ -76,13 +92,17 @@ export default function OrgPage() {
       <div className={styles.depts}>
         {departments.map((dept) => {
           const color = colorMap.get(dept) ?? "#CADCFC";
+          const size = sizeOf.get(dept) ?? 0;
+          const isLarge = size >= LARGE_DEPARTMENT_SIZE;
           return (
             <div
               key={dept}
-              className={styles.block}
+              className={`${styles.block} ${isLarge ? styles.blockLarge : ""}`}
               style={{ background: hexToRgba(color, 0.16), borderColor: hexToRgba(color, 0.45) }}
             >
-              <h4 className={`${styles.blockTitle} text-h4`}>{dept}</h4>
+              <h4 className={`${styles.blockTitle} text-h4`}>
+                {dept} <span className="text-xs">· {size}</span>
+              </h4>
               <div className={styles.blockScroll}>
                 <OrgTree roots={buildTree(all, (p) => p.department === dept)} />
               </div>
