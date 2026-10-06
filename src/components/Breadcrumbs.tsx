@@ -1,7 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useGetContentByIdQuery, useGetAdminCourseQuery, useGetAdminTestQuery } from "@/store/api";
+import {
+  useGetContentByIdQuery,
+  useGetAdminCourseQuery,
+  useGetAdminTestQuery,
+  useGetLearningCourseQuery,
+  useGetLearningTestQuery,
+} from "@/store/api";
 import styles from "./Breadcrumbs.module.css";
 
 const LABELS: Record<string, string> = {
@@ -20,10 +26,11 @@ const LABELS: Record<string, string> = {
   users: "Сотрудники",
   calendar: "Календарь",
   settings: "Настройки",
+  manager: "Моя команда",
   courses: "Курсы",
   tests: "Тесты",
-  manager: "Моя команда",
-  
+  learning: "Обучение",
+  reviews: "Проверка тестов",
 };
 
 // Разделы, которые логически живут внутри базы знаний,
@@ -40,15 +47,31 @@ export function Breadcrumbs() {
   const newsMatch = pathname.match(/^\/news\/([^/]+)$/);
   const courseMatch = pathname.match(/^\/admin\/courses\/([^/]+)$/);
   const testMatch = pathname.match(/^\/admin\/tests\/([^/]+)$/);
-  const { data: testItem } = useGetAdminTestQuery(testMatch?.[1] ?? "", { skip: !testMatch });
-  const { data: courseItem } = useGetAdminCourseQuery(courseMatch?.[1] ?? "", { skip: !courseMatch });
+  const learnCourseMatch = pathname.match(/^\/learning\/courses\/([^/]+)$/);
+  const learnTestMatch = pathname.match(/^\/learning\/tests\/([^/]+)$/);
+
   const { data: newsItem } = useGetContentByIdQuery(newsMatch?.[1] ?? "", { skip: !newsMatch });
+  const { data: courseItem } = useGetAdminCourseQuery(courseMatch?.[1] ?? "", { skip: !courseMatch });
+  const { data: testItem } = useGetAdminTestQuery(testMatch?.[1] ?? "", { skip: !testMatch });
+  const { data: learnCourse } = useGetLearningCourseQuery(learnCourseMatch?.[1] ?? "", { skip: !learnCourseMatch });
+  const { data: learnTest } = useGetLearningTestQuery(learnTestMatch?.[1] ?? "", { skip: !learnTestMatch });
 
   if (pathname === "/" || pathname === "/login") return null;
 
   const segments = pathname.split("/").filter(Boolean);
   const virtualParent = VIRTUAL_PARENTS[segments[0]];
   let href = "";
+
+  function labelFor(seg: string, isLast: boolean): string {
+    if (isLast) {
+      if (newsMatch) return newsItem?.title ?? "Загрузка...";
+      if (courseMatch) return courseItem?.title ?? "Загрузка...";
+      if (testMatch) return testItem?.title ?? "Загрузка...";
+      if (learnCourseMatch) return learnCourse?.title ?? "Загрузка...";
+      if (learnTestMatch) return learnTest?.title ?? "Загрузка...";
+    }
+    return LABELS[seg] ?? seg;
+  }
 
   return (
     <nav className={styles.breadcrumbs}>
@@ -62,14 +85,7 @@ export function Breadcrumbs() {
       {segments.map((seg, i) => {
         href += `/${seg}`;
         const isLast = i === segments.length - 1;
-        const label =
-          isLast && newsMatch
-            ? (newsItem?.title ?? "Загрузка...")
-            : isLast && courseMatch
-              ? (courseItem?.title ?? "Загрузка...")
-              : isLast && testMatch
-                ? (testItem?.title ?? "Загрузка...")
-                : (LABELS[seg] ?? seg);
+        const label = labelFor(seg, isLast);
         return (
           <span key={href}>
             <span className={styles.sep}>›</span>

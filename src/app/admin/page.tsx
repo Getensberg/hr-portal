@@ -18,6 +18,7 @@ const ADMIN_TILES = [
   { href: "/admin/calendar", title: "Календарь", desc: "Отпуска сотрудников, подтверждение, остатки" },
   { href: "/admin/courses", title: "Обучение", desc: "Курсы, уроки, тесты и доступ" },
   { href: "/admin/tests", title: "Тесты", desc: "Отдельные тесты и проверка знаний" },
+  { href: "/admin/reviews", title: "Проверка тестов", desc: "Свободные ответы, ожидающие оценки" },
 ];
 
 export default function AdminHomePage() {

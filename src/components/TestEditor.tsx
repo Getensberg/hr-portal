@@ -21,6 +21,7 @@ function AccessBlock({ test }: { test: TestDetail }) {
   const [userId, setUserId] = useState("");
   const [department, setDepartment] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const grantedIds = new Set(test.access.map((a) => a.user.id));
   const available = (users ?? []).filter((u) => !grantedIds.has(u.id));
@@ -30,15 +31,27 @@ function AccessBlock({ test }: { test: TestDetail }) {
 
   async function grantUser() {
     if (!userId) return;
-    await grant({ testId: test.id, userIds: [userId] });
-    setUserId("");
+    setError("");
     setMessage("");
+    try {
+      await grant({ testId: test.id, userIds: [userId] }).unwrap();
+      setUserId("");
+      setMessage("Доступ выдан");
+    } catch (err: any) {
+      setError(err?.data?.error || `Не удалось выдать доступ (код ${err?.status ?? "?"})`);
+    }
   }
 
   async function grantDepartment() {
     if (!department) return;
-    const res = await grant({ testId: test.id, department }).unwrap();
-    setMessage(`Новых доступов: ${res.granted}`);
+    setError("");
+    setMessage("");
+    try {
+      const res = await grant({ testId: test.id, department }).unwrap();
+      setMessage(res.granted > 0 ? `Новых доступов: ${res.granted}` : "У всех сотрудников отдела доступ уже был");
+    } catch (err: any) {
+      setError(err?.data?.error || `Не удалось выдать доступ (код ${err?.status ?? "?"})`);
+    }
   }
 
   return (
@@ -61,6 +74,7 @@ function AccessBlock({ test }: { test: TestDetail }) {
           <div><Button type="button" variant="secondary" onClick={grantDepartment}>Выдать всему отделу</Button></div>
         </div>
         {message && <p className={styles.ok}>{message}</p>}
+        {error && <p className={styles.error}>{error}</p>}
       </div>
 
       {test.access.map((a) => (

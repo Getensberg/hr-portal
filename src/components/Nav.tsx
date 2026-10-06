@@ -13,6 +13,7 @@ const EMPLOYEE_LINKS = [
   { href: "/jobs", label: "Вакансии" },
   { href: "/profile", label: "Профиль" },
   { href: "/calendar", label: "Календарь" },
+  { href: "/learning", label: "Обучение" },
 ];
 
 const ADMIN_LINKS = [
@@ -27,6 +28,7 @@ const ADMIN_LINKS = [
   { href: "/admin/calendar", label: "Календарь" },
   { href: "/admin/courses", label: "Обучение" },
   { href: "/admin/tests", label: "Тесты" },
+  { href: "/admin/reviews", label: "Проверка" },
 ];
 
 export function Nav() {

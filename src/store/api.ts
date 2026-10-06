@@ -300,6 +300,129 @@ export interface TestDetail {
   access: { id: string; user: { id: string; fullName: string; department: string | null } }[];
 }
 
+export type LearningStatus = "NOT_STARTED" | "IN_REVIEW" | "PASSED" | "FAILED";
+
+export interface LearningCourseCard {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  lessonsTotal: number;
+  lessonsDone: number;
+  testsTotal: number;
+  testsPassed: number;
+  state: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+}
+
+export interface LearningTestCard {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  questionsCount: number;
+  maxAttempts: number;
+  attemptsUsed: number;
+  state: LearningStatus;
+}
+
+export interface LearningAttempt {
+  id: string;
+  testId: string;
+  testTitle: string;
+  courseId: string | null;
+  courseTitle: string | null;
+  status: "IN_REVIEW" | "GRADED";
+  passed: boolean | null;
+  submittedAt: string;
+}
+
+export interface LearningOverview {
+  courses: LearningCourseCard[];
+  tests: LearningTestCard[];
+  attempts: LearningAttempt[];
+}
+
+export interface LearningLesson {
+  id: string;
+  title: string;
+  content: string;
+  videoUrl: string | null;
+  files: ContentFile[] | null;
+  done: boolean;
+}
+
+export interface LearningCourseTest {
+  id: string;
+  title: string;
+  description: string | null;
+  questionsCount: number;
+  maxAttempts: number;
+  attemptsUsed: number;
+  state: LearningStatus;
+}
+
+export interface LearningCourse {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  lessons: LearningLesson[];
+  tests: LearningCourseTest[];
+  completed: boolean;
+}
+
+export interface LearningQuestion {
+  id: string;
+  text: string;
+  kind: "CHOICE" | "OPEN";
+  multiple: boolean;
+  options: { id: string; text: string }[];
+}
+
+export interface LearningTest {
+  id: string;
+  title: string;
+  description: string | null;
+  courseId: string | null;
+  courseTitle: string | null;
+  passingScore: number;
+  maxAttempts: number;
+  attemptsUsed: number;
+  state: LearningStatus;
+  canTake: boolean;
+  blockReason: "PASSED" | "IN_REVIEW" | "NO_ATTEMPTS" | "NO_QUESTIONS" | null;
+  questions: LearningQuestion[];
+  attempts: { id: string; status: "IN_REVIEW" | "GRADED"; passed: boolean | null; submittedAt: string }[];
+}
+
+export interface ReviewListItem {
+  id: string;
+  submittedAt: string;
+  userName: string;
+  department: string | null;
+  testTitle: string;
+  courseTitle: string | null;
+}
+
+export interface ReviewAnswer {
+  id: string;
+  text: string;
+  kind: "CHOICE" | "OPEN";
+  selectedTexts: string[];
+  correctTexts: string[];
+  isCorrect: boolean | null;
+  textAnswer: string | null;
+}
+
+export interface ReviewDetail {
+  id: string;
+  status: "IN_REVIEW" | "GRADED";
+  submittedAt: string;
+  user: { fullName: string; department: string | null };
+  test: { title: string; courseTitle: string | null };
+  answers: ReviewAnswer[];
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
@@ -319,6 +442,8 @@ export const apiSlice = createApi({
     "Department",
     "Course",
     "Test",
+    "Learning",
+    "Review",
   ],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
@@ -739,6 +864,41 @@ revokeCourseAccess: builder.mutation<{ userId: string }, { courseId: string; use
   query: ({ courseId, userId }) => ({ url: `/courses/admin/${courseId}/access/${userId}`, method: "DELETE" }),
   invalidatesTags: ["Course"],
 }),
+getLearning: builder.query<LearningOverview, void>({
+  query: () => "/learning",
+  providesTags: ["Learning"],
+}),
+getLearningCourse: builder.query<LearningCourse, string>({
+  query: (id) => `/learning/courses/${id}`,
+  providesTags: ["Learning"],
+}),
+completeLesson: builder.mutation<{ lessonId: string }, { lessonId: string; done: boolean }>({
+  query: ({ lessonId, done }) => ({ url: `/learning/lessons/${lessonId}/complete`, method: "POST", body: { done } }),
+  invalidatesTags: ["Learning"],
+}),
+getLearningTest: builder.query<LearningTest, string>({
+  query: (id) => `/learning/tests/${id}`,
+  providesTags: ["Learning"],
+}),
+submitAttempt: builder.mutation<
+  { id: string; status: "IN_REVIEW" | "GRADED"; passed: boolean | null },
+  { testId: string; answers: { questionId: string; selectedOptionIds?: string[]; textAnswer?: string }[] }
+>({
+  query: ({ testId, answers }) => ({ url: `/learning/tests/${testId}/attempts`, method: "POST", body: { answers } }),
+  invalidatesTags: ["Learning", "Review", "Test"],
+}),
+getReviews: builder.query<ReviewListItem[], void>({
+  query: () => "/reviews",
+  providesTags: ["Review"],
+}),
+getReview: builder.query<ReviewDetail, string>({
+  query: (id) => `/reviews/${id}`,
+  providesTags: ["Review"],
+}),
+submitReview: builder.mutation<{ passed: boolean; score: number }, { attemptId: string; verdicts: Record<string, boolean> }>({
+  query: ({ attemptId, verdicts }) => ({ url: `/reviews/${attemptId}`, method: "POST", body: { verdicts } }),
+  invalidatesTags: ["Review", "Learning", "Test"],
+}),
 
   }),
 });
@@ -825,5 +985,13 @@ export const {
   useDeleteTestMutation, 
   useAddQuestionMutation, 
   useGrantTestAccessMutation, 
-  useRevokeTestAccessMutation,
+  useRevokeTestAccessMutation, 
+  useGetLearningQuery, 
+  useGetLearningCourseQuery, 
+  useCompleteLessonMutation, 
+  useGetLearningTestQuery, 
+  useSubmitAttemptMutation, 
+  useGetReviewsQuery, 
+  useGetReviewQuery, 
+  useSubmitReviewMutation,
 } = apiSlice;

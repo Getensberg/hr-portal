@@ -1,0 +1,6 @@
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.NOT_STARTED { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-text-muted); }
+.IN_PROGRESS { background: #E3ECFF; color: #2B4FA8; }
+.DONE { background: #E6F9E1; color: #157A00; }
+.IN_REVIEW { background: #FFF3CD; color: #7A5B00; }
+.FAILED { background: #FDE8EC; color: #B4234A; }

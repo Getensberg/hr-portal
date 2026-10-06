@@ -1,0 +1,2 @@
+.track { height: 8px; background: var(--color-white); border: 1px solid var(--color-text-muted); border-radius: 8px; overflow: hidden; }
+.fill { height: 100%; background: #4C7DF0; border-radius: 8px; transition: width 0.3s ease; }
