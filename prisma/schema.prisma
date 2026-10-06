@@ -41,6 +41,10 @@ model User {
   referrals         Referral[]
   vacationEntries   VacationEntry[]
   orgPerson         OrgPerson?
+  lessonProgress  LessonProgress[]
+  courseAccess    CourseAccess[]
+  testAttempts    TestAttempt[]
+  testAccess      TestAccess[]
 }
 
 model OrgPerson {
@@ -63,6 +67,153 @@ model Department {
   id    String @id @default(cuid())
   name  String @unique
   color String @default("#CADCFC")
+}
+
+// --- University: курсы вопросы статусы ---
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum CourseAccessMode {
+  OPEN
+  RESTRICTED
+}
+
+enum QuestionKind {
+  CHOICE
+  OPEN
+}
+
+enum AttemptStatus {
+  IN_REVIEW
+  GRADED
+}
+
+model Course {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  category    String?
+  status      CourseStatus     @default(DRAFT)
+  accessMode  CourseAccessMode @default(OPEN)
+  createdBy   String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  lessons Lesson[]
+  tests   Test[]
+  access  CourseAccess[]
+}
+
+model Lesson {
+  id       String  @id @default(cuid())
+  course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  title    String
+  content  String
+  videoUrl String?
+  files    Json?
+  order    Int
+
+  progress LessonProgress[]
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  completedAt DateTime @default(now())
+
+  @@unique([lessonId, userId])
+}
+
+model CourseAccess {
+  id       String @id @default(cuid())
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+
+  @@unique([courseId, userId])
+}
+
+model Test {
+  id           String           @id @default(cuid())
+  title        String           @default("Тест")
+  description  String?
+  category     String?
+  course       Course?          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId     String?
+  order        Int              @default(0)
+  status       CourseStatus     @default(DRAFT)
+  accessMode   CourseAccessMode @default(OPEN)
+  passingScore Int              @default(70)
+  maxAttempts  Int              @default(3)
+  createdAt    DateTime         @default(now())
+
+  questions TestQuestion[]
+  attempts  TestAttempt[]
+  access    TestAccess[]
+}
+
+model TestAccess {
+  id     String @id @default(cuid())
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+  testId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([testId, userId])
+}
+
+model TestQuestion {
+  id     String       @id @default(cuid())
+  test   Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  testId String
+  text   String
+  kind   QuestionKind
+  order  Int
+
+  options TestOption[]
+  answers TestAnswer[]
+}
+
+model TestOption {
+  id         String       @id @default(cuid())
+  question   TestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId String
+  text       String
+  isCorrect  Boolean      @default(false)
+  order      Int
+}
+
+model TestAttempt {
+  id          String        @id @default(cuid())
+  test        Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
+  testId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  status      AttemptStatus
+  score       Int?
+  passed      Boolean?
+  submittedAt DateTime      @default(now())
+
+  answers TestAnswer[]
+}
+
+model TestAnswer {
+  id                String       @id @default(cuid())
+  attempt           TestAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptId         String
+  question          TestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId        String
+  selectedOptionIds Json?
+  textAnswer        String?
+  isCorrect         Boolean?
 }
 
 // --- Self-service: календарь отпусков и тд ---

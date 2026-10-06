@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useGetContentByIdQuery } from "@/store/api";
+import { useGetContentByIdQuery, useGetAdminCourseQuery, useGetAdminTestQuery } from "@/store/api";
 import styles from "./Breadcrumbs.module.css";
 
 const LABELS: Record<string, string> = {
@@ -20,7 +20,10 @@ const LABELS: Record<string, string> = {
   users: "Сотрудники",
   calendar: "Календарь",
   settings: "Настройки",
+  courses: "Курсы",
+  tests: "Тесты",
   manager: "Моя команда",
+  
 };
 
 // Разделы, которые логически живут внутри базы знаний,
@@ -35,6 +38,10 @@ export function Breadcrumbs() {
   const pathname = usePathname();
 
   const newsMatch = pathname.match(/^\/news\/([^/]+)$/);
+  const courseMatch = pathname.match(/^\/admin\/courses\/([^/]+)$/);
+  const testMatch = pathname.match(/^\/admin\/tests\/([^/]+)$/);
+  const { data: testItem } = useGetAdminTestQuery(testMatch?.[1] ?? "", { skip: !testMatch });
+  const { data: courseItem } = useGetAdminCourseQuery(courseMatch?.[1] ?? "", { skip: !courseMatch });
   const { data: newsItem } = useGetContentByIdQuery(newsMatch?.[1] ?? "", { skip: !newsMatch });
 
   if (pathname === "/" || pathname === "/login") return null;
@@ -55,7 +62,14 @@ export function Breadcrumbs() {
       {segments.map((seg, i) => {
         href += `/${seg}`;
         const isLast = i === segments.length - 1;
-        const label = isLast && newsMatch ? (newsItem?.title ?? "Загрузка...") : (LABELS[seg] ?? seg);
+        const label =
+          isLast && newsMatch
+            ? (newsItem?.title ?? "Загрузка...")
+            : isLast && courseMatch
+              ? (courseItem?.title ?? "Загрузка...")
+              : isLast && testMatch
+                ? (testItem?.title ?? "Загрузка...")
+                : (LABELS[seg] ?? seg);
         return (
           <span key={href}>
             <span className={styles.sep}>›</span>

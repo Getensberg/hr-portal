@@ -214,6 +214,92 @@ export interface BlockedPeriodItem {
   reason: string;
 }
 
+export interface CourseSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  status: "DRAFT" | "PUBLISHED";
+  accessMode: "OPEN" | "RESTRICTED";
+  lessonsCount: number;
+  testsCount: number;
+  accessCount: number;
+  createdAt: string;
+}
+
+export interface CourseTestSummary {
+  id: string;
+  title: string;
+  questionsCount: number;
+  attemptsCount: number;
+}
+
+export interface LessonItem {
+  id: string;
+  title: string;
+  content: string;
+  videoUrl: string | null;
+  files: ContentFile[] | null;
+  order: number;
+}
+
+export interface TestOptionItem {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+  order: number;
+}
+
+export interface TestQuestionItem {
+  id: string;
+  text: string;
+  kind: "CHOICE" | "OPEN";
+  order: number;
+  options: TestOptionItem[];
+}
+
+export interface CourseDetail {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  status: "DRAFT" | "PUBLISHED";
+  accessMode: "OPEN" | "RESTRICTED";
+  lessons: LessonItem[];
+  tests: CourseTestSummary[];
+  access: { id: string; user: { id: string; fullName: string; department: string | null } }[];
+}
+
+export interface TestListItem {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  status: "DRAFT" | "PUBLISHED";
+  accessMode: "OPEN" | "RESTRICTED";
+  passingScore: number;
+  maxAttempts: number;
+  questionsCount: number;
+  attemptsCount: number;
+  accessCount: number;
+}
+
+export interface TestDetail {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  courseId: string | null;
+  course: { id: string; title: string } | null;
+  status: "DRAFT" | "PUBLISHED";
+  accessMode: "OPEN" | "RESTRICTED";
+  passingScore: number;
+  maxAttempts: number;
+  attemptsCount: number;
+  questions: TestQuestionItem[];
+  access: { id: string; user: { id: string; fullName: string; department: string | null } }[];
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
@@ -231,6 +317,8 @@ export const apiSlice = createApi({
     "Blocked",
     "OrgPerson",
     "Department",
+    "Course",
+    "Test",
   ],
   endpoints: (builder) => ({
     getMyRequests: builder.query<RequestItem[], void>({
@@ -552,6 +640,105 @@ deleteOnboardingTask: builder.mutation<{ id: string }, string>({
   query: (taskId) => ({ url: `/onboarding/tasks/${taskId}`, method: "DELETE" }),
   invalidatesTags: ["Onboarding"],
 }),
+getAdminCourses: builder.query<CourseSummary[], void>({
+  query: () => "/courses/admin",
+  providesTags: ["Course"],
+}),
+createCourse: builder.mutation<{ id: string }, { title: string; description?: string; category?: string; accessMode: "OPEN" | "RESTRICTED" }>({
+  query: (body) => ({ url: "/courses/admin", method: "POST", body }),
+  invalidatesTags: ["Course"],
+}),
+getAdminCourse: builder.query<CourseDetail, string>({
+  query: (id) => `/courses/admin/${id}`,
+  providesTags: ["Course"],
+}),
+updateCourse: builder.mutation<
+  { id: string },
+  { id: string; title?: string; description?: string; category?: string; accessMode?: "OPEN" | "RESTRICTED"; status?: "DRAFT" | "PUBLISHED" }
+>({
+  query: ({ id, ...body }) => ({ url: `/courses/admin/${id}`, method: "PATCH", body }),
+  invalidatesTags: ["Course"],
+}),
+deleteCourse: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/courses/admin/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Course"],
+}),
+addLesson: builder.mutation<LessonItem, { courseId: string; title: string; content: string; videoUrl?: string; files?: ContentFile[] }>({
+  query: ({ courseId, ...body }) => ({ url: `/courses/admin/${courseId}/lessons`, method: "POST", body }),
+  invalidatesTags: ["Course"],
+}),
+updateLesson: builder.mutation<LessonItem, { lessonId: string; title?: string; content?: string; videoUrl?: string; files?: ContentFile[] }>({
+  query: ({ lessonId, ...body }) => ({ url: `/lessons/${lessonId}`, method: "PATCH", body }),
+  invalidatesTags: ["Course"],
+}),
+deleteLesson: builder.mutation<{ id: string }, string>({
+  query: (lessonId) => ({ url: `/lessons/${lessonId}`, method: "DELETE" }),
+  invalidatesTags: ["Course"],
+}),
+getAdminTests: builder.query<TestListItem[], void>({
+  query: () => "/tests/admin",
+  providesTags: ["Test"],
+}),
+createTest: builder.mutation<
+  { id: string },
+  { title: string; description?: string; category?: string; accessMode?: "OPEN" | "RESTRICTED"; courseId?: string }
+>({
+  query: (body) => ({ url: "/tests/admin", method: "POST", body }),
+  invalidatesTags: ["Test", "Course"],
+}),
+getAdminTest: builder.query<TestDetail, string>({
+  query: (id) => `/tests/admin/${id}`,
+  providesTags: ["Test"],
+}),
+updateTest: builder.mutation<
+  { id: string },
+  {
+    id: string;
+    title?: string;
+    description?: string;
+    category?: string;
+    accessMode?: "OPEN" | "RESTRICTED";
+    status?: "DRAFT" | "PUBLISHED";
+    passingScore?: number;
+    maxAttempts?: number;
+  }
+>({
+  query: ({ id, ...body }) => ({ url: `/tests/admin/${id}`, method: "PATCH", body }),
+  invalidatesTags: ["Test", "Course"],
+}),
+deleteTest: builder.mutation<{ id: string }, string>({
+  query: (id) => ({ url: `/tests/admin/${id}`, method: "DELETE" }),
+  invalidatesTags: ["Test", "Course"],
+}),
+addQuestion: builder.mutation<
+  { id: string },
+  { testId: string; text: string; kind: "CHOICE" | "OPEN"; options: { text: string; isCorrect: boolean }[] }
+>({
+  query: ({ testId, ...body }) => ({ url: `/tests/admin/${testId}/questions`, method: "POST", body }),
+  invalidatesTags: ["Test", "Course"],
+}),
+grantTestAccess: builder.mutation<{ granted: number }, { testId: string; userIds?: string[]; department?: string }>({
+  query: ({ testId, ...body }) => ({ url: `/tests/admin/${testId}/access`, method: "POST", body }),
+  invalidatesTags: ["Test"],
+}),
+revokeTestAccess: builder.mutation<{ userId: string }, { testId: string; userId: string }>({
+  query: ({ testId, userId }) => ({ url: `/tests/admin/${testId}/access/${userId}`, method: "DELETE" }),
+  invalidatesTags: ["Test"],
+}),
+
+
+deleteQuestion: builder.mutation<{ id: string }, string>({
+  query: (questionId) => ({ url: `/test-questions/${questionId}`, method: "DELETE" }),
+  invalidatesTags: ["Test", "Course"],
+}),
+grantCourseAccess: builder.mutation<{ granted: number }, { courseId: string; userIds?: string[]; department?: string }>({
+  query: ({ courseId, ...body }) => ({ url: `/courses/admin/${courseId}/access`, method: "POST", body }),
+  invalidatesTags: ["Course"],
+}),
+revokeCourseAccess: builder.mutation<{ userId: string }, { courseId: string; userId: string }>({
+  query: ({ courseId, userId }) => ({ url: `/courses/admin/${courseId}/access/${userId}`, method: "DELETE" }),
+  invalidatesTags: ["Course"],
+}),
 
   }),
 });
@@ -620,4 +807,23 @@ export const {
   useGetTeamOnboardingQuery,
   useGetTeamUsersQuery,
   useDeleteOnboardingTaskMutation,
+  useGetAdminCoursesQuery,
+  useCreateCourseMutation, 
+  useGetAdminCourseQuery, 
+  useUpdateCourseMutation, 
+  useDeleteCourseMutation, 
+  useAddLessonMutation, 
+  useUpdateLessonMutation, 
+  useDeleteLessonMutation,
+  useDeleteQuestionMutation, 
+  useGrantCourseAccessMutation, 
+  useRevokeCourseAccessMutation, 
+  useGetAdminTestsQuery, 
+  useCreateTestMutation, 
+  useGetAdminTestQuery, 
+  useUpdateTestMutation, 
+  useDeleteTestMutation, 
+  useAddQuestionMutation, 
+  useGrantTestAccessMutation, 
+  useRevokeTestAccessMutation,
 } = apiSlice;

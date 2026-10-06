@@ -25,6 +25,8 @@ const ADMIN_LINKS = [
   { href: "/admin/org", label: "Оргструктура" },
   { href: "/admin/users", label: "Сотрудники" },
   { href: "/admin/calendar", label: "Календарь" },
+  { href: "/admin/courses", label: "Обучение" },
+  { href: "/admin/tests", label: "Тесты" },
 ];
 
 export function Nav() {
