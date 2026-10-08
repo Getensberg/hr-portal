@@ -65,6 +65,9 @@ export default function AdminOrgPage() {
   const [docError, setDocError] = useState("");
   const [deptError, setDeptError] = useState("");
 
+  const [isHead, setIsHead] = useState(false);
+  const [managerTouched, setManagerTouched] = useState(false);
+
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
   }
@@ -74,12 +77,19 @@ export default function AdminOrgPage() {
     : new Set<string>();
   const managerOptions = (people ?? []).filter((p) => !excludedIds.has(p.id));
 
+  function applyDepartment(value: string) {
+  setDepartment(value);
+  if (editingId || isHead || managerTouched) return;
+  const head = (people ?? []).find((p: any) => p.isDepartmentHead && p.department === value);
+  setManagerId(head ? head.id : "");
+}
+
   function handleLinkedUserChange(userId: string) {
     setLinkedUserId(userId);
     const u = (users ?? []).find((x) => x.id === userId);
     if (u) {
       setFullName(u.fullName);
-      setDepartment(u.department ?? "");
+      applyDepartment(u.department ?? "");
       setPosition(u.position ?? "");
       setPhone(u.phone ?? "");
       setEmail(u.email);
@@ -105,7 +115,7 @@ async function handleDeleteDepartment(id: string) {
 }
 
   function resetPersonForm() {
-    setFullName(""); setPosition(""); setDepartment(""); setPhone(""); setEmail("");
+    setFullName(""); setPosition(""); setDepartment(""); setPhone(""); setEmail(""); setIsHead(false); setManagerTouched(false);
     setManagerId(""); setLinkedUserId(""); setEditingId(null); setPersonError("");
   }
 
@@ -120,6 +130,7 @@ async function handleDeleteDepartment(id: string) {
       fullName, position, department, phone, email,
       managerId: managerId || null,
       linkedUserId: linkedUserId || null,
+      isDepartmentHead: isHead && Boolean(department.trim()),
     };
     try {
       if (editingId) {
@@ -143,6 +154,7 @@ async function handleDeleteDepartment(id: string) {
     setManagerId(p.managerId ?? "");
     setLinkedUserId(p.linkedUserId ?? "");
     setPersonError("");
+    setIsHead(Boolean(p.isDepartmentHead));
   }
 
   function handleDeletePerson(p: any) {
@@ -154,25 +166,26 @@ async function handleDeleteDepartment(id: string) {
 
   const tree = buildTree(people ?? [], () => true);
 
-  function renderNode(node: OrgPersonNode, depth: number): React.ReactNode {
-    return (
-      <div key={node.id}>
-        <div className={styles.treeRow} style={{ paddingLeft: depth * 24 }}>
-          <span className="text-s">
-            <strong>{node.fullName}</strong>
-            {node.position ? ` · ${node.position}` : ""}
-            {node.department ? ` · ${node.department}` : ""}
-            {node.linkedUserId ? " · связан с аккаунтом" : ""}
-          </span>
-          <div className={styles.treeActions}>
-            <Button size="sm" variant="secondary" onClick={() => startEditPerson(node)}>Изменить</Button>
-            <Button size="sm" variant="danger" onClick={() => handleDeletePerson(node)}>Удалить</Button>
-          </div>
+function renderNode(node: OrgPersonNode, depth: number): React.ReactNode {
+  return (
+    <div key={node.id}>
+      <div className={styles.treeRow} style={{ paddingLeft: depth * 24 }}>
+        <span className="text-s">
+          <strong>{node.fullName}</strong>
+          {node.position ? ` · ${node.position}` : ""}
+          {node.department ? ` · ${node.department}` : ""}
+          {(node as any).isDepartmentHead ? " · руководитель отдела" : ""}
+          {node.linkedUserId ? " · связан с аккаунтом" : ""}
+        </span>
+        <div className={styles.treeActions}>
+          <Button size="sm" variant="secondary" onClick={() => startEditPerson(node)}>Изменить</Button>
+          <Button size="sm" variant="danger" onClick={() => handleDeletePerson(node)}>Удалить</Button>
         </div>
-        {node.children.map((c) => renderNode(c, depth + 1))}
       </div>
-    );
-  }
+      {node.children.map((c) => renderNode(c, depth + 1))}
+    </div>
+  );
+}
 
 async function handleDocSubmit(e: React.FormEvent) {
   e.preventDefault();
@@ -209,12 +222,24 @@ setDocError("");
           <input className="input" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Должность" />
         </div>
         <div className={styles.formRow}>
-          <DepartmentInput value={department} onChange={setDepartment} placeholder="Отдел (пусто — руководство компании)" />
+          <DepartmentInput value={department} onChange={applyDepartment} placeholder="Отдел (пусто — руководство компании)" />
           <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Телефон" />
           <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
         </div>
+        <label className="text-s" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+          type="checkbox"
+          checked={isHead}
+          disabled={!department.trim()}
+          onChange={(e) => {
+            setIsHead(e.target.checked);
+            if (e.target.checked && !managerTouched && !editingId) setManagerId("");
+          }}
+        />
+        Руководитель отдела{department.trim() ? ` «${department}»` : ""}
+      </label>
         <div className={styles.formRow}>
-          <select className="input" value={managerId} onChange={(e) => setManagerId(e.target.value)}>
+          <select className="input" value={managerId} onChange={(e) => { setManagerId(e.target.value); setManagerTouched(true); }}>
             <option value="">Без руководителя (верхний уровень)</option>
             {managerOptions.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
           </select>

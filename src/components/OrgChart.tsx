@@ -11,6 +11,7 @@ export interface ChartPerson {
   phone?: string | null;
   email?: string | null;
   managerId: string | null;
+  isDepartmentHead?: boolean;
 }
 
 export interface ChartDepartment {
@@ -99,45 +100,37 @@ function buildTop(node: TreeNode): TopNode {
     groups.set(dept, list);
   };
 
-  // Поддерево внутри колонки: люди своего отдела остаются в ней,
-  // чужой отдел становится отдельной колонкой, человек без отдела уходит наверх
+  // Отдельная карточка над колонками: без отдела, руководитель отдела, или руководит людьми из других отделов
+  const mustLift = (n: TreeNode) =>
+    !n.person.department || !!n.person.isDepartmentHead || hasForeignChild(n);
+
+  // Поддерево внутри колонки: свой отдел остаётся, чужой отдел становится колонкой,
+  // руководитель другого отдела и человек без отдела уходят наверх
   const colify = (n: TreeNode): ColNode => {
     const children: ColNode[] = [];
     for (const c of n.children) {
       const dept = c.person.department;
-      if (!dept) lifted.push(buildTop(c));
-      else if (dept === n.person.department) children.push(colify(c));
-      else addToGroup(dept, colify(c));
+      if (!dept || (c.person.isDepartmentHead && dept !== n.person.department)) {
+        lifted.push(buildTop(c));
+      } else if (dept === n.person.department) {
+        children.push(colify(c));
+      } else {
+        addToGroup(dept, colify(c));
+      }
     }
     return { person: n.person, children, size: 1 + children.reduce((s, c) => s + c.size, 0) };
   };
 
   for (const c of node.children) {
-    const dept = c.person.department;
-    if (!dept || hasForeignChild(c)) lifted.push(buildTop(c));
-    else addToGroup(dept, colify(c));
+    if (mustLift(c)) lifted.push(buildTop(c));
+    else addToGroup(c.person.department as string, colify(c));
   }
 
-  const columns: TopColumn[] = [];
-  for (const [dept, members] of groups) {
-    // Единственный человек отдела с двумя и более подчинёнными: он руководитель отдела,
-    // ему нужна своя карточка над колонкой
-    if (members.length === 1 && members[0].children.length >= 2) {
-      const head = members[0];
-      lifted.push({
-        person: head.person,
-        columns: [{ dept, members: [...head.children].sort(bySize), count: head.size }],
-        children: [],
-        size: head.size,
-      });
-    } else {
-      columns.push({
-        dept,
-        members: members.sort(bySize),
-        count: members.reduce((s, m) => s + m.size, 0) + (node.person.department === dept ? 1 : 0),
-      });
-    }
-  }
+  const columns: TopColumn[] = Array.from(groups, ([dept, members]) => ({
+    dept,
+    members: members.sort(bySize),
+    count: members.reduce((s, m) => s + m.size, 0) + (node.person.department === dept ? 1 : 0),
+  }));
 
   return {
     person: node.person,

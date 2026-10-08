@@ -42,24 +42,38 @@ export async function PATCH(
     }
   }
 
-  if (body.department) {
-  await prisma.department.upsert({
-    where: { name: body.department },
-    update: {},
-    create: { name: body.department },
-  });
-}
+  const department = String(body.department ?? "").trim();
+
+  if (department) {
+    await prisma.department.upsert({
+      where: { name: department },
+      update: {},
+      create: { name: department },
+    });
+  }
+
+  // Отметка имеет смысл только при заполненном отделе
+  const isHead = Boolean(body.isDepartmentHead) && Boolean(department);
+
+  // Руководитель у отдела один: у остальных отметка снимается
+  if (isHead) {
+    await prisma.orgPerson.updateMany({
+      where: { department, isDepartmentHead: true, NOT: { id } },
+      data: { isDepartmentHead: false },
+    });
+  }
 
   const updated = await prisma.orgPerson.update({
     where: { id },
     data: {
       fullName: body.fullName,
       position: body.position || null,
-      department: body.department || null,
+      department: department || null,
       phone: body.phone || null,
       email: body.email || null,
       managerId: body.managerId || null,
       linkedUserId: body.linkedUserId || null,
+      isDepartmentHead: isHead,
     },
   });
   return NextResponse.json(updated);

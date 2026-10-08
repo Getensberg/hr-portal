@@ -61,6 +61,7 @@ model OrgPerson {
   linkedUser   User?       @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  isDepartmentHead Boolean @default(false)
 }
 
 model Department {
