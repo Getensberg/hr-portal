@@ -19,20 +19,25 @@
 
 /* Узел: карточка + всё, что под ней */
 .unit { display: flex; flex-direction: column; align-items: center; }
+
+/* Колонка отдела */
 .zone { border: 1px solid; border-radius: 16px; padding: 10px 12px 14px; }
 .zoneLabel { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 10px; white-space: nowrap; }
 
+/* Карточка сотрудника (кнопка) */
 .card {
   position: relative; z-index: 1; box-sizing: border-box;
   width: 200px; height: 60px; margin: 0 20px; padding: 8px 12px;
   display: flex; flex-direction: column; justify-content: center;
+  font: inherit; text-align: left; cursor: pointer;
   background: var(--color-white); border: 1px solid var(--color-text-muted); border-left: 4px solid var(--color-text-muted);
   border-radius: 12px;
 }
+.card:hover { border-top-color: var(--color-text-primary); border-right-color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
 .name { font-size: 14px; font-weight: 600; color: var(--color-text-primary); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .position { font-size: 12px; color: var(--color-text-secondary); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Ряд ветвей (руководители с подчинёнными) */
+/* Ряд ветвей: подчинённые руководители, колонки отделов, руководители направлений */
 .row { display: flex; align-items: flex-start; justify-content: center; list-style: none; margin: 0; padding: 20px 0 0; position: relative; }
 .row::before { content: ""; position: absolute; top: 0; left: 50%; height: 20px; border-left: 1px solid var(--chart-line); }
 .row > li { position: relative; display: flex; flex-direction: column; align-items: center; padding: 20px 8px 0; }
@@ -55,5 +60,28 @@
 .stack > li::after { content: ""; position: absolute; left: -12px; top: 40px; width: 12px; border-top: 1px solid var(--chart-line); }
 .stack .card { margin: 0; }
 
-/* Столбик без руководителя в ряду: первая карточка касается линии ряда */
+/* Столбик рядовых сотрудников в конце ряда направлений */
 .leafCol > .stack > li:first-child { margin-top: -10px; }
+
+/* Окно с данными сотрудника */
+.overlay {
+  position: fixed; inset: 0; z-index: 50; background: rgba(0, 2, 9, 0.4);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.modal {
+  position: relative; width: 100%; max-width: 420px; background: var(--color-white);
+  border-radius: 20px; padding: 28px 28px 24px;
+}
+.close {
+  position: absolute; top: 12px; right: 14px; width: 32px; height: 32px; border: none; background: none;
+  font-size: 24px; line-height: 1; color: var(--color-text-tertiary); cursor: pointer;
+}
+.close:hover { color: var(--color-text-primary); }
+.modalName { font-size: 20px; font-weight: 600; color: var(--color-text-primary); padding-right: 28px; }
+.modalPosition { font-size: 15px; color: var(--color-text-secondary); margin-top: 4px; }
+.modalDept { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--color-text-secondary); margin-top: 12px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.modalList { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 20px 0 0; font-size: 14px; }
+.modalList dt { color: var(--color-text-tertiary); }
+.modalList dd { margin: 0; color: var(--color-text-primary); word-break: break-word; }
+.modalList a { color: var(--color-text-primary); }
