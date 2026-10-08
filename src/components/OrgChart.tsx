@@ -118,11 +118,26 @@ function buildTop(node: TreeNode): TopNode {
     else addToGroup(dept, colify(c));
   }
 
-  const columns: TopColumn[] = Array.from(groups, ([dept, members]) => ({
-    dept,
-    members: members.sort(bySize),
-    count: members.reduce((s, m) => s + m.size, 0) + (node.person.department === dept ? 1 : 0),
-  }));
+  const columns: TopColumn[] = [];
+  for (const [dept, members] of groups) {
+    // Единственный человек отдела с двумя и более подчинёнными: он руководитель отдела,
+    // ему нужна своя карточка над колонкой
+    if (members.length === 1 && members[0].children.length >= 2) {
+      const head = members[0];
+      lifted.push({
+        person: head.person,
+        columns: [{ dept, members: [...head.children].sort(bySize), count: head.size }],
+        children: [],
+        size: head.size,
+      });
+    } else {
+      columns.push({
+        dept,
+        members: members.sort(bySize),
+        count: members.reduce((s, m) => s + m.size, 0) + (node.person.department === dept ? 1 : 0),
+      });
+    }
+  }
 
   return {
     person: node.person,
@@ -301,7 +316,7 @@ export function OrgChart({ people, departments }: { people: ChartPerson[]; depar
         <span className={styles.scale}>{Math.round(scale * 100)}%</span>
         <button type="button" className={styles.tool} onClick={() => setScale((s) => Math.min(1.3, Math.round((s + 0.1) * 10) / 10))}>+</button>
         <button type="button" className={styles.tool} onClick={() => setScale(1)}>100%</button>
-        <button type="button" className={styles.tool} onClick={fit}>Вписать</button>
+        <button type="button" className={styles.tool} onClick={fit}>Уместить по ширине</button>
         <span className={styles.tip}>Схему можно двигать мышью</span>
       </div>
 
