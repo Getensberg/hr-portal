@@ -31,10 +31,16 @@ interface ColNode {
   size: number;
 }
 
-// Карточка верхнего яруса: руководство компании или руководитель отдела
+interface TopColumn {
+  dept: string;
+  members: ColNode[];
+  count: number;
+}
+
+// Карточка верхнего яруса: руководство компании или руководитель нескольких отделов
 interface TopNode {
   person: ChartPerson;
-  column: { dept: string | null; members: ColNode[]; count: number } | null;
+  columns: TopColumn[];
   children: TopNode[];
   size: number;
 }
@@ -75,65 +81,57 @@ function buildForest(people: ChartPerson[]): TreeNode[] {
   return forest;
 }
 
-// Карточка верхнего яруса: без отдела (руководство) или руководитель с подчинёнными из другого отдела
-function isTop(node: TreeNode, parent: TreeNode | null): boolean {
-  const dept = node.person.department;
-  if (!parent || !dept) return true;
-  return dept !== parent.person.department && node.children.length > 0;
-}
 
-function mostCommonDept(nodes: ColNode[]): string | null {
-  const counts = new Map<string, number>();
-  const walk = (list: ColNode[]) => {
-    for (const n of list) {
-      if (n.person.department) counts.set(n.person.department, (counts.get(n.person.department) ?? 0) + 1);
-      walk(n.children);
-    }
-  };
-  walk(nodes);
-  let best: string | null = null;
-  let max = 0;
-  for (const [dept, n] of counts) {
-    if (n > max) {
-      best = dept;
-      max = n;
-    }
-  }
-  return best;
+
+// Руководит людьми из других отделов: такому человеку нужна своя карточка над колонками
+function hasForeignChild(n: TreeNode): boolean {
+  const dept = n.person.department;
+  return n.children.some((c) => c.person.department && c.person.department !== dept);
 }
 
 function buildTop(node: TreeNode): TopNode {
   const lifted: TopNode[] = [];
+  const groups = new Map<string, ColNode[]>();
 
-  // Копия поддерева для колонки; руководители других отделов уходят в верхний ярус
+  const addToGroup = (dept: string, col: ColNode) => {
+    const list = groups.get(dept) ?? [];
+    list.push(col);
+    groups.set(dept, list);
+  };
+
+  // Поддерево внутри колонки: люди своего отдела остаются в ней,
+  // чужой отдел становится отдельной колонкой, человек без отдела уходит наверх
   const colify = (n: TreeNode): ColNode => {
     const children: ColNode[] = [];
     for (const c of n.children) {
-      if (isTop(c, n)) lifted.push(buildTop(c));
-      else children.push(colify(c));
+      const dept = c.person.department;
+      if (!dept) lifted.push(buildTop(c));
+      else if (dept === n.person.department) children.push(colify(c));
+      else addToGroup(dept, colify(c));
     }
     return { person: n.person, children, size: 1 + children.reduce((s, c) => s + c.size, 0) };
   };
 
-  const members: ColNode[] = [];
   for (const c of node.children) {
-    if (isTop(c, node)) lifted.push(buildTop(c));
-    else members.push(colify(c));
+    const dept = c.person.department;
+    if (!dept || hasForeignChild(c)) lifted.push(buildTop(c));
+    else addToGroup(dept, colify(c));
   }
 
-  const membersSize = members.reduce((s, m) => s + m.size, 0);
-  let column: TopNode["column"] = null;
-  if (members.length > 0) {
-    const own = node.person.department;
-    const dept = own ?? mostCommonDept(members);
-    column = { dept, members, count: membersSize + (own && own === dept ? 1 : 0) };
-  }
+  const columns: TopColumn[] = Array.from(groups, ([dept, members]) => ({
+    dept,
+    members: members.sort(bySize),
+    count: members.reduce((s, m) => s + m.size, 0) + (node.person.department === dept ? 1 : 0),
+  }));
 
   return {
     person: node.person,
-    column,
+    columns,
     children: lifted,
-    size: 1 + membersSize + lifted.reduce((s, c) => s + c.size, 0),
+    size:
+      1 +
+      columns.reduce((s, c) => s + c.members.reduce((x, m) => x + m.size, 0), 0) +
+      lifted.reduce((s, c) => s + c.size, 0),
   };
 }
 
@@ -197,23 +195,20 @@ function ColUnit({ node, colors }: { node: ColNode; colors: Map<string, string> 
 function TopUnit({ node, colors }: { node: TopNode; colors: Map<string, string> }) {
   const items: { key: string; size: number; el: React.ReactNode }[] = [];
 
-  if (node.column) {
-    const { dept, members, count } = node.column;
-    const color = (dept && colors.get(dept)) || FALLBACK_COLOR;
+  for (const col of node.columns) {
+    const color = colors.get(col.dept) ?? FALLBACK_COLOR;
     items.push({
-      key: `col-${node.person.id}`,
-      size: count,
+      key: `col-${node.person.id}-${col.dept}`,
+      size: col.count,
       el: (
         <div
           className={`${styles.unit} ${styles.zone}`}
           style={{ background: hexToRgba(color, 0.12), borderColor: hexToRgba(color, 0.4) }}
         >
-          {dept && (
-            <div className={styles.zoneLabel}>
-              {dept} ({count})
-            </div>
-          )}
-          <Members nodes={members} colors={colors} />
+          <div className={styles.zoneLabel}>
+            {col.dept} ({col.count})
+          </div>
+          <Members nodes={col.members} colors={colors} />
         </div>
       ),
     });
