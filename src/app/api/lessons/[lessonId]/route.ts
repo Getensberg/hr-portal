@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
+import { parseBody } from "@/lib/validate";
+import { lessonUpdateSchema } from "@/lib/schemas";
 
 export async function PATCH(
   req: NextRequest,
@@ -10,28 +12,18 @@ export async function PATCH(
   const session = await getHRSession();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await req.json();
-
-  let title: string | undefined;
-  if (body.title !== undefined) {
-    title = String(body.title).trim();
-    if (!title) return NextResponse.json({ error: "Название не может быть пустым" }, { status: 400 });
-    title = title.slice(0, 200);
-  }
-
-  const videoUrl = body.videoUrl !== undefined ? String(body.videoUrl).trim() : undefined;
-  if (videoUrl && !/^https?:\/\//i.test(videoUrl)) {
-    return NextResponse.json({ error: "Ссылка на видео должна начинаться с http:// или https://" }, { status: 400 });
-  }
+  const parsed = await parseBody(req, lessonUpdateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   try {
     const updated = await prisma.lesson.update({
       where: { id: lessonId },
       data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(body.content !== undefined ? { content: String(body.content).trim() } : {}),
-        ...(videoUrl !== undefined ? { videoUrl: videoUrl || null } : {}),
-        ...(body.files !== undefined ? { files: body.files } : {}),
+        title: body.title,
+        content: body.content,
+        videoUrl: body.videoUrl,
+        files: body.files,
       },
     });
     return NextResponse.json(updated);

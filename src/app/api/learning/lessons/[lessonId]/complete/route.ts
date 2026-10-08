@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { courseAccessWhere } from "@/lib/learning";
+import { parseBody } from "@/lib/validate";
+import { lessonCompleteSchema } from "@/lib/schemas";
 
 export async function POST(
   req: NextRequest,
@@ -19,8 +21,11 @@ export async function POST(
   });
   if (!lesson) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = await req.json();
-  if (body.done === false) {
+  const parsed = await parseBody(req, lessonCompleteSchema);
+  if (!parsed.ok) return parsed.response;
+  const { done } = parsed.data;
+
+  if (!done) {
     await prisma.lessonProgress.deleteMany({ where: { lessonId, userId } });
   } else {
     await prisma.lessonProgress.upsert({
@@ -29,5 +34,5 @@ export async function POST(
       create: { lessonId, userId },
     });
   }
-  return NextResponse.json({ lessonId, done: body.done !== false });
+  return NextResponse.json({ lessonId, done });
 }

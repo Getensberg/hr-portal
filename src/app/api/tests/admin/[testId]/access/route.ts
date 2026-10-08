@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
+import { parseBody } from "@/lib/validate";
+import { accessGrantSchema } from "@/lib/schemas";
 
 export async function POST(
   req: NextRequest,
@@ -13,14 +15,15 @@ export async function POST(
   const test = await prisma.test.findUnique({ where: { id: testId }, select: { id: true } });
   if (!test) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = await req.json();
-  const ids = new Set<string>(
-    Array.isArray(body.userIds) ? body.userIds.filter((x: unknown): x is string => typeof x === "string") : []
-  );
+  const parsed = await parseBody(req, accessGrantSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
+
+  const ids = new Set<string>(body.userIds);
 
   if (body.department) {
     const deptUsers = await prisma.user.findMany({
-      where: { department: String(body.department) },
+      where: { department: body.department },
       select: { id: true },
     });
     deptUsers.forEach((u) => ids.add(u.id));

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseBody } from "@/lib/validate";
+import { departmentCreateSchema } from "@/lib/schemas";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -17,10 +19,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  if (!body.name?.trim()) {
-    return NextResponse.json({ error: "Укажите название" }, { status: 400 });
-  }
+  const parsed = await parseBody(req, departmentCreateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const existing = await prisma.department.findUnique({ where: { name: body.name } });
   if (existing) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
 
   const created = await prisma.department.create({
-    data: { name: body.name, color: body.color || "#CADCFC" },
+    data: { name: body.name, color: body.color },
   });
   return NextResponse.json(created, { status: 201 });
 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
 import { computeScore } from "@/lib/learning";
+import { parseBody } from "@/lib/validate";
+import { reviewSchema } from "@/lib/schemas";
 
 export async function GET(
   req: NextRequest,
@@ -67,9 +69,9 @@ export async function POST(
     return NextResponse.json({ error: "Эта попытка уже проверена" }, { status: 409 });
   }
 
-  const body = await req.json();
-  const verdicts: Record<string, unknown> =
-    body.verdicts && typeof body.verdicts === "object" ? body.verdicts : {};
+  const parsed = await parseBody(req, reviewSchema);
+  if (!parsed.ok) return parsed.response;
+  const verdicts = parsed.data.verdicts;
 
   let correct = 0;
   const updates = [];

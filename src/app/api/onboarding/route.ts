@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTeamUserIds } from "@/lib/team";
+import { parseBody } from "@/lib/validate";
+import { onboardingPlanSchema } from "@/lib/schemas";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -10,7 +12,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const parsed = await parseBody(req, onboardingPlanSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   if (session.user.role === "MANAGER") {
     const teamIds = await getTeamUserIds(session.user.id);
@@ -20,14 +24,14 @@ export async function POST(req: NextRequest) {
   }
 
   const existingPlan = await prisma.onboardingPlan.findUnique({ where: { newcomerId: body.newcomerId } });
-    if (existingPlan) {
-  return NextResponse.json({ error: "У этого сотрудника уже есть план онбординга" }, { status: 409 });
-}
+  if (existingPlan) {
+    return NextResponse.json({ error: "У этого сотрудника уже есть план онбординга" }, { status: 409 });
+  }
 
   const created = await prisma.onboardingPlan.create({
     data: {
       newcomerId: body.newcomerId,
-      mentorId: body.mentorId || null,
+      mentorId: body.mentorId,
       startDate: body.startDate ? new Date(body.startDate + "T00:00:00") : new Date(),
       endDate: body.endDate ? new Date(body.endDate + "T00:00:00") : null,
     },

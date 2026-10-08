@@ -10,6 +10,8 @@ import {
   computeScore,
   BLOCK_MESSAGES,
 } from "@/lib/learning";
+import { parseBody } from "@/lib/validate";
+import { attemptSchema } from "@/lib/schemas";
 
 export async function POST(
   req: NextRequest,
@@ -32,9 +34,9 @@ export async function POST(
   const block = getBlockReason(test.questions.length, test.maxAttempts, previous);
   if (block) return NextResponse.json({ error: BLOCK_MESSAGES[block] }, { status: 409 });
 
-  const body = await req.json();
-  const answers: any[] = Array.isArray(body.answers) ? body.answers : [];
-  const byQuestion = new Map<string, any>(answers.map((a) => [String(a?.questionId), a]));
+  const parsed = await parseBody(req, attemptSchema);
+  if (!parsed.ok) return parsed.response;
+  const byQuestion = new Map(parsed.data.answers.map((a) => [a.questionId, a]));
 
   const rows: { questionId: string; selectedOptionIds?: string[]; textAnswer?: string; isCorrect: boolean | null }[] = [];
   let correctCount = 0;

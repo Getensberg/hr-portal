@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
+import { parseBody } from "@/lib/validate";
+import { testUpdateSchema } from "@/lib/schemas";
 
 export async function GET(
   req: NextRequest,
@@ -33,41 +35,14 @@ export async function PATCH(
   const session = await getHRSession();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await req.json();
+  const parsed = await parseBody(req, testUpdateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
-  let title: string | undefined;
-  if (body.title !== undefined) {
-    title = String(body.title).trim();
-    if (!title) return NextResponse.json({ error: "Название не может быть пустым" }, { status: 400 });
-    title = title.slice(0, 200);
-  }
-
-  let passingScore: number | undefined;
-  if (body.passingScore !== undefined) {
-    passingScore = Math.round(Number(body.passingScore));
-    if (!(passingScore >= 1 && passingScore <= 100)) {
-      return NextResponse.json({ error: "Проходной балл должен быть от 1 до 100" }, { status: 400 });
-    }
-  }
-
-  let maxAttempts: number | undefined;
-  if (body.maxAttempts !== undefined) {
-    maxAttempts = Math.round(Number(body.maxAttempts));
-    if (!(maxAttempts >= 1 && maxAttempts <= 20)) {
-      return NextResponse.json({ error: "Число попыток должно быть от 1 до 20" }, { status: 400 });
-    }
-  }
-
-  let status: "DRAFT" | "PUBLISHED" | undefined;
-  if (body.status !== undefined) {
-    if (body.status === "PUBLISHED") {
-      const count = await prisma.testQuestion.count({ where: { testId } });
-      if (count === 0) {
-        return NextResponse.json({ error: "Добавьте хотя бы один вопрос, чтобы опубликовать тест" }, { status: 400 });
-      }
-      status = "PUBLISHED";
-    } else {
-      status = "DRAFT";
+  if (body.status === "PUBLISHED") {
+    const count = await prisma.testQuestion.count({ where: { testId } });
+    if (count === 0) {
+      return NextResponse.json({ error: "Добавьте хотя бы один вопрос, чтобы опубликовать тест" }, { status: 400 });
     }
   }
 
@@ -75,15 +50,13 @@ export async function PATCH(
     const updated = await prisma.test.update({
       where: { id: testId },
       data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(body.description !== undefined ? { description: body.description?.trim() || null } : {}),
-        ...(body.category !== undefined ? { category: body.category?.trim() || null } : {}),
-        ...(body.accessMode !== undefined
-          ? { accessMode: body.accessMode === "RESTRICTED" ? ("RESTRICTED" as const) : ("OPEN" as const) }
-          : {}),
-        ...(passingScore !== undefined ? { passingScore } : {}),
-        ...(maxAttempts !== undefined ? { maxAttempts } : {}),
-        ...(status !== undefined ? { status } : {}),
+        title: body.title,
+        description: body.description,
+        category: body.category,
+        accessMode: body.accessMode,
+        passingScore: body.passingScore,
+        maxAttempts: body.maxAttempts,
+        status: body.status,
       },
     });
     return NextResponse.json(updated);

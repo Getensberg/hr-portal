@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
+import { parseBody } from "@/lib/validate";
+import { courseUpdateSchema } from "@/lib/schemas";
 
 export async function GET(
   req: NextRequest,
@@ -42,31 +44,20 @@ export async function PATCH(
   const session = await getHRSession();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await req.json();
+  const parsed = await parseBody(req, courseUpdateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
-  let title: string | undefined;
-  if (body.title !== undefined) {
-    title = String(body.title).trim();
-    if (!title) return NextResponse.json({ error: "Название не может быть пустым" }, { status: 400 });
-    title = title.slice(0, 200);
-  }
-
-  let status: "DRAFT" | "PUBLISHED" | undefined;
-  if (body.status !== undefined) {
-    if (body.status === "PUBLISHED") {
-      const [lessons, emptyTests] = await Promise.all([
-        prisma.lesson.count({ where: { courseId: id } }),
-        prisma.test.count({ where: { courseId: id, questions: { none: {} } } }),
-      ]);
-      if (lessons === 0) {
-        return NextResponse.json({ error: "Добавьте хотя бы один урок, чтобы опубликовать курс" }, { status: 400 });
-      }
-      if (emptyTests > 0) {
-        return NextResponse.json({ error: "В курсе есть тест без вопросов: добавьте вопросы или удалите тест" }, { status: 400 });
-      }
-      status = "PUBLISHED";
-    } else {
-      status = "DRAFT";
+  if (body.status === "PUBLISHED") {
+    const [lessons, emptyTests] = await Promise.all([
+      prisma.lesson.count({ where: { courseId: id } }),
+      prisma.test.count({ where: { courseId: id, questions: { none: {} } } }),
+    ]);
+    if (lessons === 0) {
+      return NextResponse.json({ error: "Добавьте хотя бы один урок, чтобы опубликовать курс" }, { status: 400 });
+    }
+    if (emptyTests > 0) {
+      return NextResponse.json({ error: "В курсе есть тест без вопросов: добавьте вопросы или удалите тест" }, { status: 400 });
     }
   }
 
@@ -74,13 +65,11 @@ export async function PATCH(
     const updated = await prisma.course.update({
       where: { id },
       data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(body.description !== undefined ? { description: body.description?.trim() || null } : {}),
-        ...(body.category !== undefined ? { category: body.category?.trim() || null } : {}),
-        ...(body.accessMode !== undefined
-          ? { accessMode: body.accessMode === "RESTRICTED" ? ("RESTRICTED" as const) : ("OPEN" as const) }
-          : {}),
-        ...(status !== undefined ? { status } : {}),
+        title: body.title,
+        description: body.description,
+        category: body.category,
+        accessMode: body.accessMode,
+        status: body.status,
       },
     });
     return NextResponse.json(updated);

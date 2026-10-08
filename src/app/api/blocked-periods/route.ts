@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseISODate } from "@/lib/vacation";
+import { parseBody } from "@/lib/validate";
+import { blockedPeriodSchema } from "@/lib/schemas";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -18,19 +20,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const start = typeof body.startDate === "string" ? parseISODate(body.startDate) : null;
-  const end = typeof body.endDate === "string" ? parseISODate(body.endDate) : null;
-  const reason = String(body.reason || "").trim();
-
-  if (!start || !end) return NextResponse.json({ error: "Некорректные даты" }, { status: 400 });
-  if (start.getTime() > end.getTime()) {
-    return NextResponse.json({ error: "Дата начала позже даты окончания" }, { status: 400 });
-  }
-  if (!reason) return NextResponse.json({ error: "Укажите причину" }, { status: 400 });
+  const parsed = await parseBody(req, blockedPeriodSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const created = await prisma.blockedPeriod.create({
-    data: { startDate: start, endDate: end, reason: reason.slice(0, 200) },
+    data: {
+      startDate: parseISODate(body.startDate)!,
+      endDate: parseISODate(body.endDate)!,
+      reason: body.reason,
+    },
   });
   return NextResponse.json(created, { status: 201 });
 }

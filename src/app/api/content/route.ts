@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseBody } from "@/lib/validate";
+import { contentSchema } from "@/lib/schemas";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -40,13 +42,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const parsed = await parseBody(req, contentSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
+
   const created = await prisma.contentItem.create({
     data: {
       title: body.title,
       content: body.content,
       type: body.type,
-      category: body.category ?? null,
+      category: body.category,
       createdBy: session.user.id,
       ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
       ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTeamUserIds } from "@/lib/team";
+import { parseBody } from "@/lib/validate";
+import { onboardingTaskSchema } from "@/lib/schemas";
 
 export async function POST(
   req: NextRequest,
@@ -22,19 +24,22 @@ export async function POST(
     }
   }
 
-  const body = await req.json();
- const last = await prisma.onboardingTask.findFirst({
-  where: { planId },
-  orderBy: { order: "desc" },
-  select: { order: true },
-});
-const nextOrder = last ? last.order + 1 : 0;
+  const parsed = await parseBody(req, onboardingTaskSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
+
+  const last = await prisma.onboardingTask.findFirst({
+    where: { planId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+  const nextOrder = last ? last.order + 1 : 0;
 
   const created = await prisma.onboardingTask.create({
     data: {
       planId,
       title: body.title,
-      description: body.description || null,
+      description: body.description,
       dueDate: body.dueDate ? new Date(body.dueDate + "T00:00:00") : null,
       order: nextOrder,
     },

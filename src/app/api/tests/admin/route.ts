@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
+import { parseBody } from "@/lib/validate";
+import { testCreateSchema } from "@/lib/schemas";
 
 // Список отдельных тестов (не входящих в курсы)
 export async function GET() {
@@ -27,11 +29,11 @@ export async function POST(req: NextRequest) {
   const session = await getHRSession();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await req.json();
-  const title = String(body.title || "").trim();
-  if (!title) return NextResponse.json({ error: "Укажите название теста" }, { status: 400 });
+  const parsed = await parseBody(req, testCreateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
-  const courseId: string | null = body.courseId ? String(body.courseId) : null;
+  const courseId = body.courseId;
   let order = 0;
   if (courseId) {
     const course = await prisma.course.findUnique({ where: { id: courseId }, select: { id: true } });
@@ -46,10 +48,10 @@ export async function POST(req: NextRequest) {
 
   const created = await prisma.test.create({
     data: {
-      title: title.slice(0, 200),
-      description: body.description?.trim() || null,
-      category: body.category?.trim() || null,
-      accessMode: body.accessMode === "RESTRICTED" ? "RESTRICTED" : "OPEN",
+      title: body.title,
+      description: body.description,
+      category: body.category,
+      accessMode: body.accessMode,
       courseId,
       order,
     },

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseISODate } from "@/lib/vacation";
+import { parseBody } from "@/lib/validate";
+import { holidaysSchema } from "@/lib/schemas";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -18,20 +20,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const rawItems = Array.isArray(body.items) ? body.items : [];
-  if (rawItems.length === 0 || rawItems.length > 400) {
-    return NextResponse.json({ error: "Нужно от 1 до 400 дат за раз" }, { status: 400 });
-  }
+  const parsed = await parseBody(req, holidaysSchema);
+  if (!parsed.ok) return parsed.response;
 
-  const data: { date: Date; name: string }[] = [];
-  for (const item of rawItems) {
-    const date = typeof item.date === "string" ? parseISODate(item.date) : null;
-    if (!date) {
-      return NextResponse.json({ error: "Некорректная дата в списке" }, { status: 400 });
-    }
-    data.push({ date, name: String(item.name || "Нерабочий день").trim().slice(0, 200) });
-  }
+  // Схема уже проверила, что каждая дата реальна
+  const data = parsed.data.items.map((item) => ({
+    date: parseISODate(item.date)!,
+    name: item.name,
+  }));
 
   const result = await prisma.companyHoliday.createMany({ data, skipDuplicates: true });
   return NextResponse.json({ created: result.count }, { status: 201 });

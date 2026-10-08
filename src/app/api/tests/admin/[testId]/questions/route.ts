@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
+import { parseBody } from "@/lib/validate";
+import { questionCreateSchema } from "@/lib/schemas";
 
 export async function POST(
   req: NextRequest,
@@ -19,14 +21,10 @@ export async function POST(
     return NextResponse.json({ error: "У теста уже есть попытки прохождения, вопросы менять нельзя" }, { status: 409 });
   }
 
-  const body = await req.json();
-  const text = String(body.text || "").trim();
-  const kind: "CHOICE" | "OPEN" = body.kind === "OPEN" ? "OPEN" : "CHOICE";
-  if (!text) return NextResponse.json({ error: "Введите текст вопроса" }, { status: 400 });
-
-  const options = (Array.isArray(body.options) ? body.options : [])
-    .map((o: any) => ({ text: String(o.text || "").trim(), isCorrect: Boolean(o.isCorrect) }))
-    .filter((o: { text: string }) => o.text);
+  const parsed = await parseBody(req, questionCreateSchema);
+  if (!parsed.ok) return parsed.response;
+  const { text, kind } = parsed.data;
+  const options = parsed.data.options.filter((o) => o.text);
 
   if (kind === "CHOICE") {
     if (options.length < 2) {
@@ -35,7 +33,7 @@ export async function POST(
     if (options.length > 10) {
       return NextResponse.json({ error: "Не больше десяти вариантов ответа" }, { status: 400 });
     }
-    if (!options.some((o: { isCorrect: boolean }) => o.isCorrect)) {
+    if (!options.some((o) => o.isCorrect)) {
       return NextResponse.json({ error: "Отметьте хотя бы один правильный ответ" }, { status: 400 });
     }
   }
@@ -55,11 +53,7 @@ export async function POST(
       ...(kind === "CHOICE"
         ? {
             options: {
-              create: options.map((o: { text: string; isCorrect: boolean }, i: number) => ({
-                text: o.text,
-                isCorrect: o.isCorrect,
-                order: i,
-              })),
+              create: options.map((o, i) => ({ text: o.text, isCorrect: o.isCorrect, order: i })),
             },
           }
         : {}),
