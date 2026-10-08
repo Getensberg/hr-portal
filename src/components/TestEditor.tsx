@@ -12,7 +12,9 @@ import {
   type TestDetail,
 } from "@/store/api";
 import { Button } from "./Button";
+import { QuestionEditForm } from "./QuestionEditForm";
 import styles from "./TestEditor.module.css";
+
 
 function AccessBlock({ test }: { test: TestDetail }) {
   const { data: users } = useGetUsersQuery();
@@ -110,6 +112,7 @@ function TestForm({ test, onDeleted }: { test: TestDetail; onDeleted?: () => voi
     { text: "", isCorrect: false },
   ]);
   const [qError, setQError] = useState("");
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
 
   const attempts = test.attemptsCount;
 
@@ -223,28 +226,39 @@ function TestForm({ test, onDeleted }: { test: TestDetail; onDeleted?: () => voi
       </div>
 
       <h3 className={`${styles.subtitle} text-h4`}>Вопросы</h3>
-      {test.questions.map((q, i) => (
-        <div key={q.id} className={styles.question}>
-          <div className={styles.questionHead}>
-            <span className="text-s">
-              <strong>{i + 1}. {q.text}</strong>{" "}
-              <span className="text-xs">{q.kind === "OPEN" ? "· свободный ответ, проверяет HR" : "· выбор ответа"}</span>
-            </span>
-            {attempts === 0 && (
-              <Button size="sm" variant="danger" onClick={() => handleDeleteQuestion(q.id)}>Удалить</Button>
+      {test.questions.map((q, i) =>
+        editingQuestionId === q.id ? (
+          <QuestionEditForm
+            key={q.id}
+            question={q}
+            onDone={() => setEditingQuestionId(null)}
+          />
+        ) : (
+          <div key={q.id} className={styles.question}>
+            <div className={styles.questionHead}>
+              <span className="text-s">
+                <strong>{i + 1}. {q.text}</strong>{" "}
+                <span className="text-xs">{q.kind === "OPEN" ? "· свободный ответ, проверяет HR" : "· выбор ответа"}</span>
+              </span>
+              {attempts === 0 && (
+                <div className={styles.actions}>
+                  <Button size="sm" variant="secondary" onClick={() => setEditingQuestionId(q.id)}>Изменить</Button>
+                  <Button size="sm" variant="danger" onClick={() => handleDeleteQuestion(q.id)}>Удалить</Button>
+                </div>
+              )}
+            </div>
+            {q.kind === "CHOICE" && (
+              <ul className={styles.options}>
+                {q.options.map((o) => (
+                  <li key={o.id} className={o.isCorrect ? styles.correct : ""}>
+                    {o.isCorrect ? "✓ " : "○ "}{o.text}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
-          {q.kind === "CHOICE" && (
-            <ul className={styles.options}>
-              {q.options.map((o) => (
-                <li key={o.id} className={o.isCorrect ? styles.correct : ""}>
-                  {o.isCorrect ? "✓ " : "○ "}{o.text}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
+        )
+      )}
       {test.questions.length === 0 && <p className="text-s">Вопросов пока нет</p>}
 
       {attempts === 0 && (

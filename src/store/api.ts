@@ -957,6 +957,14 @@ getTeamLearning: builder.query<{ employees: ReportEmployee[] }, void>({
   providesTags: ["Learning"],
 }),
 
+updateTestQuestion: builder.mutation<
+  { id: string },
+  { questionId: string; text: string; options?: { text: string; isCorrect: boolean }[] }
+>({
+  query: ({ questionId, ...body }) => ({ url: `/test-questions/${questionId}`, method: "PATCH", body }),
+  invalidatesTags: ["Test"],
+}),
+
   }),
 });
 
@@ -1052,5 +1060,6 @@ export const {
   useGetReviewQuery, 
   useSubmitReviewMutation, 
   useGetLearningReportQuery, 
-  useGetTeamLearningQuery
+  useGetTeamLearningQuery,
+  useUpdateTestQuestionMutation,
 } = apiSlice;
