@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseBody } from "@/lib/validate";
+import { orgPersonSchema } from "@/lib/schemas";
 
 async function wouldCreateCycle(entryId: string, proposedManagerId: string): Promise<boolean> {
   if (entryId === proposedManagerId) return true;
@@ -30,7 +32,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const parsed = await parseBody(req, orgPersonSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   if (body.managerId) {
     const cycle = await wouldCreateCycle(id, body.managerId);
@@ -42,23 +46,21 @@ export async function PATCH(
     }
   }
 
-  const department = String(body.department ?? "").trim();
-
-  if (department) {
+  if (body.department) {
     await prisma.department.upsert({
-      where: { name: department },
+      where: { name: body.department },
       update: {},
-      create: { name: department },
+      create: { name: body.department },
     });
   }
 
   // Отметка имеет смысл только при заполненном отделе
-  const isHead = Boolean(body.isDepartmentHead) && Boolean(department);
+  const isHead = body.isDepartmentHead && body.department !== null;
 
   // Руководитель у отдела один: у остальных отметка снимается
   if (isHead) {
     await prisma.orgPerson.updateMany({
-      where: { department, isDepartmentHead: true, NOT: { id } },
+      where: { department: body.department, isDepartmentHead: true, NOT: { id } },
       data: { isDepartmentHead: false },
     });
   }
@@ -67,12 +69,12 @@ export async function PATCH(
     where: { id },
     data: {
       fullName: body.fullName,
-      position: body.position || null,
-      department: department || null,
-      phone: body.phone || null,
-      email: body.email || null,
-      managerId: body.managerId || null,
-      linkedUserId: body.linkedUserId || null,
+      position: body.position,
+      department: body.department,
+      phone: body.phone,
+      email: body.email,
+      managerId: body.managerId,
+      linkedUserId: body.linkedUserId,
       isDepartmentHead: isHead,
     },
   });

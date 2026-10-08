@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getHRSession } from "@/lib/guards";
+import { parseBody } from "@/lib/validate";
+import { questionUpdateSchema } from "@/lib/schemas";
 
 export async function PATCH(
   req: NextRequest,
@@ -24,16 +26,13 @@ export async function PATCH(
     );
   }
 
-  const body = await req.json();
-  const text = String(body.text ?? "").trim();
-  if (!text) return NextResponse.json({ error: "Введите текст вопроса" }, { status: 400 });
+  const parsed = await parseBody(req, questionUpdateSchema);
+  if (!parsed.ok) return parsed.response;
+  const text = parsed.data.text;
 
   let options: { text: string; isCorrect: boolean }[] = [];
   if (question.kind === "CHOICE") {
-    const raw: any[] = Array.isArray(body.options) ? body.options : [];
-    options = raw
-      .map((o) => ({ text: String(o?.text ?? "").trim(), isCorrect: Boolean(o?.isCorrect) }))
-      .filter((o) => o.text);
+    options = (parsed.data.options ?? []).filter((o) => o.text);
     if (options.length < 2) {
       return NextResponse.json({ error: "Нужно минимум два варианта ответа" }, { status: 400 });
     }

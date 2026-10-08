@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { getTeamUserIds } from "@/lib/team";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseBody } from "@/lib/validate";
+import { requestStatusSchema } from "@/lib/schemas";
 
 export async function PATCH(
   req: NextRequest,
@@ -23,12 +25,15 @@ export async function PATCH(
     }
   }
 
-  const body = await req.json();
+  const parsed = await parseBody(req, requestStatusSchema);
+  if (!parsed.ok) return parsed.response;
+  const { status } = parsed.data;
+
   const updated = await prisma.request.update({
     where: { id },
     data: {
-      status: body.status,
-      completedAt: body.status === "DONE" ? new Date() : null,
+      status,
+      completedAt: status === "DONE" ? new Date() : null,
     },
   });
   return NextResponse.json(updated);

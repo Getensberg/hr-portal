@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseBody } from "@/lib/validate";
+import { vacationStatusSchema } from "@/lib/schemas";
 
 export async function PATCH(
   req: NextRequest,
@@ -13,13 +15,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  if (body.status !== "PLANNED" && body.status !== "CONFIRMED") {
-    return NextResponse.json({ error: "Неизвестный статус" }, { status: 400 });
-  }
+  const parsed = await parseBody(req, vacationStatusSchema);
+  if (!parsed.ok) return parsed.response;
 
   try {
-    const updated = await prisma.vacationEntry.update({ where: { id }, data: { status: body.status } });
+    const updated = await prisma.vacationEntry.update({ where: { id }, data: { status: parsed.data.status } });
     return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
