@@ -29,6 +29,7 @@ const ADMIN_LINKS = [
   { href: "/admin/courses", label: "Обучение" },
   { href: "/admin/tests", label: "Тесты" },
   { href: "/admin/reviews", label: "Проверка" },
+  { href: "/admin/learning", label: "Отчёты" },
 ];
 
 export function Nav() {

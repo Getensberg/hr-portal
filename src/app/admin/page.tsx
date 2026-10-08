@@ -19,6 +19,7 @@ const ADMIN_TILES = [
   { href: "/admin/courses", title: "Обучение", desc: "Курсы, уроки, тесты и доступ" },
   { href: "/admin/tests", title: "Тесты", desc: "Отдельные тесты и проверка знаний" },
   { href: "/admin/reviews", title: "Проверка тестов", desc: "Свободные ответы, ожидающие оценки" },
+  { href: "/admin/learning", title: "Отчёты по обучению", desc: "Прохождение курсов, результаты тестов, прогресс сотрудников" },
 ];
 
 export default function AdminHomePage() {

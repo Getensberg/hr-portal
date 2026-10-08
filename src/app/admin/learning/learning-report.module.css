@@ -1,0 +1,22 @@
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat { background: var(--color-bg-card); border: 1px solid var(--color-text-muted); border-radius: var(--radius-sm); padding: 14px 16px; }
+.statNumber { font-size: 28px; font-weight: 600; color: var(--color-text-primary); line-height: 1.1; }
+.statLabel { font-size: 13px; color: var(--color-text-tertiary); margin-top: 4px; }
+.statLink { display: inline-block; margin-top: 6px; font-size: 13px; }
+
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+.tableWrap { overflow-x: auto; background: var(--color-white); border: 1px solid var(--color-text-muted); border-radius: var(--radius-sm); }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--color-text-secondary); }
+.table th {
+  text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--color-text-tertiary); padding: 12px 16px; border-bottom: 1px solid var(--color-bg-card); white-space: nowrap;
+}
+.table td { padding: 12px 16px; border-bottom: 1px solid var(--color-bg-card); vertical-align: top; }
+.table tr:last-child td { border-bottom: none; }
+.title { font-weight: 600; color: var(--color-text-primary); }
+.sub { font-size: 12px; font-weight: 400; color: var(--color-text-tertiary); margin-top: 2px; }
+.linkBtn { background: none; border: none; padding: 0; font: inherit; color: var(--color-text-primary); text-decoration: underline; cursor: pointer; }
+.expand { background: var(--color-bg-card); font-size: 13px; line-height: 1.5; }
+.hint { font-size: 13px; color: var(--color-text-tertiary); margin: 12px 0 0; }
+.empty { font-size: 14px; color: var(--color-text-tertiary); }

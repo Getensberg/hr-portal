@@ -423,6 +423,55 @@ export interface ReviewDetail {
   answers: ReviewAnswer[];
 }
 
+export type ReportState = "NOT_STARTED" | "IN_PROGRESS" | "DONE" | "IN_REVIEW" | "FAILED";
+
+export interface ReportItem {
+  kind: "course" | "test";
+  id: string;
+  title: string;
+  courseTitle: string | null;
+  state: ReportState;
+  percent: number | null;
+  restricted: boolean;
+}
+
+export interface ReportEmployee {
+  id: string;
+  fullName: string;
+  department: string | null;
+  position: string | null;
+  items: ReportItem[];
+}
+
+export interface ReportCourseRow {
+  id: string;
+  title: string;
+  restricted: boolean;
+  audience: number;
+  notStarted: number;
+  inProgress: number;
+  done: number;
+  notStartedNames: string[];
+}
+
+export interface ReportTestRow {
+  id: string;
+  title: string;
+  courseTitle: string | null;
+  passingScore: number;
+  attempts: number;
+  people: number;
+  passedPeople: number;
+  inReview: number;
+  avgScore: number | null;
+}
+
+export interface LearningReport {
+  employees: ReportEmployee[];
+  courses: ReportCourseRow[];
+  tests: ReportTestRow[];
+}
+
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({ baseUrl: "/api" }),
@@ -899,6 +948,14 @@ submitReview: builder.mutation<{ passed: boolean; score: number }, { attemptId: 
   query: ({ attemptId, verdicts }) => ({ url: `/reviews/${attemptId}`, method: "POST", body: { verdicts } }),
   invalidatesTags: ["Review", "Learning", "Test"],
 }),
+getLearningReport: builder.query<LearningReport, void>({
+  query: () => "/reports/learning",
+  providesTags: ["Learning", "Review"],
+}),
+getTeamLearning: builder.query<{ employees: ReportEmployee[] }, void>({
+  query: () => "/learning/team",
+  providesTags: ["Learning"],
+}),
 
   }),
 });
@@ -993,5 +1050,7 @@ export const {
   useSubmitAttemptMutation, 
   useGetReviewsQuery, 
   useGetReviewQuery, 
-  useSubmitReviewMutation,
+  useSubmitReviewMutation, 
+  useGetLearningReportQuery, 
+  useGetTeamLearningQuery
 } = apiSlice;
