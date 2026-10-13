@@ -173,3 +173,38 @@
   .moreRow { display: flex; margin: -12px 0 28px; }
   .moreRow > button { width: 100%; }
 }
+
+/* Моя статистика (вверху страницы) */
+.myStats { margin-bottom: 36px; }
+.myStats .sectionTitle { margin-bottom: 12px; }
+.myStatsCard {
+  display: flex;
+  gap: 28px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 24px 28px;
+  box-shadow: var(--shadow-card);
+}
+.statCol { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.statDivider { width: 1px; background: var(--color-border); flex-shrink: 0; }
+.statHead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.statName { font-size: 18px; font-weight: 600; color: var(--color-text-primary); }
+.statPercent { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; color: var(--color-accent); }
+.statSub { font-size: 14px; color: var(--color-text-tertiary); margin-top: -6px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.pill { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-pill); white-space: nowrap; }
+.pillLilac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
+.pillMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+.pillSky { background: var(--tint-sky-bg); color: var(--tint-sky-fg); }
+.pillRose { background: var(--tint-rose-bg); color: var(--tint-rose-fg); }
+.pillSand { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
+.pillGray { background: var(--color-bg-card); color: var(--color-text-tertiary); }
+
+@media (max-width: 640px) {
+  .myStats { margin-bottom: 24px; }
+  .myStatsCard { flex-direction: column; gap: 18px; padding: 18px; border-radius: 20px; }
+  .statDivider { width: 100%; height: 1px; }
+  .statName { font-size: 16px; }
+  .statPercent { font-size: 22px; }
+}

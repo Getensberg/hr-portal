@@ -7,7 +7,6 @@ import { Button } from "@/components/Button";
 import { Select } from "@/components/Select";
 import { ProgressBar } from "@/components/ProgressBar";
 import { StatusPill, testStatusKey, type StatusKey } from "@/components/LearningStatus";
-import buttonStyles from "@/components/Button.module.css";
 import styles from "./learning.module.css";
 
 const PAGE_SIZE = 4;
@@ -108,6 +107,11 @@ export default function LearningPage() {
   );
 
   const inProgress = courseItems.filter((i) => i.status === "IN_PROGRESS");
+  // Статистика по курсам
+  const courseTotal = courseItems.length;
+  const coursesDone = courseItems.filter((i) => i.status === "DONE").length;
+  const coursesNew = courseItems.filter((i) => i.status === "NOT_STARTED").length;
+  const coursePercent = courseTotal ? Math.round((coursesDone / courseTotal) * 100) : 0;
   // Статистика по тестам: сдано, осталось, не сдано, на проверке
   const testTotal = testItems.length;
   const testPassed = testItems.filter((t) => t.status === "DONE").length;
@@ -120,28 +124,39 @@ export default function LearningPage() {
 
   return (
     <PageShell title="Обучение">
-      <div className={`${styles.top} ${inProgress.length > 0 ? styles.topWithContinue : ""}`}>
-
-      {inProgress.length > 0 && (
-        <div className={styles.continueBlock}>
-          <h2 className={`${styles.sectionTitle} text-h2`}>Продолжить</h2>
-          <div className={styles.continueRow}>
-            {inProgress.map((i) => (
-              <div key={i.key} className={styles.continueCard}>
-                <div className={styles.continueTitle}>{i.title}</div>
-                <ProgressBar percent={i.percent ?? 0} />
-                <div className={styles.continueMeta}>Пройдено {i.percent}%</div>
-                <div>
-                  <Link href={i.href} className={`${buttonStyles.btn} ${buttonStyles.secondary} ${buttonStyles.small}`}>
-                    Продолжить
-                  </Link>
-                </div>
-              </div>
-            ))}
+      <section className={styles.myStats}>
+        <h2 className={`${styles.sectionTitle} text-h2`}>Моя статистика</h2>
+        <div className={styles.myStatsCard}>
+          <div className={styles.statCol}>
+            <div className={styles.statHead}>
+              <span className={styles.statName}>Курсы</span>
+              <span className={styles.statPercent}>{coursePercent}%</span>
+            </div>
+            <div className={styles.statSub}>Пройдено {coursesDone} из {courseTotal}</div>
+            <ProgressBar percent={coursePercent} />
+            <div className={styles.pills}>
+              <span className={`${styles.pill} ${styles.pillLilac}`}>В процессе: {inProgress.length}</span>
+              <span className={`${styles.pill} ${styles.pillMint}`}>Пройдено: {coursesDone}</span>
+              <span className={`${styles.pill} ${styles.pillGray}`}>Не начато: {coursesNew}</span>
+            </div>
+          </div>
+          <div className={styles.statDivider} aria-hidden="true" />
+          <div className={styles.statCol}>
+            <div className={styles.statHead}>
+              <span className={styles.statName}>Тесты</span>
+              <span className={styles.statPercent}>{testPercent}%</span>
+            </div>
+            <div className={styles.statSub}>Сдано {testPassed} из {testTotal}</div>
+            <ProgressBar percent={testPercent} />
+            <div className={styles.pills}>
+              <span className={`${styles.pill} ${styles.pillMint}`}>Сдано: {testPassed}</span>
+              <span className={`${styles.pill} ${styles.pillSky}`}>Осталось: {testRemaining}</span>
+              <span className={`${styles.pill} ${styles.pillRose}`}>Не сдано: {testFailed}</span>
+              <span className={`${styles.pill} ${styles.pillSand}`}>На проверке: {testReview}</span>
+            </div>
           </div>
         </div>
-      )}
-      </div>
+      </section>
 
       <h2 className={`${styles.sectionTitle} text-h2`}>Каталог</h2>
       <div className={styles.filters}>
@@ -193,24 +208,6 @@ export default function LearningPage() {
         </p>
       )}
 
-      {testTotal > 0 && (
-        <section className={styles.testStats}>
-          <h2 className={`${styles.sectionTitle} text-h2`}>Мои тесты</h2>
-          <div className={styles.testStatsCard}>
-            <div className={styles.testStatsTop}>
-              <span className={styles.testStatsLabel}>Сдано {testPassed} из {testTotal}</span>
-              <span className={styles.testStatsPercent}>{testPercent}%</span>
-            </div>
-            <ProgressBar percent={testPercent} />
-            <div className={styles.testStatsGrid}>
-              <div className={`${styles.testTile} ${styles.tileMint}`}><div className={styles.tileNumber}>{testPassed}</div><div className={styles.tileLabel}>сдано</div></div>
-              <div className={`${styles.testTile} ${styles.tileSky}`}><div className={styles.tileNumber}>{testRemaining}</div><div className={styles.tileLabel}>осталось пройти</div></div>
-              <div className={`${styles.testTile} ${styles.tileRose}`}><div className={styles.tileNumber}>{testFailed}</div><div className={styles.tileLabel}>не сдано</div></div>
-              <div className={`${styles.testTile} ${styles.tileSand}`}><div className={styles.tileNumber}>{testReview}</div><div className={styles.tileLabel}>на проверке</div></div>
-            </div>
-          </div>
-        </section>
-      )}
     </PageShell>
   );
 }
