@@ -208,3 +208,16 @@
   .statName { font-size: 16px; }
   .statPercent { font-size: 22px; }
 }
+
+/* Телефон: статистика компактно — курсы и тесты рядом, снизу две пометки */
+.pillsMobile { display: none; }
+@media (max-width: 640px) {
+  .myStatsCard { flex-direction: row; flex-wrap: wrap; gap: 14px 18px; padding: 16px; }
+  .statCol { flex: 1 1 calc(50% - 9px); gap: 8px; }
+  .statDivider, .statPercent, .statCol .pills { display: none; }
+  .statHead { align-items: center; }
+  .statName { font-size: 15px; }
+  .statSub { margin-top: 0; font-size: 13px; color: var(--color-text-secondary); order: 3; }
+  .statCol > :nth-child(3) { order: 2; }
+  .pillsMobile { display: flex; gap: 8px; width: 100%; }
+}

@@ -155,6 +155,10 @@ export default function LearningPage() {
               <span className={`${styles.pill} ${styles.pillSand}`}>На проверке: {testReview}</span>
             </div>
           </div>
+          <div className={styles.pillsMobile}>
+            <span className={`${styles.pill} ${styles.pillLilac}`}>В процессе: {inProgress.length}</span>
+            <span className={`${styles.pill} ${styles.pillMint}`}>Пройдено: {coursesDone + testPassed}</span>
+          </div>
         </div>
       </section>
 
