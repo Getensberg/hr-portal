@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useGetLearningQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
@@ -9,6 +9,8 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { StatusPill, testStatusKey, type StatusKey } from "@/components/LearningStatus";
 import buttonStyles from "@/components/Button.module.css";
 import styles from "./learning.module.css";
+
+const PAGE_SIZE = 4;
 
 type Group = "new" | "started" | "done";
 
@@ -45,6 +47,11 @@ export default function LearningPage() {
   const [group, setGroup] = useState("");
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
+  const [shownCount, setShownCount] = useState(PAGE_SIZE); // телефон: сколько карточек каталога показано
+
+  useEffect(() => {
+    setShownCount(PAGE_SIZE);
+  }, [kind, group, category, search]);
 
   const courses = data?.courses ?? [];
   const tests = data?.tests ?? [];
@@ -151,8 +158,8 @@ export default function LearningPage() {
       </div>
 
       <div className={styles.grid}>
-        {filtered.map((i) => (
-          <Link key={i.key} href={i.href} className={styles.card}>
+        {filtered.map((i, idx) => (
+          <Link key={i.key} href={i.href} className={`${styles.card} ${idx >= shownCount ? styles.cardHiddenMobile : ""}`}>
             <div className={styles.cardTop}>
               <span className={styles.kind}>{i.kind === "course" ? "Курс" : "Тест"}</span>
               {i.category && <span className={styles.category}>{i.category}</span>}
@@ -169,6 +176,17 @@ export default function LearningPage() {
           </Link>
         ))}
       </div>
+      {filtered.length > PAGE_SIZE && (
+        <div className={styles.moreRow}>
+          {shownCount < filtered.length ? (
+            <Button variant="secondary" onClick={() => setShownCount((c) => c + PAGE_SIZE)}>
+              Показать ещё {Math.min(PAGE_SIZE, filtered.length - shownCount)}
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={() => setShownCount(PAGE_SIZE)}>Свернуть</Button>
+          )}
+        </div>
+      )}
       {filtered.length === 0 && (
         <p className={styles.empty}>
           {items.length === 0 ? "Пока нет доступных курсов и тестов" : "По выбранным фильтрам ничего не найдено"}

@@ -165,3 +165,11 @@
 /* Верхний блок: только «Продолжить» */
 .top { display: block; margin-bottom: 36px; }
 .top:empty { display: none; margin: 0; }
+
+/* Телефон: каталог по 4 карточки и кнопка «Показать ещё» */
+.moreRow { display: none; }
+@media (max-width: 640px) {
+  .cardHiddenMobile { display: none; }
+  .moreRow { display: flex; margin: -12px 0 28px; }
+  .moreRow > button { width: 100%; }
+}
