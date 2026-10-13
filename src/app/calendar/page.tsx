@@ -60,6 +60,30 @@ function usedDays(kind: string) {
     (b) => daysInYear(new Date(b.startDate), new Date(b.endDate), year) > 0
   );
 
+  // Выбор дат кликом: 1-й клик — один день, 2-й — конец периода, 3-й — начать заново
+  const [picking, setPicking] = useState(false);
+  function isoToRu(iso: string) {
+    const [y, m, d] = iso.split("-");
+    return `${d}.${m}.${y}`;
+  }
+  function handlePick(iso: string) {
+    const ru = isoToRu(iso);
+    if (!picking) {
+      setStartInput(ru);
+      setEndInput(ru);
+      setPicking(true);
+      return;
+    }
+    const first = parseRuDate(startInput);
+    if (first && iso < first) {
+      setStartInput(ru);
+      setEndInput(isoToRu(first));
+    } else {
+      setEndInput(ru);
+    }
+    setPicking(false);
+  }
+
   const startISO = parseRuDate(startInput);
   const endISO = parseRuDate(endInput);
   const startDate = startISO ? parseISODate(startISO) : null;
@@ -87,6 +111,7 @@ function usedDays(kind: string) {
       await createVacation({ type, startDate: startISO, endDate: endISO, comment: comment || undefined }).unwrap();
       setStartInput("");
       setEndInput("");
+      setPicking(false);
       setComment("");
     } catch (err) {
       setError(getErrorMessage(err, "Не удалось сохранить период"));
@@ -135,6 +160,9 @@ function usedDays(kind: string) {
             entries={entries}
             holidays={holidays ?? []}
             blocked={blocked ?? []}
+            selStart={startISO}
+            selEnd={endISO}
+            onPick={handlePick}
           />
         </section>
 
@@ -152,7 +180,7 @@ function usedDays(kind: string) {
                   className="input"
                   inputMode="numeric"
                   value={startInput}
-                  onChange={(e) => setStartInput(autoFormatRuDate(e.target.value))}
+                  onChange={(e) => { setPicking(false); setStartInput(autoFormatRuDate(e.target.value)); }}
                   placeholder="дд.мм.гггг"
                   maxLength={10}
                 />
@@ -163,7 +191,7 @@ function usedDays(kind: string) {
                   className="input"
                   inputMode="numeric"
                   value={endInput}
-                  onChange={(e) => setEndInput(autoFormatRuDate(e.target.value))}
+                  onChange={(e) => { setPicking(false); setEndInput(autoFormatRuDate(e.target.value)); }}
                   placeholder="дд.мм.гггг"
                   maxLength={10}
                 />

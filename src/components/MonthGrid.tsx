@@ -23,9 +23,13 @@ interface MonthGridProps {
   entries: VacationEntryItem[];
   holidays: HolidayItem[];
   blocked: BlockedPeriodItem[];
+  /** Выбранный период (ISO yyyy-mm-dd). Если задан onPick — даты кликабельны */
+  selStart?: string | null;
+  selEnd?: string | null;
+  onPick?: (iso: string) => void;
 }
 
-export function MonthGrid({ year, month, onChange, entries, holidays, blocked }: MonthGridProps) {
+export function MonthGrid({ year, month, onChange, entries, holidays, blocked, selStart, selEnd, onPick }: MonthGridProps) {
   const today = useToday();
 
   const leading = weekdayIndex(new Date(Date.UTC(year, month, 1)));
@@ -74,19 +78,46 @@ export function MonthGrid({ year, month, onChange, entries, holidays, blocked }:
           if (holiday) hints.push(holiday);
           if (block) hints.push(`Не рекомендуется: ${block.reason}`);
 
+          const lo = selStart && selEnd && selStart > selEnd ? selEnd : selStart;
+          const hi = selStart && selEnd && selStart > selEnd ? selStart : selEnd;
+          const isEdge = !!lo && (key === lo || key === hi);
+          const inRange = !!lo && !!hi && key > lo && key < hi;
+          const selCls = isEdge ? styles.selEdge : inRange ? styles.selRange : "";
+          const classes = `${styles.cell} ${cls} ${key === today ? colors.today : ""} ${selCls}`;
+
+          if (!onPick) {
+            return (
+              <div key={key} className={classes} title={hints.join(" · ") || undefined}>
+                {day}
+              </div>
+            );
+          }
           return (
-            <div
+            <button
+              type="button"
               key={key}
-              className={`${styles.cell} ${cls} ${key === today ? colors.today : ""}`}
+              className={`${classes} ${styles.pick}`}
               title={hints.join(" · ") || undefined}
+              aria-pressed={isEdge || inRange}
+              onClick={() => onPick(key)}
             >
               {day}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      <CalendarLegend />
+      {onPick && (
+        <p className={styles.hint}>Нажмите на дату, а затем на вторую, чтобы выбрать период. Одна дата — один день.</p>
+      )}
+
+      <div className={styles.legendDesktop}>
+        <CalendarLegend />
+      </div>
+      <details className={styles.legendMobile}>
+        <summary>Обозначения цветов</summary>
+        <CalendarLegend />
+      </details>
     </div>
   );
 }
