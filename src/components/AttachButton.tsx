@@ -7,10 +7,11 @@ type AttachButtonProps = {
   onChange: (files: File[]) => void;
   label?: string;
   multiple?: boolean;
+  accept?: string;
 };
 
 // Кнопка-скрепка: добавляет файлы, выбранные файлы показываются плашками с крестиком
-export function AttachButton({ files, onChange, label = "Прикрепить файл", multiple = true }: AttachButtonProps) {
+export function AttachButton({ files, onChange, label = "Прикрепить файл", multiple = true, accept }: AttachButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -26,7 +27,7 @@ export function AttachButton({ files, onChange, label = "Прикрепить ф
 
   return (
     <div className={styles.wrap}>
-      <input ref={inputRef} type="file" multiple={multiple} onChange={onPick} className={styles.hidden} tabIndex={-1} />
+      <input ref={inputRef} type="file" multiple={multiple} accept={accept} onChange={onPick} className={styles.hidden} tabIndex={-1} />
       <button type="button" className={styles.btn} onClick={() => inputRef.current?.click()}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m21 11.5-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.9-8.9a3.7 3.7 0 0 1 5.2 5.2l-8.9 8.9a1.8 1.8 0 0 1-2.6-2.6l8.2-8.2" />

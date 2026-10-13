@@ -3,35 +3,28 @@ import { useState } from "react";
 import { useGetContentQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Select } from "@/components/Select";
+import { FileTypeIcon } from "@/components/FileTypeIcon";
 import styles from "./documents.module.css";
 
 type DocFile = { url: string; name: string };
 
 const NO_FOLDER = "Без категории";
 
-// Тип файла по расширению: подпись и цвет плитки
-function fileKind(name: string): { label: string; tint: string } {
-  const ext = (name.split(".").pop() ?? "").toLowerCase();
-  if (["xls", "xlsx", "csv"].includes(ext)) return { label: ext.toUpperCase(), tint: "tintMint" };
-  if (ext === "pdf") return { label: "PDF", tint: "tintRose" };
-  if (["doc", "docx", "rtf", "txt"].includes(ext)) return { label: ext.toUpperCase(), tint: "tintSky" };
-  if (["ppt", "pptx"].includes(ext)) return { label: ext.toUpperCase(), tint: "tintPeach" };
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return { label: ext.toUpperCase(), tint: "tintLilac" };
-  if (["zip", "rar", "7z"].includes(ext)) return { label: ext.toUpperCase(), tint: "tintSand" };
-  return { label: ext && ext.length <= 4 ? ext.toUpperCase() : "ФАЙЛ", tint: "tintGray" };
-}
-
 function FileRow({ file }: { file: DocFile }) {
-  const kind = fileKind(file.name);
   return (
     <a href={file.url} target="_blank" rel="noopener noreferrer" className={styles.file} title={file.name}>
-      <span className={`${styles.fileIcon} ${styles[kind.tint]}`}>{kind.label}</span>
+      <FileTypeIcon name={file.name} />
       <span className={styles.fileName}>{file.name}</span>
       <svg className={styles.fileArrow} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />
       </svg>
     </a>
   );
+}
+
+function docFiles(item: { files?: DocFile[] | null; fileUrl?: string | null; fileName?: string | null }): DocFile[] {
+  if (item.files?.length) return item.files;
+  return item.fileUrl ? [{ url: item.fileUrl, name: item.fileName || "Файл" }] : [];
 }
 
 export default function DocumentsPage() {
@@ -44,9 +37,14 @@ export default function DocumentsPage() {
     new Set((items ?? []).map((i) => i.category).filter((c): c is string => Boolean(c)))
   );
 
+  const q = search.trim().toLowerCase();
   const filtered = (items ?? []).filter((item) => {
     const matchesCategory = !category || item.category === category;
-    const matchesSearch = !search || item.title.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      !q ||
+      item.title.toLowerCase().includes(q) ||
+      (item.category ?? "").toLowerCase().includes(q) ||
+      docFiles(item).some((f) => f.name.toLowerCase().includes(q));
     return matchesCategory && matchesSearch;
   });
 
@@ -58,7 +56,7 @@ export default function DocumentsPage() {
   });
   // «Без категории» всегда в конце
   const folders = Object.entries(grouped).sort(([a], [b]) => (a === NO_FOLDER ? 1 : b === NO_FOLDER ? -1 : a.localeCompare(b, "ru")));
-  const searching = Boolean(search);
+  const searching = Boolean(q);
 
   return (
     <PageShell title="Документы">
@@ -68,13 +66,14 @@ export default function DocumentsPage() {
           className="input"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Поиск по названию"
-          aria-label="Поиск по названию"
+          placeholder="Поиск по документам, папкам и файлам"
+          aria-label="Поиск"
         />
       </div>
 
       {isLoading && <p className="text-s">Загрузка...</p>}
 
+      <div className={styles.folders}>
       {folders.map(([folder, docs]) => {
         const isClosed = closed[folder] && !searching;
         return (
@@ -100,11 +99,7 @@ export default function DocumentsPage() {
             {!isClosed && (
               <div className={styles.docs}>
                 {docs.map((doc) => {
-                  const files: DocFile[] = doc.files?.length
-                    ? doc.files
-                    : doc.fileUrl
-                      ? [{ url: doc.fileUrl, name: doc.fileName || "Файл" }]
-                      : [];
+                  const files = docFiles(doc);
                   return (
                     <article key={doc.id} className={styles.doc}>
                       <h3 className={styles.docTitle}>{doc.title}</h3>
@@ -123,6 +118,7 @@ export default function DocumentsPage() {
           </section>
         );
       })}
+      </div>
       {filtered.length === 0 && !isLoading && <p className="text-s">Ничего не найдено</p>}
     </PageShell>
   );

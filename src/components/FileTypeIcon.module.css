@@ -1,0 +1,16 @@
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.tintMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+.tintRose { background: var(--tint-rose-bg); color: var(--tint-rose-fg); }
+.tintSky { background: var(--tint-sky-bg); color: var(--tint-sky-fg); }
+.tintPeach { background: var(--tint-peach-bg); color: var(--tint-peach-fg); }
+.tintLilac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
+.tintSand { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
+.tintGray { background: var(--color-bg-card); color: var(--color-text-tertiary); }
