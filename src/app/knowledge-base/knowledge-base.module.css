@@ -23,18 +23,25 @@
 .tintMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
 .tintPeach { background: var(--tint-peach-bg); color: var(--tint-peach-fg); }
 
-/* Телефон: две карточки в ряд, только значок и название */
+/* Телефон: две карточки в ряд, значок и название по центру */
 @media (max-width: 640px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .hubCard > div {
-    min-height: 140px;
     height: 100%;
-    padding: 18px 16px;
+    min-height: 150px;
+    padding: 20px 12px;
     border-radius: 22px;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
   }
   .hubCard :global(p) { display: none; }
-  .icon { width: 52px; height: 52px; border-radius: 18px; margin-bottom: 0; }
+  .icon { width: 52px; height: 52px; border-radius: 18px; margin: 0; flex-shrink: 0; }
   .icon svg { width: 26px; height: 26px; }
-  .hubCard > div > :last-child { font-size: 16px; line-height: 1.25; margin: 14px 0 0; }
+  .hubCard > div > :last-child {
+    margin: 14px 0 0;
+    font-size: 15px;
+    line-height: 1.25;
+    min-height: 2.5em;
+  }
 }
