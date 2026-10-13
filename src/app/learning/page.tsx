@@ -101,9 +101,6 @@ export default function LearningPage() {
   );
 
   const inProgress = courseItems.filter((i) => i.status === "IN_PROGRESS");
-  const completedCourses = courseItems.filter((i) => i.status === "DONE").length;
-  const passedTests = new Set(attempts.filter((a) => a.status === "GRADED" && a.passed).map((a) => a.testId)).size;
-  const inReview = attempts.filter((a) => a.status === "IN_REVIEW").length;
   // Статистика по тестам: сдано, осталось, не сдано, на проверке
   const testTotal = testItems.length;
   const testPassed = testItems.filter((t) => t.status === "DONE").length;
@@ -117,12 +114,6 @@ export default function LearningPage() {
   return (
     <PageShell title="Обучение">
       <div className={`${styles.top} ${inProgress.length > 0 ? styles.topWithContinue : ""}`}>
-      <div className={styles.stats}>
-        <div className={styles.stat}><div className={styles.statNumber}>{inProgress.length}</div><div className={styles.statLabel}>в процессе</div></div>
-        <div className={styles.stat}><div className={styles.statNumber}>{completedCourses}</div><div className={styles.statLabel}>курсов пройдено</div></div>
-        <div className={styles.stat}><div className={styles.statNumber}>{passedTests}</div><div className={styles.statLabel}>тестов сдано</div></div>
-        <div className={styles.stat}><div className={styles.statNumber}>{inReview}</div><div className={styles.statLabel}>на проверке</div></div>
-      </div>
 
       {inProgress.length > 0 && (
         <div className={styles.continueBlock}>
