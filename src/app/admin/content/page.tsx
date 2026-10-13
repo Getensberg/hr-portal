@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -8,21 +8,39 @@ import {
   useUpdateContentMutation,
   useDeleteContentMutation,
   useUploadFileMutation,
+  type ContentItem,
 } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
-import styles from "./content-admin.module.css";
-import { getErrorMessage } from "@/lib/errors";
+import { Select } from "@/components/Select";
+import { AttachButton } from "@/components/AttachButton";
+import { FileTypeIcon } from "@/components/FileTypeIcon";
 import { FormError } from "@/components/FormError";
+import { getErrorMessage } from "@/lib/errors";
+import styles from "./content-admin.module.css";
 
-const TYPE_OPTIONS = ["KNOWLEDGE_ARTICLE", "NEWS_POST", "POLICY_DOCUMENT", "GALLERY_ALBUM"];
-const TYPE_LABELS: Record<string, string> = {
-  KNOWLEDGE_ARTICLE: "Статья",
-  NEWS_POST: "Новость",
-  POLICY_DOCUMENT: "Регламент",
-  GALLERY_ALBUM: "Фотоальбом",
-};
+type Tab = "news" | "docs" | "gallery";
+type DocFile = { url: string; name: string };
+
+const TABS: { key: Tab; label: string; types: string[]; add: string }[] = [
+  { key: "news", label: "Новости и статьи", types: ["NEWS_POST", "KNOWLEDGE_ARTICLE"], add: "Добавить новость" },
+  { key: "docs", label: "Документы", types: ["POLICY_DOCUMENT"], add: "Добавить документ" },
+  { key: "gallery", label: "Галерея", types: ["GALLERY_ALBUM"], add: "Добавить альбом" },
+];
+const NEWS_TYPE_OPTIONS = [
+  { value: "NEWS_POST", label: "Новость" },
+  { value: "KNOWLEDGE_ARTICLE", label: "Статья" },
+];
+const NO_FOLDER = "Без папки";
+
+function itemFiles(item: ContentItem): DocFile[] {
+  if (item.files?.length) return item.files;
+  return item.fileUrl ? [{ url: item.fileUrl, name: item.fileName || "Файл" }] : [];
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export default function AdminContentPage() {
   const { data: session, status } = useSession();
@@ -40,176 +58,451 @@ export default function AdminContentPage() {
   const [deleteContent] = useDeleteContentMutation();
   const [uploadFile] = useUploadFileMutation();
 
+  const [tab, setTab] = useState<Tab>("news");
+  const [query, setQuery] = useState("");
+  const [closedFolders, setClosedFolders] = useState<Record<string, boolean>>({});
+  const [pageError, setPageError] = useState("");
+
+  // Редактор: null — закрыт; id === null — создание новой записи
+  const [editor, setEditor] = useState<{ id: string | null } | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [type, setType] = useState(TYPE_OPTIONS[0]);
+  const [newsType, setNewsType] = useState("NEWS_POST");
   const [category, setCategory] = useState("");
   const [driveLink, setDriveLink] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [files, setFiles] = useState<FileList | null>(null);
-  const [image, setImage] = useState<File | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [existingFiles, setExistingFiles] = useState<DocFile[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [attachment, setAttachment] = useState<DocFile | null>(null);
+  const [newAttachment, setNewAttachment] = useState<File[]>([]);
+  const [existingImage, setExistingImage] = useState<string | null>(null);
+  const [newImage, setNewImage] = useState<File[]>([]);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const isAlbum = type === "GALLERY_ALBUM";
-  const isDocument = type === "POLICY_DOCUMENT";
+  const currentTab = TABS.find((t) => t.key === tab)!;
+
+  const tabItems = useMemo(
+    () => (items ?? []).filter((i) => currentTab.types.includes(i.type)),
+    [items, currentTab]
+  );
+  const counts = useMemo(() => {
+    const result: Record<Tab, number> = { news: 0, docs: 0, gallery: 0 };
+    for (const t of TABS) result[t.key] = (items ?? []).filter((i) => t.types.includes(i.type)).length;
+    return result;
+  }, [items]);
+
+  const q = query.trim().toLowerCase();
+  const visible = tabItems.filter(
+    (i) =>
+      !q ||
+      i.title.toLowerCase().includes(q) ||
+      (i.category ?? "").toLowerCase().includes(q) ||
+      itemFiles(i).some((f) => f.name.toLowerCase().includes(q))
+  );
+
+  const folderNames = Array.from(new Set(tabItems.map((i) => i.category).filter((c): c is string => Boolean(c)))).sort((a, b) =>
+    a.localeCompare(b, "ru")
+  );
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function openEditor(item?: ContentItem, presetCategory?: string) {
     setError("");
-    try {
-      await save();
-    } catch (err) {
-      setError(getErrorMessage(err, "Не удалось сохранить"));
-    }
+    setPageError("");
+    setTitle(item?.title ?? "");
+    setContent(item?.content ?? "");
+    setNewsType(item && item.type === "KNOWLEDGE_ARTICLE" ? "KNOWLEDGE_ARTICLE" : "NEWS_POST");
+    setCategory(item?.category ?? presetCategory ?? "");
+    setDriveLink(item && item.type === "GALLERY_ALBUM" ? item.fileUrl ?? "" : "");
+    setExistingFiles(item && item.type === "POLICY_DOCUMENT" ? itemFiles(item) : []);
+    setNewFiles([]);
+    setAttachment(item && item.type !== "POLICY_DOCUMENT" && item.type !== "GALLERY_ALBUM" && item.fileUrl ? { url: item.fileUrl, name: item.fileName || "Файл" } : null);
+    setNewAttachment([]);
+    setExistingImage(item?.imageUrl || null);
+    setNewImage([]);
+    setEditor({ id: item?.id ?? null });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function closeEditor() {
+    setEditor(null);
+    setError("");
+  }
+
+  async function upload(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return uploadFile(formData).unwrap();
   }
 
   async function save() {
+    if (!editor) return;
+    if (!title.trim()) throw new Error("Укажите заголовок");
+    if (tab === "gallery" && !driveLink.trim()) throw new Error("Укажите ссылку на папку в Google Drive");
 
-    let fileUrl: string | undefined;
-    let fileName: string | undefined;
-    let uploadedFiles: { url: string; name: string }[] | undefined;
+    const type = tab === "news" ? newsType : tab === "docs" ? "POLICY_DOCUMENT" : "GALLERY_ALBUM";
+    const body: Partial<ContentItem> = { title: title.trim(), content, type: type as ContentItem["type"], category: category.trim() || null };
 
-    if (isAlbum) {
-      fileUrl = driveLink;
-      fileName = "Google Drive";
-    } else if (isDocument && files && files.length > 0) {
-      uploadedFiles = [];
-      for (const f of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", f);
-        const uploaded = await uploadFile(formData).unwrap();
-        uploadedFiles.push({ url: uploaded.url, name: uploaded.name });
+    if (tab === "docs") {
+      const uploaded: DocFile[] = [];
+      for (const f of newFiles) {
+        const u = await upload(f);
+        uploaded.push({ url: u.url, name: u.name });
       }
-    } else if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploaded = await uploadFile(formData).unwrap();
-      fileUrl = uploaded.url;
-      fileName = uploaded.name;
-    }
-
-    let imageUrl: string | undefined;
-    if (image) {
-      const formData = new FormData();
-      formData.append("file", image);
-      const uploaded = await uploadFile(formData).unwrap();
-      imageUrl = uploaded.url;
-    }
-
-    if (editingId) {
-      await updateContent({
-        id: editingId,
-        title,
-        content,
-        type: type as any,
-        category,
-        fileUrl,
-        fileName,
-        files: uploadedFiles,
-        imageUrl,
-      }).unwrap();
-      setEditingId(null);
+      body.files = [...existingFiles, ...uploaded];
+      // старое одиночное вложение заменяется списком файлов
+      body.fileUrl = "";
+      body.fileName = "";
+    } else if (tab === "gallery") {
+      body.fileUrl = driveLink.trim();
+      body.fileName = "Google Drive";
+    } else if (newAttachment[0]) {
+      const u = await upload(newAttachment[0]);
+      body.fileUrl = u.url;
+      body.fileName = u.name;
+    } else if (attachment) {
+      body.fileUrl = attachment.url;
+      body.fileName = attachment.name;
     } else {
-      await createContent({
-        title,
-        content,
-        type: type as any,
-        category,
-        fileUrl,
-        fileName,
-        files: uploadedFiles,
-        imageUrl,
-      }).unwrap();
+      body.fileUrl = "";
+      body.fileName = "";
     }
-    setTitle(""); setContent(""); setCategory(""); setFile(null); setFiles(null); setImage(null); setDriveLink("");
+
+    if (tab !== "docs") {
+      if (newImage[0]) body.imageUrl = (await upload(newImage[0])).url;
+      else body.imageUrl = existingImage ?? (editor.id ? "" : undefined);
+    }
+
+    if (editor.id) await updateContent({ id: editor.id, ...body }).unwrap();
+    else await createContent(body).unwrap();
   }
 
-  function startEdit(item: any) {
-    setEditingId(item.id);
-    setTitle(item.title);
-    setContent(item.content);
-    setType(item.type);
-    setCategory(item.category ?? "");
-    setFile(null);
-    setFiles(null);
-    setImage(null);
-    setDriveLink(item.type === "GALLERY_ALBUM" ? (item.fileUrl ?? "") : "");
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await save();
+      setEditor(null);
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось сохранить"));
+    } finally {
+      setSaving(false);
+    }
   }
+
+  async function handleDelete(item: ContentItem) {
+    if (!confirm(`Удалить «${item.title}»? Это действие нельзя отменить.`)) return;
+    setPageError("");
+    try {
+      await deleteContent(item.id).unwrap();
+      if (editor?.id === item.id) setEditor(null);
+    } catch (err) {
+      setPageError(getErrorMessage(err, "Не удалось удалить"));
+    }
+  }
+
+  const actions = (item: ContentItem) => (
+    <div className={styles.itemActions}>
+      <Button size="sm" variant="secondary" onClick={() => openEditor(item)}>Изменить</Button>
+      <Button size="sm" variant="danger" onClick={() => handleDelete(item)}>Удалить</Button>
+    </div>
+  );
+
+  // ---------- Списки по вкладкам ----------
+  function renderNews() {
+    return (
+      <div className={styles.list}>
+        {visible.map((item) => (
+          <div key={item.id} className={styles.item}>
+            <div className={styles.thumb}>
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.imageUrl} alt="" />
+              ) : (
+                <span>{item.type === "NEWS_POST" ? "N" : "A"}</span>
+              )}
+            </div>
+            <div className={styles.itemBody}>
+              <div className={styles.itemTitle}>{item.title}</div>
+              <div className={styles.meta}>
+                <span className={styles.chip}>{item.type === "NEWS_POST" ? "Новость" : "Статья"}</span>
+                {item.category && <span>{item.category}</span>}
+                <span>{formatDate(item.createdAt)}</span>
+                {item.fileUrl && <span>Есть вложение</span>}
+              </div>
+            </div>
+            {actions(item)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function renderDocs() {
+    const grouped: Record<string, ContentItem[]> = {};
+    for (const item of visible) {
+      const folder = item.category || NO_FOLDER;
+      (grouped[folder] ??= []).push(item);
+    }
+    const folders = Object.entries(grouped).sort(([a], [b]) => (a === NO_FOLDER ? 1 : b === NO_FOLDER ? -1 : a.localeCompare(b, "ru")));
+    return (
+      <div className={styles.folders}>
+        {folders.map(([folder, docs]) => {
+          const closed = closedFolders[folder] && !q;
+          return (
+            <section key={folder} className={styles.folder}>
+              <div className={styles.folderHead}>
+                <button
+                  type="button"
+                  className={styles.folderToggle}
+                  onClick={() => setClosedFolders((c) => ({ ...c, [folder]: !c[folder] }))}
+                  aria-expanded={!closed}
+                >
+                  <span className={styles.folderIcon} aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3.5 7a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7Z" />
+                    </svg>
+                  </span>
+                  <span className={styles.folderTitle}>{folder}</span>
+                  <span className={styles.count}>{docs.length}</span>
+                  <svg className={`${styles.chevron} ${closed ? styles.chevronClosed : ""}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                <Button size="sm" variant="secondary" onClick={() => openEditor(undefined, folder === NO_FOLDER ? "" : folder)}>
+                  + Документ
+                </Button>
+              </div>
+              {!closed && (
+                <div className={styles.docs}>
+                  {docs.map((doc) => {
+                    const files = itemFiles(doc);
+                    return (
+                      <div key={doc.id} className={styles.doc}>
+                        <div className={styles.docTop}>
+                          <div className={styles.itemTitle}>{doc.title}</div>
+                          {actions(doc)}
+                        </div>
+                        {files.length > 0 ? (
+                          <div className={styles.fileChips}>
+                            {files.map((f, i) => (
+                              <a key={i} href={f.url} target="_blank" rel="noopener noreferrer" className={styles.fileChip} title={f.name}>
+                                <FileTypeIcon name={f.name} size={30} />
+                                <span>{f.name}</span>
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={styles.muted}>Файлы не приложены</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function renderGallery() {
+    return (
+      <div className={styles.gallery}>
+        {visible.map((item) => (
+          <div key={item.id} className={styles.album}>
+            <div className={styles.cover}>
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.imageUrl} alt="" />
+              ) : (
+                <span>Нет обложки</span>
+              )}
+            </div>
+            <div className={styles.albumBody}>
+              <div className={styles.itemTitle}>{item.title}</div>
+              <div className={styles.meta}>
+                {item.category && <span>{item.category}</span>}
+                <span>{formatDate(item.createdAt)}</span>
+              </div>
+              {item.fileUrl && (
+                <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" className={styles.driveLink}>
+                  Открыть в Google Диске →
+                </a>
+              )}
+            </div>
+            {actions(item)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // ---------- Редактор ----------
+  const editorTitle = editor?.id ? "Редактирование" : currentTab.add;
 
   return (
     <PageShell title="Управление базой знаний" wide>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Заголовок" />
-        <textarea
-          className="textarea"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={isAlbum ? "Короткое описание альбома" : "Текст"}
-          rows={4}
-        />
-        <div className={styles.formRow}>
-          <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
-            {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
-          </select>
-          <input className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Категория" />
+      <div className={styles.toolbar}>
+        <div className={styles.tabs} role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.key}
+              className={`${styles.tab} ${tab === t.key ? styles.tabActive : ""}`}
+              onClick={() => { setTab(t.key); setQuery(""); setEditor(null); setPageError(""); }}
+            >
+              {t.label}
+              <span className={styles.tabCount}>{counts[t.key]}</span>
+            </button>
+          ))}
         </div>
+        <Button onClick={() => openEditor()}>+ {currentTab.add.replace("Добавить ", "")}</Button>
+      </div>
 
-        {isAlbum ? (
-          <input
-            className="input"
-            value={driveLink}
-            onChange={(e) => setDriveLink(e.target.value)}
-            placeholder="Ссылка на папку в Google Drive"
-          />
-        ) : isDocument ? (
-          <div>
-            <label className="text-xs">Файлы (можно выбрать несколько)</label>
-            <input type="file" multiple onChange={(e) => setFiles(e.target.files)} />
+      {editor && (
+        <form onSubmit={handleSubmit} className={styles.editor}>
+          <div className={styles.editorHead}>
+            <h2 className={styles.editorTitle}>{editorTitle}</h2>
+            <button type="button" className={styles.close} onClick={closeEditor} aria-label="Закрыть">×</button>
           </div>
-        ) : (
-          <div>
-            <label className="text-xs">Файл-приложение (документ)</label>
-            <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          </div>
-        )}
 
-        <div>
-          <label className="text-xs">{isAlbum ? "Обложка альбома" : "Картинка-баннер (необязательно, для новостей)"}</label>
-          <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
-        </div>
+          <label className={styles.field}>
+            <span className={styles.label}>Заголовок</span>
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tab === "docs" ? "Название документа" : "Заголовок"} />
+          </label>
 
-        <div>
-          <Button type="submit">{editingId ? "Сохранить" : "Добавить"}</Button>
-          {editingId && (
-            <Button type="button" variant="secondary" onClick={() => { setEditingId(null); setDriveLink(""); }} style={{ marginLeft: 8 }}>
-              Отмена
-            </Button>
-          )}
-        </div>
-        <FormError message={error} />
-      </form>
-
-      {items?.map((item) => (
-        <Card key={item.id}>
-          <div className={styles.itemRow}>
-            <span className="text-s">
-              <strong>{item.title}</strong> · {TYPE_LABELS[item.type]}
-              {item.fileUrl && item.type !== "GALLERY_ALBUM" && <> · 📎 {item.fileName}</>}
-              {item.files && item.files.length > 0 && <> · 📎 {item.files.length} файл(ов)</>}
-              {item.imageUrl && <> · 🖼</>}
-            </span>
-            <div className={styles.itemActions}>
-              <Button variant="secondary" onClick={() => startEdit(item)}>Изменить</Button>
-              <Button variant="danger" onClick={() => deleteContent(item.id)}>Удалить</Button>
+          {tab === "news" && (
+            <div className={styles.field}>
+              <span className={styles.label}>Тип</span>
+              <Select value={newsType} onChange={setNewsType} options={NEWS_TYPE_OPTIONS} ariaLabel="Тип материала" />
             </div>
+          )}
+
+          <label className={styles.field}>
+            <span className={styles.label}>{tab === "gallery" ? "Короткое описание альбома" : tab === "docs" ? "Описание (необязательно)" : "Текст"}</span>
+            <textarea className="textarea" value={content} onChange={(e) => setContent(e.target.value)} rows={tab === "news" ? 6 : 3} />
+          </label>
+
+          <div className={styles.field}>
+            <span className={styles.label}>{tab === "docs" ? "Папка" : "Категория"}</span>
+            <input
+              className="input"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder={tab === "docs" ? "Выберите папку ниже или введите название новой" : "Необязательно"}
+            />
+            {folderNames.length > 0 && (
+              <div className={styles.suggest}>
+                {folderNames.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    className={`${styles.suggestChip} ${category === name ? styles.suggestActive : ""}`}
+                    onClick={() => setCategory(category === name ? "" : name)}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </Card>
-      ))}
+
+          {tab === "docs" && (
+            <div className={styles.field}>
+              <span className={styles.label}>Файлы документа</span>
+              {existingFiles.length > 0 && (
+                <div className={styles.fileList}>
+                  {existingFiles.map((f, i) => (
+                    <div key={`${f.url}-${i}`} className={styles.fileRow}>
+                      <FileTypeIcon name={f.name} size={36} />
+                      <a href={f.url} target="_blank" rel="noopener noreferrer" className={styles.fileRowName} title={f.name}>{f.name}</a>
+                      <button
+                        type="button"
+                        className={styles.removeBtn}
+                        onClick={() => setExistingFiles(existingFiles.filter((_, idx) => idx !== i))}
+                        aria-label={`Убрать файл ${f.name}`}
+                      >
+                        Убрать
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {existingFiles.length === 0 && <p className={styles.muted}>Пока нет загруженных файлов</p>}
+              <AttachButton files={newFiles} onChange={setNewFiles} label="Добавить файлы" />
+              <p className={styles.hint}>Лишние файлы уберите, новые добавьте и нажмите «Сохранить» — список обновится целиком.</p>
+            </div>
+          )}
+
+          {tab === "gallery" && (
+            <label className={styles.field}>
+              <span className={styles.label}>Ссылка на папку в Google Drive</span>
+              <input className="input" value={driveLink} onChange={(e) => setDriveLink(e.target.value)} placeholder="https://drive.google.com/..." />
+            </label>
+          )}
+
+          {tab === "news" && (
+            <div className={styles.field}>
+              <span className={styles.label}>Вложение (необязательно)</span>
+              {attachment && newAttachment.length === 0 && (
+                <div className={styles.fileRow}>
+                  <FileTypeIcon name={attachment.name} size={36} />
+                  <a href={attachment.url} target="_blank" rel="noopener noreferrer" className={styles.fileRowName}>{attachment.name}</a>
+                  <button type="button" className={styles.removeBtn} onClick={() => setAttachment(null)}>Убрать</button>
+                </div>
+              )}
+              <AttachButton files={newAttachment} onChange={setNewAttachment} multiple={false} label={attachment ? "Заменить файл" : "Прикрепить файл"} />
+            </div>
+          )}
+
+          {tab !== "docs" && (
+            <div className={styles.field}>
+              <span className={styles.label}>{tab === "gallery" ? "Обложка альбома" : "Картинка-баннер (необязательно)"}</span>
+              {existingImage && newImage.length === 0 && (
+                <div className={styles.imagePreview}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={existingImage} alt="" />
+                  <button type="button" className={styles.removeBtn} onClick={() => setExistingImage(null)}>Убрать</button>
+                </div>
+              )}
+              <AttachButton files={newImage} onChange={setNewImage} multiple={false} accept="image/*" label={existingImage ? "Заменить картинку" : "Выбрать картинку"} />
+            </div>
+          )}
+
+          <FormError message={error} />
+          <div className={styles.editorActions}>
+            <Button type="submit" disabled={saving}>{saving ? "Сохраняем…" : "Сохранить"}</Button>
+            <Button type="button" variant="secondary" onClick={closeEditor}>Отмена</Button>
+          </div>
+        </form>
+      )}
+
+      <div className={styles.searchRow}>
+        <input
+          className="input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={tab === "docs" ? "Поиск по документам, папкам и файлам" : "Поиск по заголовку"}
+          aria-label="Поиск"
+        />
+      </div>
+
+      <FormError message={pageError} />
+
+      {tab === "news" && renderNews()}
+      {tab === "docs" && renderDocs()}
+      {tab === "gallery" && renderGallery()}
+
+      {visible.length === 0 && (
+        <p className="text-s">{tabItems.length === 0 ? "Здесь пока ничего нет — добавьте первую запись" : "Ничего не найдено"}</p>
+      )}
     </PageShell>
   );
 }
