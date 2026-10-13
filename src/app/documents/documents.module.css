@@ -1,5 +1,5 @@
 .controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
-.controls select { flex: 0 0 200px; }
+.controls > div:first-child { flex: 0 0 220px; }
 .controls input { flex: 1; min-width: 200px; }
 
 .folder { margin-bottom: 32px; }
@@ -18,5 +18,5 @@
 }
 .fileLinks { display: flex; gap: 12px; flex-wrap: wrap; }
 @media (max-width: 640px) {
-  .controls select { flex: 1 1 100%; }
+  .controls > div:first-child { flex: 1 1 100%; }
 }

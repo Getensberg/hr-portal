@@ -4,12 +4,20 @@ import Link from "next/link";
 import { useGetLearningQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
+import { Select } from "@/components/Select";
 import { ProgressBar } from "@/components/ProgressBar";
 import { StatusPill, testStatusKey, type StatusKey } from "@/components/LearningStatus";
 import buttonStyles from "@/components/Button.module.css";
 import styles from "./learning.module.css";
 
 type Group = "new" | "started" | "done";
+
+const STATUS_OPTIONS = [
+  { value: "", label: "Любой статус" },
+  { value: "new", label: "Не начато" },
+  { value: "started", label: "Начато" },
+  { value: "done", label: "Пройдено" },
+];
 
 interface Item {
   key: string;
@@ -122,7 +130,7 @@ const visibleResults = showAllAttempts ? results : results.slice(0, 8);
   return (
     <PageShell title="Обучение">
       <div className={styles.stats}>
-        <div className={styles.stat}><div className={styles.statNumber}>{inProgress.length}</div><div className={styles.statLabel}>курсов в процессе</div></div>
+        <div className={styles.stat}><div className={styles.statNumber}>{inProgress.length}</div><div className={styles.statLabel}>в процессе</div></div>
         <div className={styles.stat}><div className={styles.statNumber}>{completedCourses}</div><div className={styles.statLabel}>курсов пройдено</div></div>
         <div className={styles.stat}><div className={styles.statNumber}>{passedTests}</div><div className={styles.statLabel}>тестов сдано</div></div>
         <div className={styles.stat}><div className={styles.statNumber}>{inReview}</div><div className={styles.statLabel}>на проверке</div></div>
@@ -150,17 +158,9 @@ const visibleResults = showAllAttempts ? results : results.slice(0, 8);
 
       <h2 className={`${styles.sectionTitle} text-h2`}>Каталог</h2>
       <div className={styles.filters}>
-        <input className={`input ${styles.search}`} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск по названию и описанию" />
-        <select className={`input ${styles.select}`} value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Все направления</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select className={`input ${styles.select}`} value={group} onChange={(e) => setGroup(e.target.value)}>
-          <option value="">Любой статус</option>
-          <option value="new">Не начато</option>
-          <option value="started">Начато</option>
-          <option value="done">Пройдено</option>
-        </select>
+        <input className={`input ${styles.search}`} aria-label="Поиск" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск по названию и описанию" />
+        <Select className={styles.select} size="sm" value={category} onChange={setCategory} ariaLabel="Направление" options={[{ value: "", label: "Все направления" }, ...categories.map((c) => ({ value: c, label: c }))]} />
+        <Select className={styles.select} size="sm" value={group} onChange={setGroup} ariaLabel="Статус" options={STATUS_OPTIONS} />
       </div>
       <div className={styles.kindTabs}>
         {([["all", "Все"], ["course", "Курсы"], ["test", "Тесты"]] as const).map(([value, label]) => (

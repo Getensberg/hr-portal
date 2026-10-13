@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useGetContentQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
+import { Select } from "@/components/Select";
 import { Card } from "@/components/Card";
 import styles from "./news-list.module.css";
 
@@ -27,10 +28,7 @@ export default function NewsListPage() {
   return (
     <PageShell title="Новости и статьи">
       <div className={styles.controls}>
-        <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Все категории</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <Select value={category} onChange={setCategory} ariaLabel="Категория" options={[{ value: "", label: "Все категории" }, ...categories.map((c) => ({ value: c, label: c }))]} />
         <input
           className="input"
           value={search}

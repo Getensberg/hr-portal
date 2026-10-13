@@ -64,3 +64,39 @@
   .grid { grid-template-columns: minmax(0, 1fr); }
   .continueRow { grid-template-columns: minmax(0, 1fr); }
 }
+.kindTabs { align-items: center; }
+
+@media (max-width: 640px) {
+  .sectionTitle { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+
+  /* Статистика: одна строка из четырёх мини-плиток */
+  .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 22px; }
+  .stat { padding: 12px 6px; border-radius: 16px; text-align: center; }
+  .statNumber { font-size: 22px; }
+  .statLabel { font-size: 11px; line-height: 1.25; margin-top: 3px; }
+
+  /* Продолжить: лента, которую можно листать вбок */
+  .continueRow {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    margin: 0 -16px 24px;
+    padding: 0 16px 4px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .continueRow::-webkit-scrollbar { display: none; }
+  .continueCard { flex: 0 0 76%; scroll-snap-align: start; padding: 16px 18px; }
+
+  /* Фильтры: поиск сверху, два списка в одну строку, вкладки */
+  .filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-bottom: 10px; }
+  .search { grid-column: 1 / -1; min-width: 0; height: 44px; }
+  .select { width: 100%; flex: none; }
+  .kindTabs { margin-bottom: 14px; }
+
+  /* Карточки ниже */
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-bottom: 28px; }
+  .card { min-height: 0; padding: 16px 18px; gap: 8px; border-radius: 18px; }
+  .cardTitle { font-size: 16px; }
+  .cardDesc { -webkit-line-clamp: 1; }
+}

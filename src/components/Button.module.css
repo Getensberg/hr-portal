@@ -14,13 +14,25 @@
   white-space: nowrap;
   text-decoration: none;
 }
-.primary { background: var(--color-text-primary); color: var(--color-white); }
-.primary:hover:not(:disabled) { background: var(--color-primary-hover); }
-.primary:disabled { background: var(--color-text-muted); cursor: not-allowed; }
+.primary {
+  background: var(--color-accent); color: var(--color-white);
+}
+.primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+.primary:disabled {
+  background: #C9C7F2; cursor: not-allowed;
+}
 
-.secondary { background: var(--color-white); color: var(--color-text-primary); border-color: var(--color-text-muted); }
-.secondary:hover:not(:disabled) { background: var(--color-bg-card); }
-.secondary:disabled { color: var(--color-text-muted); cursor: not-allowed; }
+.secondary {
+  background: var(--color-accent-soft); color: var(--color-accent); border-color: transparent;
+}
+.secondary:hover:not(:disabled) {
+  background: #DEDBFF;
+}
+.secondary:disabled {
+  color: #A9A6D8; cursor: not-allowed;
+}
 
 .danger { background: var(--color-white); color: var(--color-danger); border-color: var(--color-danger); }
 .danger:hover:not(:disabled) { background: var(--color-danger); color: var(--color-white); }
@@ -28,7 +40,9 @@
 /* Фирменная кнопка */
 .accent { background: var(--color-accent); color: var(--color-white); }
 .accent:hover:not(:disabled) { background: var(--color-accent-hover); }
-.accent:disabled { background: var(--color-text-muted); cursor: not-allowed; }
+.accent:disabled {
+  background: #C9C7F2; cursor: not-allowed;
+}
 
 /* Белая кнопка для цветных блоков */
 .light { background: var(--color-white); color: var(--color-text-primary); }

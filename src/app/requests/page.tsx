@@ -4,6 +4,8 @@ import { useGetMyRequestsQuery, useCreateRequestMutation, useUploadFileMutation 
 import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
+import { Select } from "@/components/Select";
+import { AttachButton } from "@/components/AttachButton";
 import { StatusBadge } from "@/components/StatusBadge";
 import styles from "./requests.module.css";
 import { getErrorMessage } from "@/lib/errors";
@@ -17,13 +19,15 @@ const TYPE_LABELS: Record<string, string> = {
   ACCESS: "Доступ",
 };
 
+const TYPE_OPTIONS = Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label }));
+
 export default function RequestsPage() {
   const { data: requests, isLoading } = useGetMyRequestsQuery();
   const [createRequest, { isLoading: creating }] = useCreateRequestMutation();
   const [uploadFile] = useUploadFileMutation();
   const [type, setType] = useState("DOCUMENT");
   const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<FileList | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -43,7 +47,7 @@ export default function RequestsPage() {
 
     await createRequest({ type: type as any, payload: { description }, files: uploadedFiles }).unwrap();
     setDescription("");
-    setFiles(null);
+    setFiles([]);
     } catch (err) {
       setError(getErrorMessage(err, "Не удалось отправить заявку"));
     }
@@ -52,11 +56,7 @@ export default function RequestsPage() {
   return (
     <PageShell title="Мои заявки">
       <form onSubmit={handleSubmit} className={styles.form}>
-        <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
-          {Object.entries(TYPE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
+        <Select value={type} onChange={setType} options={TYPE_OPTIONS} ariaLabel="Тип заявки" />
         <textarea
           className="textarea"
           value={description}
@@ -64,12 +64,11 @@ export default function RequestsPage() {
           placeholder="Детали заявки (например, даты отпуска)"
           rows={3}
         />
-        <div>
-          <label className="text-xs">Приложить документы (необязательно)</label>
-          <input type="file" multiple onChange={(e) => setFiles(e.target.files)} />
-        </div>
         <FormError message={error} />
-        <Button type="submit" disabled={creating}>Отправить заявку</Button>
+        <div className={styles.formActions}>
+          <AttachButton files={files} onChange={setFiles} label="Прикрепить" />
+          <Button type="submit" disabled={creating} className={styles.submit}>Отправить заявку</Button>
+        </div>
       </form>
 
       <h2 className="text-h2">История</h2>

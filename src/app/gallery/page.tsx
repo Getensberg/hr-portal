@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useGetContentQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
+import { Select } from "@/components/Select";
 import { AlbumCard } from "@/components/AlbumCard";
 import styles from "./gallery.module.css";
 
@@ -23,10 +24,7 @@ export default function GalleryPage() {
   return (
     <PageShell title="Фотогалерея">
       <div className={styles.controls}>
-        <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Все категории</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <Select value={category} onChange={setCategory} ariaLabel="Категория" options={[{ value: "", label: "Все категории" }, ...categories.map((c) => ({ value: c, label: c }))]} />
         <input
           className="input"
           value={search}

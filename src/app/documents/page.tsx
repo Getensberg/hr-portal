@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useGetContentQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
+import { Select } from "@/components/Select";
 import styles from "./documents.module.css";
 
 export default function DocumentsPage() {
@@ -29,10 +30,7 @@ export default function DocumentsPage() {
   return (
     <PageShell title="Документы">
       <div className={styles.controls}>
-        <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Все категории</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <Select value={category} onChange={setCategory} ariaLabel="Категория" options={[{ value: "", label: "Все категории" }, ...categories.map((c) => ({ value: c, label: c }))]} />
         <input
           className="input"
           value={search}

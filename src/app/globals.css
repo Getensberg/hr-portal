@@ -97,10 +97,10 @@ img {
 .input, .textarea, select.input {
   font-family: var(--font-sans);
   font-size: 16px;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-white);
+  border: 1px solid #E1DFFA;
+  background: #F6F5FF;
   color: var(--color-text-primary);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 .input {
   height: 48px;
@@ -117,6 +117,7 @@ img {
 .input:focus, .textarea:focus {
   outline: none;
   border-color: var(--color-accent);
+  background: var(--color-white);
   box-shadow: 0 0 0 4px var(--color-accent-soft);
 }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--color-accent); }
