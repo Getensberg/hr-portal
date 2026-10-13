@@ -1,56 +1,117 @@
-.yearRow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.yearBtn {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border-strong);
+/* Верхняя полоса: сюда позже можно добавить переключатель календарей (отпуска / рабочий) */
+.topBar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: -8px 0 20px; }
+.yearPicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: var(--color-white);
-  cursor: pointer;
-  font-size: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 4px;
 }
-.yearBtn:hover { background: var(--color-bg-card); }
-.balances { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.balanceNumber { font-size: 32px; font-weight: 600; color: var(--color-text-primary); margin: 4px 0; }
+.yearBtn {
+  width: 36px; height: 36px; border: none; border-radius: 50%;
+  background: transparent; color: var(--color-accent);
+  font-size: 20px; line-height: 1; cursor: pointer;
+}
+.yearBtn:hover { background: var(--color-accent-soft); }
+.yearValue { min-width: 64px; text-align: center; font-size: 17px; font-weight: 600; color: var(--color-text-primary); }
 
+/* Остатки */
+.balances { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.balance { border-radius: 24px; padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 12px; }
+.tileLilac { background: var(--tint-lilac-bg); }
+.tileMint { background: var(--tint-mint-bg); }
+.balanceTop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.balanceName { font-size: 16px; font-weight: 600; color: var(--color-text-primary); }
+.balanceUsed { font-size: 13px; color: var(--color-text-secondary); }
+.balanceNumber { font-size: 40px; font-weight: 600; letter-spacing: -1px; line-height: 1; color: var(--color-text-primary); }
+.balanceOf { font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--color-text-secondary); }
+.balance :global(div[role="progressbar"]) { background: rgba(255, 255, 255, 0.7); }
+
+/* Месяц и форма */
 .mainGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
-  margin-bottom: 16px;
+  margin-bottom: 36px;
 }
+.panel {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.panelTitle { margin: 0 0 18px; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; color: var(--color-text-primary); }
+.form { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.field > .input { width: 100%; }
+.label { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+.dates { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.preview {
+  margin: 0; padding: 10px 16px; border-radius: 14px;
+  background: var(--color-accent-soft); color: var(--color-accent); font-size: 14px;
+}
+.warning {
+  margin: 0; padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.45;
+  background: var(--tint-sand-bg); color: var(--tint-sand-fg); border: 1px solid var(--tint-sand-line);
+}
+.submit { width: 100%; }
+
+/* Периоды */
+.sectionTitle { margin: 0 0 14px; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; color: var(--color-text-primary); }
+.periods { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.period {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--color-white); border: 1px solid var(--color-border); border-radius: 20px;
+  padding: 14px 18px; box-shadow: var(--shadow-card);
+}
+.dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.dotVacation { background: var(--color-accent); }
+.dotDayOff { background: #2FA36B; }
+.periodBody { flex: 1; min-width: 0; }
+.periodTitle { font-size: 16px; font-weight: 600; color: var(--color-text-primary); }
+.periodMeta { margin-top: 3px; font-size: 13px; color: var(--color-text-tertiary); overflow-wrap: anywhere; }
+.periodActions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.badge { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-pill); white-space: nowrap; }
+.planned { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
+.confirmed { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+.hrOnly { font-size: 12px; color: var(--color-text-muted); }
+
+/* Праздники и ограничения */
+.extra { background: var(--color-white); border: 1px solid var(--color-border); border-radius: 22px; box-shadow: var(--shadow-card); }
+.extraSummary {
+  list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 18px 24px; font-size: 16px; font-weight: 600; color: var(--color-text-primary);
+}
+.extraSummary::-webkit-details-marker { display: none; }
+.extraChevron { color: var(--color-text-muted); transition: transform 0.15s ease; }
+.extra[open] .extraChevron { transform: rotate(180deg); }
+.extraBody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 0 24px 22px; }
+.extraTitle { margin: 0 0 10px; font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+.holidayList { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); }
+.muted { margin: 0; font-size: 14px; color: var(--color-text-muted); }
+
 @media (max-width: 900px) {
   .mainGrid { grid-template-columns: minmax(0, 1fr); }
 }
-
-.form { display: flex; flex-direction: column; gap: 12px; }
-.formRow { display: flex; gap: 12px; flex-wrap: wrap; }
-.formRow > * { flex: 1; min-width: 140px; }
-.preview { font-size: 14px; color: var(--color-text-tertiary); margin: 0; }
-.error { color: var(--color-danger); font-size: 14px; margin: 0; }
-.warning {
-  background: var(--tint-sand-bg);
-  color: var(--tint-sand-fg);
-  border: 1px solid var(--tint-sand-line);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
-  font-size: 14px;
-  margin: 0;
+@media (max-width: 640px) {
+  .topBar { margin: -4px 0 16px; }
+  .balances { gap: 10px; margin-bottom: 18px; }
+  .balance { padding: 14px 16px 16px; border-radius: 20px; gap: 10px; }
+  .balanceTop { flex-direction: column; gap: 2px; }
+  .balanceNumber { font-size: 30px; }
+  .balanceOf { font-size: 12px; display: block; margin-top: 2px; }
+  .mainGrid { gap: 16px; margin-bottom: 28px; }
+  .panel { padding: 18px 16px; border-radius: 20px; }
+  .panelTitle { font-size: 18px; margin-bottom: 14px; }
+  .sectionTitle { font-size: 19px; }
+  .period { flex-wrap: wrap; padding: 14px 16px; gap: 10px 12px; }
+  .periodBody { flex: 1 1 calc(100% - 30px); }
+  .periodActions { width: 100%; justify-content: space-between; }
+  .extraBody { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 0 18px 18px; }
+  .extraSummary { padding: 16px 18px; }
 }
-
-.infoGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 32px; }
-.blockedBox {
-  background: var(--tint-sand-bg);
-  color: var(--tint-sand-fg);
-  border: 1px solid var(--tint-sand-line);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
-}
-.blockedBox h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
-.blockedBox p { margin: 4px 0; font-size: 14px; }
-.holidayList { margin: 8px 0 0; padding-left: 18px; font-size: 14px; color: var(--color-text-secondary); }
-
-.entryRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.entryActions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
-.planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
-.confirmed { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }

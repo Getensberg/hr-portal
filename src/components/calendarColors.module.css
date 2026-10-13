@@ -1,12 +1,12 @@
-.normal { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-bg-card); }
-.weekend { background: var(--color-bg-card); color: var(--color-text-muted); border: 1px solid var(--color-bg-card); }
+.normal { background: var(--color-bg-alt); color: var(--color-text-secondary); border: 1px solid transparent; }
+.weekend { background: transparent; color: var(--color-text-muted); border: 1px solid transparent; }
 .holiday { background: var(--tint-rose-bg); color: var(--tint-rose-fg); border: 1px solid var(--tint-rose-line); }
 .blocked { background: var(--tint-sand-bg); color: var(--tint-sand-fg); border: 1px solid var(--tint-sand-line); }
-.vacationPlanned { background: #E3ECFF; color: #2B4FA8; border: 1px dashed #4C7DF0; }
-.vacationConfirmed { background: #4C7DF0; color: #FFFFFF; border: 1px solid #4C7DF0; }
-.dayOffPlanned { background: #EFE6FF; color: #5B3AB8; border: 1px dashed #8B5CF6; }
-.dayOffConfirmed { background: #8B5CF6; color: #FFFFFF; border: 1px solid #8B5CF6; }
-.today { outline: 2px solid var(--color-text-primary); outline-offset: -2px; }
+.vacationPlanned { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); border: 1px dashed var(--color-accent); }
+.vacationConfirmed { background: var(--color-accent); color: #FFFFFF; border: 1px solid var(--color-accent); }
+.dayOffPlanned { background: var(--tint-mint-bg); color: var(--tint-mint-fg); border: 1px dashed #2FA36B; }
+.dayOffConfirmed { background: #2FA36B; color: #FFFFFF; border: 1px solid #2FA36B; }
+.today { outline: 2px solid var(--color-accent-hover); outline-offset: 2px; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; font-size: 13px; color: var(--color-text-secondary); }
 .legendItem { display: flex; align-items: center; gap: 6px; }
