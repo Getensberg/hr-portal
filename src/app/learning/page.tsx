@@ -15,9 +15,11 @@ type Group = "new" | "started" | "done";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Любой статус" },
-  { value: "new", label: "Не начато" },
-  { value: "started", label: "Начато" },
-  { value: "done", label: "Пройдено" },
+  { value: "IN_PROGRESS", label: "В процессе" },
+  { value: "NOT_STARTED", label: "Не начато" },
+  { value: "DONE", label: "Пройдено" },
+  { value: "FAILED", label: "Не сдано" },
+  { value: "IN_REVIEW", label: "На проверке" },
 ];
 
 interface Item {
@@ -101,7 +103,7 @@ export default function LearningPage() {
   const filtered = items.filter(
     (i) =>
       (kind === "all" || i.kind === kind) &&
-      (!group || i.group === group) &&
+      (!group || i.status === group) &&
       (!category || i.category === category) &&
       (!q || i.title.toLowerCase().includes(q) || (i.description ?? "").toLowerCase().includes(q))
   );
