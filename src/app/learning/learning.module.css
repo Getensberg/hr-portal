@@ -119,3 +119,16 @@
   .continueBlock .continueRow { margin: 0 -16px 24px; padding: 0 16px 4px; }
   .continueBlock .continueCard { flex: 0 0 76%; }
 }
+
+/* Карточки «Продолжить» тянутся по высоте до плиток слева; кнопки и полоски на одной линии */
+.top { align-items: stretch; }
+.topWithContinue .stats { grid-template-rows: 1fr 1fr; }
+.continueBlock { display: flex; flex-direction: column; }
+.continueBlock .continueRow { flex: 1 1 auto; align-items: stretch; }
+.continueBlock .continueCard { justify-content: flex-start; }
+.continueBlock .continueTitle { flex: 1 1 auto; }
+
+@media (max-width: 640px) {
+  .top { display: block; }
+  .continueBlock { display: block; }
+}
