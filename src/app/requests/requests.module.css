@@ -23,6 +23,7 @@
 @media (max-width: 640px) {
   .form { padding: 18px; border-radius: 20px; }
   .formActions { flex-direction: column; align-items: stretch; }
+  .formActions > :first-child { flex: none; }
   .submit { width: 100%; }
   .historyRow { flex-wrap: wrap; }
 }

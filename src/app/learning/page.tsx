@@ -129,6 +129,7 @@ const visibleResults = showAllAttempts ? results : results.slice(0, 8);
 
   return (
     <PageShell title="Обучение">
+      <div className={`${styles.top} ${inProgress.length > 0 ? styles.topWithContinue : ""}`}>
       <div className={styles.stats}>
         <div className={styles.stat}><div className={styles.statNumber}>{inProgress.length}</div><div className={styles.statLabel}>в процессе</div></div>
         <div className={styles.stat}><div className={styles.statNumber}>{completedCourses}</div><div className={styles.statLabel}>курсов пройдено</div></div>
@@ -137,7 +138,7 @@ const visibleResults = showAllAttempts ? results : results.slice(0, 8);
       </div>
 
       {inProgress.length > 0 && (
-        <>
+        <div className={styles.continueBlock}>
           <h2 className={`${styles.sectionTitle} text-h2`}>Продолжить</h2>
           <div className={styles.continueRow}>
             {inProgress.map((i) => (
@@ -153,8 +154,9 @@ const visibleResults = showAllAttempts ? results : results.slice(0, 8);
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
+      </div>
 
       <h2 className={`${styles.sectionTitle} text-h2`}>Каталог</h2>
       <div className={styles.filters}>

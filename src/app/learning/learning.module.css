@@ -100,3 +100,22 @@
   .cardTitle { font-size: 16px; }
   .cardDesc { -webkit-line-clamp: 1; }
 }
+
+/* Верхняя полоса: компактная статистика и «Продолжить» на одной линии */
+.top { display: flex; gap: 24px; align-items: flex-start; margin-bottom: 36px; }
+.top .stats { grid-template-columns: repeat(4, minmax(0, 190px)); gap: 12px; margin: 0; }
+.top .stat { padding: 14px 16px; border-radius: 18px; }
+.top .statNumber { font-size: 26px; }
+.topWithContinue .stats { grid-template-columns: repeat(2, 150px); flex-shrink: 0; margin-top: 42px; }
+.continueBlock { flex: 1 1 auto; min-width: 0; }
+.continueBlock .sectionTitle { margin: 0 0 12px; }
+.continueBlock .continueRow { display: flex; gap: 12px; overflow-x: auto; margin: 0; padding-bottom: 4px; }
+.continueBlock .continueCard { flex: 0 0 280px; }
+
+@media (max-width: 640px) {
+  /* На телефоне статистику не показываем */
+  .stats, .top .stats { display: none; }
+  .top { display: block; margin-bottom: 0; }
+  .continueBlock .continueRow { margin: 0 -16px 24px; padding: 0 16px 4px; }
+  .continueBlock .continueCard { flex: 0 0 76%; }
+}
