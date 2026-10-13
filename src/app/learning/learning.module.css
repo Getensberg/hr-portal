@@ -132,3 +132,32 @@
   .top { display: block; }
   .continueBlock { display: block; }
 }
+
+/* Статистика по тестам внизу страницы */
+.testStats { margin-top: 8px; }
+.testStatsCard {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 22px 26px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-card);
+}
+.testStatsTop { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.testStatsLabel { font-size: 16px; font-weight: 600; color: var(--color-text-primary); }
+.testStatsPercent { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; color: var(--color-accent); }
+.testStatsGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 4px; }
+.testTile { border-radius: 18px; padding: 14px 16px; }
+.tileNumber { font-size: 26px; font-weight: 600; line-height: 1.1; color: var(--color-text-primary); }
+.tileLabel { font-size: 13px; margin-top: 4px; color: var(--color-text-secondary); }
+.tileMint { background: var(--tint-mint-bg); }
+.tileSky { background: var(--tint-sky-bg); }
+.tileRose { background: var(--tint-rose-bg); }
+.tileSand { background: var(--tint-sand-bg); }
+
+@media (max-width: 640px) {
+  .testStatsCard { padding: 18px; border-radius: 20px; }
+  .testStatsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}

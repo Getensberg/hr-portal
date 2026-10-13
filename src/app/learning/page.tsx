@@ -45,7 +45,6 @@ export default function LearningPage() {
   const [group, setGroup] = useState("");
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
-  const [showAllAttempts, setShowAllAttempts] = useState(false);
 
   const courses = data?.courses ?? [];
   const tests = data?.tests ?? [];
@@ -105,25 +104,13 @@ export default function LearningPage() {
   const completedCourses = courseItems.filter((i) => i.status === "DONE").length;
   const passedTests = new Set(attempts.filter((a) => a.status === "GRADED" && a.passed).map((a) => a.testId)).size;
   const inReview = attempts.filter((a) => a.status === "IN_REVIEW").length;
- // Один результат на каждый тест: сданная попытка важнее остальных, дальше попытка на проверке, иначе последняя
-const results = (() => {
-  const byTest = new Map<string, typeof attempts>();
-  for (const a of attempts) {
-    const list = byTest.get(a.testId) ?? [];
-    list.push(a);
-    byTest.set(a.testId, list);
-  }
-  return Array.from(byTest.values())
-    .map((list) => {
-      const passed = list.find((a) => a.status === "GRADED" && a.passed);
-      const review = list.find((a) => a.status === "IN_REVIEW");
-      const chosen = passed ?? review ?? list[0];
-      const status: StatusKey = passed ? "DONE" : review ? "IN_REVIEW" : "FAILED";
-      return { ...chosen, status, attemptsCount: list.length };
-    })
-    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-})();
-const visibleResults = showAllAttempts ? results : results.slice(0, 8);
+  // Статистика по тестам: сдано, осталось, не сдано, на проверке
+  const testTotal = testItems.length;
+  const testPassed = testItems.filter((t) => t.status === "DONE").length;
+  const testRemaining = testItems.filter((t) => t.status === "NOT_STARTED").length;
+  const testFailed = testItems.filter((t) => t.status === "FAILED").length;
+  const testReview = testItems.filter((t) => t.status === "IN_REVIEW").length;
+  const testPercent = testTotal ? Math.round((testPassed / testTotal) * 100) : 0;
 
   if (isLoading) return <p className="text-s">Загрузка...</p>;
 
@@ -197,29 +184,24 @@ const visibleResults = showAllAttempts ? results : results.slice(0, 8);
         </p>
       )}
 
-{results.length > 0 && (
-  <>
-    <h2 className={`${styles.sectionTitle} text-h2`}>Результаты тестов</h2>
-    {visibleResults.map((r) => (
-      <div key={r.testId} className={styles.historyRow}>
-        <div>
-          <Link href={`/learning/tests/${r.testId}`}>{r.testTitle}</Link>
-          <div className={styles.historyMeta}>
-            {r.courseTitle ? `Курс «${r.courseTitle}» · ` : ""}
-            {new Date(r.submittedAt).toLocaleDateString("ru-RU")}
-            {r.attemptsCount > 1 ? ` · попыток: ${r.attemptsCount}` : ""}
+      {testTotal > 0 && (
+        <section className={styles.testStats}>
+          <h2 className={`${styles.sectionTitle} text-h2`}>Мои тесты</h2>
+          <div className={styles.testStatsCard}>
+            <div className={styles.testStatsTop}>
+              <span className={styles.testStatsLabel}>Сдано {testPassed} из {testTotal}</span>
+              <span className={styles.testStatsPercent}>{testPercent}%</span>
+            </div>
+            <ProgressBar percent={testPercent} />
+            <div className={styles.testStatsGrid}>
+              <div className={`${styles.testTile} ${styles.tileMint}`}><div className={styles.tileNumber}>{testPassed}</div><div className={styles.tileLabel}>сдано</div></div>
+              <div className={`${styles.testTile} ${styles.tileSky}`}><div className={styles.tileNumber}>{testRemaining}</div><div className={styles.tileLabel}>осталось пройти</div></div>
+              <div className={`${styles.testTile} ${styles.tileRose}`}><div className={styles.tileNumber}>{testFailed}</div><div className={styles.tileLabel}>не сдано</div></div>
+              <div className={`${styles.testTile} ${styles.tileSand}`}><div className={styles.tileNumber}>{testReview}</div><div className={styles.tileLabel}>на проверке</div></div>
+            </div>
           </div>
-        </div>
-        <StatusPill status={r.status} kind="test" />
-      </div>
-    ))}
-    {results.length > 8 && (
-      <Button size="sm" variant="secondary" onClick={() => setShowAllAttempts(!showAllAttempts)}>
-        {showAllAttempts ? "Свернуть" : `Показать все (${results.length})`}
-      </Button>
-    )}
-  </>
-)}
+        </section>
+      )}
     </PageShell>
   );
 }
