@@ -71,7 +71,6 @@
   background: var(--color-white); border: 1px solid var(--color-border);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: 14px;
 }
-.sideTitle { display: flex; align-items: center; gap: 8px; padding: 4px 8px 12px; font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
 .count { background: var(--color-bg-alt); border-radius: var(--radius-pill); padding: 2px 8px; font-size: 12px; color: var(--color-text-secondary); }
 .sideList { display: flex; flex-direction: column; gap: 4px; }
 .sideItem {
@@ -97,9 +96,27 @@
   .layout { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .content { max-width: none; }
   .side { position: static; padding: 10px; }
-  .sideTitle { display: none; }
   .sideList { flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 2px; scrollbar-width: none; }
   .sideList::-webkit-scrollbar { display: none; }
   .sideItem { width: auto; flex: none; max-width: 240px; background: var(--color-bg-alt); }
   .sideMeta { display: none; }
+}
+
+.sideAll .sideName { font-weight: 600; }
+.sideAll .count { flex: none; }
+.back { display: none; }
+.allGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.allCard {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left;
+  background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); padding: 18px; font-family: inherit; cursor: pointer; min-width: 0;
+  transition: border-color 0.12s, transform 0.12s;
+}
+.allCard:hover { border-color: var(--color-accent); transform: translateY(-1px); }
+.allTitle { font-size: 16px; font-weight: 600; color: var(--color-text-primary); letter-spacing: -0.2px; }
+.allMeta { font-size: 13px; color: var(--color-text-muted); }
+.allStatus { margin-top: auto; padding: 5px 12px; border-radius: var(--radius-pill); background: var(--color-accent-soft); color: var(--color-accent); font-size: 12px; font-weight: 600; }
+.allStatusDone { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+@media (max-width: 900px) {
+  .allGrid { grid-template-columns: minmax(0, 1fr); }
 }

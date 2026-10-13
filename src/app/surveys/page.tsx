@@ -46,7 +46,7 @@ export default function SurveysPage() {
   if (isLoading) return <p className="text-s">Загрузка...</p>;
 
   const list = surveys ?? [];
-  const active = list.find((x) => x.id === activeId) ?? list.find((x) => !x.completed) ?? list[0];
+  const active = list.find((x) => x.id === activeId) ?? null; // null — показываем «Все опросы»
 
   function answeredCount(sv: SurveyItem) {
     const a = answers[sv.id] ?? {};
@@ -174,8 +174,16 @@ export default function SurveysPage() {
       ) : (
         <div className={styles.layout}>
           <nav className={styles.side} aria-label="Список опросов">
-            <div className={styles.sideTitle}>Все опросы <span className={styles.count}>{list.length}</span></div>
             <div className={styles.sideList}>
+              <button
+                type="button"
+                className={`${styles.sideItem} ${styles.sideAll} ${!active ? styles.sideItemActive : ""}`}
+                onClick={() => setActiveId(null)}
+                aria-current={!active ? "true" : undefined}
+              >
+                <span className={styles.sideName}>Все опросы</span>
+                <span className={styles.count}>{list.length}</span>
+              </button>
               {list.map((sv) => {
                 const isActive = active?.id === sv.id;
                 return (
@@ -198,7 +206,35 @@ export default function SurveysPage() {
               })}
             </div>
           </nav>
-          <div className={styles.content}>{active && renderSurvey(active)}</div>
+          <div className={styles.content}>
+            {active ? (
+              <>
+                <button type="button" className={styles.back} onClick={() => setActiveId(null)}>‹ Все опросы</button>
+                {renderSurvey(active)}
+              </>
+            ) : (
+              <div className={styles.allGrid}>
+                {list.map((sv) => {
+                  const n = answeredCount(sv);
+                  return (
+                    <button key={sv.id} type="button" className={styles.allCard} onClick={() => setActiveId(sv.id)}>
+                      <span className={`${styles.dot} ${sv.completed ? styles.dotDone : styles.dotOpen}`}>
+                        {sv.completed ? "✓" : ""}
+                      </span>
+                      <span className={styles.allTitle}>{sv.title}</span>
+                      <span className={styles.allMeta}>
+                        {sv.questions.length} {plural(sv.questions.length, "вопрос", "вопроса", "вопросов")}
+                        {sv.isAnonymous ? " · анонимно" : ""}
+                      </span>
+                      <span className={`${styles.allStatus} ${sv.completed ? styles.allStatusDone : ""}`}>
+                        {sv.completed ? "Пройден" : n > 0 ? `Отвечено ${n} из ${sv.questions.length}` : "Пройти"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </PageShell>
