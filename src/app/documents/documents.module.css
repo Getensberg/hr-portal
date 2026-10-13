@@ -1,22 +1,106 @@
-.controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.controls { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
 .controls > div:first-child { flex: 0 0 220px; }
 .controls input { flex: 1; min-width: 200px; }
 
-.folder { margin-bottom: 32px; }
-.folderTitle { margin-bottom: 10px; color: var(--color-text-primary); }
-.row {
+.folder { margin-bottom: 28px; }
+.folderHead {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
-  padding: 14px 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  margin-bottom: 8px;
-  background: var(--color-white);
+  width: 100%;
+  padding: 4px 0;
+  margin-bottom: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
 }
-.fileLinks { display: flex; gap: 12px; flex-wrap: wrap; }
+.folderIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--tint-lilac-bg);
+  color: var(--tint-lilac-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.folderTitle { font-size: 20px; font-weight: 600; color: var(--color-text-primary); letter-spacing: -0.3px; }
+.count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 2px 10px;
+}
+.chevron { margin-left: auto; color: var(--color-text-muted); transition: transform 0.15s ease; flex-shrink: 0; }
+.chevronClosed { transform: rotate(-90deg); }
+
+/* Документы: карточки в сетке */
+.docs { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+.doc {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.docTitle { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.3; color: var(--color-text-primary); overflow-wrap: anywhere; }
+.noFile { margin: 0; font-size: 14px; color: var(--color-text-muted); }
+
+/* Файлы внутри документа */
+.files { display: flex; flex-direction: column; gap: 8px; }
+.file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 14px 8px 8px;
+  border-radius: 16px;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  text-decoration: none;
+  color: var(--color-text-primary);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.file:hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.fileIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.fileName { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fileArrow { flex-shrink: 0; color: var(--color-text-muted); }
+.file:hover .fileArrow { color: var(--color-accent); }
+
+.tintMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+.tintRose { background: var(--tint-rose-bg); color: var(--tint-rose-fg); }
+.tintSky { background: var(--tint-sky-bg); color: var(--tint-sky-fg); }
+.tintPeach { background: var(--tint-peach-bg); color: var(--tint-peach-fg); }
+.tintLilac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
+.tintSand { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
+.tintGray { background: var(--color-bg-card); color: var(--color-text-tertiary); }
+
 @media (max-width: 640px) {
   .controls > div:first-child { flex: 1 1 100%; }
+  .controls input { flex: 1 1 100%; }
+  .folder { margin-bottom: 22px; }
+  .folderTitle { font-size: 18px; }
+  .docs { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .doc { padding: 16px; border-radius: 20px; }
 }
