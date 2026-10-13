@@ -6,6 +6,8 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
 import styles from "./requests.module.css";
+import { getErrorMessage } from "@/lib/errors";
+import { FormError } from "@/components/FormError";
 
 const TYPE_LABELS: Record<string, string> = {
   DOCUMENT: "Справка",
@@ -22,10 +24,12 @@ export default function RequestsPage() {
   const [type, setType] = useState("DOCUMENT");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
+    setError("");
+    try {
     let uploadedFiles: { url: string; name: string }[] | undefined;
     if (files && files.length > 0) {
       uploadedFiles = [];
@@ -37,9 +41,12 @@ export default function RequestsPage() {
       }
     }
 
-    await createRequest({ type: type as any, payload: { description }, files: uploadedFiles });
+    await createRequest({ type: type as any, payload: { description }, files: uploadedFiles }).unwrap();
     setDescription("");
     setFiles(null);
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось отправить заявку"));
+    }
   }
 
   return (
@@ -61,6 +68,7 @@ export default function RequestsPage() {
           <label className="text-xs">Приложить документы (необязательно)</label>
           <input type="file" multiple onChange={(e) => setFiles(e.target.files)} />
         </div>
+        <FormError message={error} />
         <Button type="submit" disabled={creating}>Отправить заявку</Button>
       </form>
 

@@ -13,6 +13,8 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./jobs-admin.module.css";
+import { getErrorMessage } from "@/lib/errors";
+import { FormError } from "@/components/FormError";
 
 export default function AdminJobsPage() {
   const { data: session, status } = useSession();
@@ -33,6 +35,7 @@ export default function AdminJobsPage() {
   const [title, setTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
@@ -40,8 +43,13 @@ export default function AdminJobsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await createJob({ title, department, description });
-    setTitle(""); setDepartment(""); setDescription("");
+    setError("");
+    try {
+      await createJob({ title, department, description }).unwrap();
+      setTitle(""); setDepartment(""); setDescription("");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось создать вакансию"));
+    }
   }
 
   return (
@@ -50,6 +58,7 @@ export default function AdminJobsPage() {
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название вакансии" />
         <input className="input" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Отдел" />
         <textarea className="textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Описание" rows={3} />
+        <FormError message={error} />
         <Button type="submit">Создать вакансию</Button>
       </form>
 

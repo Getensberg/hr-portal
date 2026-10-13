@@ -13,6 +13,8 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./onboarding-admin.module.css";
+import { getErrorMessage } from "@/lib/errors";
+import { FormError } from "@/components/FormError";
 
 export default function AdminOnboardingPage() {
   const { data: session, status } = useSession();
@@ -33,6 +35,7 @@ export default function AdminOnboardingPage() {
   const [mentorId, setMentorId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [error, setError] = useState("");
   const [taskDrafts, setTaskDrafts] = useState<Record<string, { title: string; description: string; dueDate: string }>>({});
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
@@ -41,14 +44,19 @@ export default function AdminOnboardingPage() {
 
   async function handleCreatePlan(e: React.FormEvent) {
     e.preventDefault();
-    if (!newcomerId) return alert("Выбери новичка");
+    setError("");
+    if (!newcomerId) return setError("Выбери новичка");
     const startIso = startDate ? parseRuDate(startDate) : null;
-    if (startDate && !startIso) return alert("Дата начала в формате дд.мм.гггг");
+    if (startDate && !startIso) return setError("Дата начала в формате дд.мм.гггг");
     const endIso = endDate ? parseRuDate(endDate) : null;
-    if (endDate && !endIso) return alert("Дата конца в формате дд.мм.гггг");
+    if (endDate && !endIso) return setError("Дата конца в формате дд.мм.гггг");
 
-    await createPlan({ newcomerId, mentorId: mentorId || null, startDate: startIso, endDate: endIso });
-    setNewcomerId(""); setMentorId(""); setStartDate(""); setEndDate("");
+    try {
+      await createPlan({ newcomerId, mentorId: mentorId || null, startDate: startIso, endDate: endIso }).unwrap();
+      setNewcomerId(""); setMentorId(""); setStartDate(""); setEndDate("");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось создать план"));
+    }
   }
 
   function updateDraft(planId: string, field: string, value: string) {
@@ -58,11 +66,16 @@ export default function AdminOnboardingPage() {
   async function handleAddTask(planId: string) {
     const draft = taskDrafts[planId];
     if (!draft?.title) return;
+    setError("");
     const dueIso = draft.dueDate ? parseRuDate(draft.dueDate) : null;
-    if (draft.dueDate && !dueIso) return alert("Дата дедлайна в формате дд.мм.гггг");
+    if (draft.dueDate && !dueIso) return setError("Дата дедлайна в формате дд.мм.гггг");
 
-    await addTask({ planId, title: draft.title, description: draft.description, dueDate: dueIso });
-    setTaskDrafts((prev) => ({ ...prev, [planId]: { title: "", description: "", dueDate: "" } }));
+    try {
+      await addTask({ planId, title: draft.title, description: draft.description, dueDate: dueIso }).unwrap();
+      setTaskDrafts((prev) => ({ ...prev, [planId]: { title: "", description: "", dueDate: "" } }));
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось добавить задачу"));
+    }
   }
 
   return (
@@ -84,6 +97,7 @@ export default function AdminOnboardingPage() {
         </div>
         <Button type="submit">Создать план</Button>
       </form>
+      <FormError message={error} />
 
       {plans?.map((p) => (
         <Card key={p.id}>

@@ -5,10 +5,13 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./surveys.module.css";
+import { getErrorMessage } from "@/lib/errors";
+import { FormError } from "@/components/FormError";
 
 export default function SurveysPage() {
   const { data: surveys, isLoading } = useGetActiveSurveysQuery();
   const [submitSurvey] = useSubmitSurveyMutation();
+  const [error, setError] = useState<{ id: string; message: string } | null>(null);
   const [answers, setAnswers] = useState<Record<string, Record<string, string>>>({});
 
   function setAnswer(surveyId: string, questionId: string, value: string) {
@@ -17,7 +20,12 @@ export default function SurveysPage() {
 
   async function handleSubmit(surveyId: string, questions: { id: string }[]) {
     const surveyAnswers = questions.map((q) => ({ questionId: q.id, value: answers[surveyId]?.[q.id] ?? "" }));
-    await submitSurvey({ id: surveyId, answers: surveyAnswers });
+    setError(null);
+    try {
+      await submitSurvey({ id: surveyId, answers: surveyAnswers }).unwrap();
+    } catch (err) {
+      setError({ id: surveyId, message: getErrorMessage(err, "Не удалось отправить ответы") });
+    }
   }
 
   if (isLoading) return <p className="text-s">Загрузка...</p>;
@@ -53,6 +61,7 @@ export default function SurveysPage() {
                   )}
                 </div>
               ))}
+              <FormError message={error?.id === s.id ? error.message : null} />
               <Button onClick={() => handleSubmit(s.id, s.questions)}>Отправить ответ</Button>
             </>
           )}

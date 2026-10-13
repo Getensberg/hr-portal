@@ -5,6 +5,8 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./jobs.module.css";
+import { getErrorMessage } from "@/lib/errors";
+import { FormError } from "@/components/FormError";
 
 export default function JobsPage() {
   const { data: jobs, isLoading } = useGetActiveJobsQuery();
@@ -13,12 +15,18 @@ export default function JobsPage() {
 
   const [openJobId, setOpenJobId] = useState<string | null>(null);
   const [form, setForm] = useState({ candidateName: "", candidateContact: "", comment: "" });
+  const [error, setError] = useState("");
 
   async function handleSubmit(jobId: string) {
-    if (!form.candidateName || !form.candidateContact) return alert("Заполни имя и контакт кандидата");
-    await createReferral({ jobId, ...form });
-    setForm({ candidateName: "", candidateContact: "", comment: "" });
-    setOpenJobId(null);
+    setError("");
+    if (!form.candidateName || !form.candidateContact) return setError("Заполни имя и контакт кандидата");
+    try {
+      await createReferral({ jobId, ...form }).unwrap();
+      setForm({ candidateName: "", candidateContact: "", comment: "" });
+      setOpenJobId(null);
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось отправить рекомендацию"));
+    }
   }
 
   if (isLoading) return <p className="text-s">Загрузка...</p>;
@@ -35,13 +43,14 @@ export default function JobsPage() {
               <input className="input" placeholder="Имя кандидата" value={form.candidateName} onChange={(e) => setForm({ ...form, candidateName: e.target.value })} />
               <input className="input" placeholder="Контакт (телефон/почта/телеграм)" value={form.candidateContact} onChange={(e) => setForm({ ...form, candidateContact: e.target.value })} />
               <textarea className="textarea" placeholder="Комментарий (необязательно)" value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} rows={2} />
+              <FormError message={error} />
               <div className={styles.actions}>
                 <Button onClick={() => handleSubmit(j.id)}>Отправить рекомендацию</Button>
-                <Button variant="secondary" onClick={() => setOpenJobId(null)}>Отмена</Button>
+                <Button variant="secondary" onClick={() => { setOpenJobId(null); setError(""); }}>Отмена</Button>
               </div>
             </div>
           ) : (
-            <Button variant="secondary" onClick={() => setOpenJobId(j.id)}>Порекомендовать</Button>
+            <Button variant="secondary" onClick={() => { setOpenJobId(j.id); setError(""); }}>Порекомендовать</Button>
           )}
         </Card>
       ))}

@@ -29,6 +29,8 @@ export default function AdminSurveysPage() {
   const [endDate, setEndDate] = useState("");
   const [questions, setQuestions] = useState([{ text: "", type: "SCALE_1_5" }]);
   const [resultsOpenId, setResultsOpenId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [deleteSurvey] = useDeleteSurveyMutation();
 
@@ -53,17 +55,39 @@ export default function AdminSurveysPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+
     const startIso = startDate ? parseRuDate(startDate) : null;
-    if (startDate && !startIso) return alert("Дата начала в формате дд.мм.гггг");
+    if (startDate && !startIso) return setError("Дата начала в формате дд.мм.гггг");
     const endIso = endDate ? parseRuDate(endDate) : null;
-    if (endDate && !endIso) return alert("Дата конца в формате дд.мм.гггг");
+    if (endDate && !endIso) return setError("Дата конца в формате дд.мм.гггг");
+    if (!title.trim()) return setError("Укажите название опроса");
+    if (!isSuggestionBox && questions.some((q) => !q.text.trim())) {
+      return setError("Заполните текст всех вопросов");
+    }
 
     const finalQuestions = isSuggestionBox ? [{ text: "Ваше предложение", type: "TEXT" }] : questions;
 
-    await createSurvey({ title, frequency: "ONCE", isAnonymous, isSuggestionBox, startDate: startIso, endDate: endIso, questions: finalQuestions });
-
-    setTitle(""); setStartDate(""); setEndDate("");
-    setQuestions([{ text: "", type: "SCALE_1_5" }]);
+    try {
+      await createSurvey({
+        title,
+        frequency: "ONCE",
+        isAnonymous,
+        isSuggestionBox,
+        // Пустая дата начала: опрос стартует сразу
+        startDate: startIso ?? undefined,
+        endDate: endIso ?? undefined,
+        questions: finalQuestions,
+      }).unwrap();
+      setSuccess("Опрос создан");
+      setTitle("");
+      setStartDate("");
+      setEndDate("");
+      setQuestions([{ text: "", type: "SCALE_1_5" }]);
+    } catch (err: any) {
+      setError(err?.data?.error ?? "Не удалось создать опрос");
+    }
   }
 
   return (
@@ -77,7 +101,7 @@ export default function AdminSurveysPage() {
         </div>
 
         <div className={styles.dateRow}>
-          <label>Начало: <input className="input" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="10.09.2026" maxLength={10} /></label>
+          <label>Начало: <input className="input" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="по умолчанию — сегодня" maxLength={10} /></label>
           <label>Конец: <input className="input" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="необязательно" maxLength={10} /></label>
         </div>
 
@@ -98,6 +122,8 @@ export default function AdminSurveysPage() {
           </div>
         )}
 
+        {error && <p className="text-xs" style={{ color: "var(--color-danger)", margin: 0 }}>{error}</p>}
+        {success && <p className="text-xs" style={{ color: "var(--tint-mint-fg)", margin: 0 }}>{success}</p>}
         <Button type="submit">Создать опрос</Button>
       </form>
 

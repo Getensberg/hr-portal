@@ -375,7 +375,7 @@ export const surveyCreateSchema = z.object({
   frequency: z.enum(["ONCE", "WEEKLY", "BIWEEKLY"], { error: "Неизвестная периодичность" }).optional().default("ONCE"),
   isAnonymous: z.boolean().optional().default(true),
   isSuggestionBox: z.boolean().optional().default(false),
-  startDate: dateTimeString,
+  startDate: dateTimeString.nullish().transform((v) => v || new Date().toISOString()),
   endDate: dateTimeString.nullish().transform((v) => v || null),
   questions: z
     .array(

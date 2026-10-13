@@ -7,6 +7,7 @@ import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
 import { StatusPill, type StatusKey } from "@/components/LearningStatus";
 import styles from "./test.module.css";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function LearningTestPage() {
   const params = useParams<{ id: string }>();
@@ -72,7 +73,7 @@ export default function LearningTestPage() {
       setTexts({});
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
-      setError(err?.data?.error || "Не удалось отправить ответы");
+      setError(getErrorMessage(err, "Не удалось отправить ответы"));
     }
   }
 

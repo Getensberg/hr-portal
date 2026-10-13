@@ -20,6 +20,7 @@ import styles from "./org-admin.module.css";
 import { DepartmentInput } from "@/components/DepartmentInput";
 import { useGetDepartmentsQuery, useCreateDepartmentMutation, useUpdateDepartmentColorMutation, useDeleteDepartmentMutation } from "@/store/api";
 import { useUploadFileMutation } from "@/store/api";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function AdminOrgPage() {
   const { data: session, status } = useSession();
@@ -195,6 +196,7 @@ async function handleDocSubmit(e: React.FormEvent) {
 }
 setDocError("");
 
+  try {
   let fileUrl: string | undefined;
   let fileName: string | undefined;
   if (docFile) {
@@ -205,8 +207,11 @@ setDocError("");
     fileName = uploaded.name;
   }
 
-  await createDoc({ title: docTitle, description: docDescription, fileUrl, fileName });
+  await createDoc({ title: docTitle, description: docDescription, fileUrl, fileName }).unwrap();
   setDocTitle(""); setDocDescription(""); setDocFile(null);
+  } catch (err) {
+    setDocError(getErrorMessage(err, "Не удалось создать пункт"));
+  }
 }
 
   function handleDeleteDoc(id: string) {

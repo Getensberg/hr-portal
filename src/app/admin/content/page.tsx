@@ -13,6 +13,8 @@ import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./content-admin.module.css";
+import { getErrorMessage } from "@/lib/errors";
+import { FormError } from "@/components/FormError";
 
 const TYPE_OPTIONS = ["KNOWLEDGE_ARTICLE", "NEWS_POST", "POLICY_DOCUMENT", "GALLERY_ALBUM"];
 const TYPE_LABELS: Record<string, string> = {
@@ -47,6 +49,7 @@ export default function AdminContentPage() {
   const [files, setFiles] = useState<FileList | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   const isAlbum = type === "GALLERY_ALBUM";
   const isDocument = type === "POLICY_DOCUMENT";
@@ -57,6 +60,15 @@ export default function AdminContentPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
+    try {
+      await save();
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось сохранить"));
+    }
+  }
+
+  async function save() {
 
     let fileUrl: string | undefined;
     let fileName: string | undefined;
@@ -100,7 +112,7 @@ export default function AdminContentPage() {
         fileName,
         files: uploadedFiles,
         imageUrl,
-      });
+      }).unwrap();
       setEditingId(null);
     } else {
       await createContent({
@@ -112,7 +124,7 @@ export default function AdminContentPage() {
         fileName,
         files: uploadedFiles,
         imageUrl,
-      });
+      }).unwrap();
     }
     setTitle(""); setContent(""); setCategory(""); setFile(null); setFiles(null); setImage(null); setDriveLink("");
   }
@@ -179,6 +191,7 @@ export default function AdminContentPage() {
             </Button>
           )}
         </div>
+        <FormError message={error} />
       </form>
 
       {items?.map((item) => (

@@ -14,6 +14,7 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./manager-onboarding.module.css";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function ManagerOnboardingPage() {
   const { data: session, status } = useSession();
@@ -59,7 +60,7 @@ export default function ManagerOnboardingPage() {
       await createPlan({ newcomerId, mentorId: mentorId || null, startDate: startIso, endDate: endIso }).unwrap();
       setNewcomerId(""); setMentorId(""); setStartDate(""); setEndDate("");
     } catch (err: any) {
-      setError(err?.data?.error || "Не удалось создать план");
+      setError(getErrorMessage(err, "Не удалось создать план"));
     }
   }
 
@@ -73,8 +74,13 @@ export default function ManagerOnboardingPage() {
     const dueIso = draft.dueDate ? parseRuDate(draft.dueDate) : null;
     if (draft.dueDate && !dueIso) return setError("Дата дедлайна в формате дд.мм.гггг");
 
-    await addTask({ planId, title: draft.title, description: draft.description, dueDate: dueIso });
-    setTaskDrafts((prev) => ({ ...prev, [planId]: { title: "", description: "", dueDate: "" } }));
+    setError("");
+    try {
+      await addTask({ planId, title: draft.title, description: draft.description, dueDate: dueIso }).unwrap();
+      setTaskDrafts((prev) => ({ ...prev, [planId]: { title: "", description: "", dueDate: "" } }));
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось добавить задачу"));
+    }
   }
 
   function handleDeleteTask(id: string, title: string) {
