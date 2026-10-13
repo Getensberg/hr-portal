@@ -24,6 +24,7 @@ export default function SurveysPage() {
   const [error, setError] = useState<{ id: string; message: string } | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   function setAnswer(surveyId: string, questionId: string, value: string) {
     setAnswers((prev) => ({ ...prev, [surveyId]: { ...prev[surveyId], [questionId]: value } }));
@@ -44,39 +45,49 @@ export default function SurveysPage() {
 
   if (isLoading) return <p className="text-s">Загрузка...</p>;
 
-  const open = (surveys ?? []).filter((s) => !s.completed);
-  const done = (surveys ?? []).filter((s) => s.completed);
+  const list = surveys ?? [];
+  const active = list.find((x) => x.id === activeId) ?? list.find((x) => !x.completed) ?? list[0];
 
-  return (
-    <PageShell title="Опросы">
-      {surveys?.length === 0 && (
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>✓</div>
-          <div className={styles.emptyTitle}>Сейчас нет активных опросов</div>
-          <div className={styles.emptyText}>Когда появится новый опрос, он будет здесь.</div>
+  function answeredCount(sv: SurveyItem) {
+    const a = answers[sv.id] ?? {};
+    return sv.questions.filter((q) => (a[q.id] ?? "").trim() !== "").length;
+  }
+
+  function renderSurvey(s: SurveyItem) {
+    const a = answers[s.id] ?? {};
+    const answered = answeredCount(s);
+    const percent = s.questions.length ? Math.round((answered / s.questions.length) * 100) : 0;
+    const chips = (
+      <div className={styles.chips}>
+        {s.isAnonymous && <span className={`${styles.chip} ${styles.chipMint}`}>Анонимно</span>}
+        {s.isSuggestionBox && <span className={`${styles.chip} ${styles.chipPeach}`}>Ящик предложений</span>}
+        <span className={`${styles.chip} ${styles.chipLilac}`}>
+          {s.questions.length} {plural(s.questions.length, "вопрос", "вопроса", "вопросов")}
+        </span>
+      </div>
+    );
+
+    if (s.completed) {
+      return (
+        <section className={`${styles.card} ${styles.cardDone}`}>
+          <div className={styles.bigCheck}>✓</div>
+          <h2 className={styles.title}>{s.title}</h2>
+          <p className={styles.doneText}>Спасибо, вы уже прошли этот опрос.</p>
+          {chips}
+        </section>
+      );
+    }
+
+    return (
+      <section className={styles.card}>
+        <div className={styles.head}>
+          <h2 className={styles.title}>{s.title}</h2>
+          {chips}
+          <div className={styles.progress}>
+            <ProgressBar percent={percent} />
+            <span className={styles.progressText}>Отвечено {answered} из {s.questions.length}</span>
+          </div>
         </div>
-      )}
-
-      {open.map((s) => {
-        const a = answers[s.id] ?? {};
-        const answered = s.questions.filter((q) => (a[q.id] ?? "").trim() !== "").length;
-        const percent = s.questions.length ? Math.round((answered / s.questions.length) * 100) : 0;
-        return (
-          <section key={s.id} className={styles.card}>
-            <div className={styles.head}>
-              <h2 className={styles.title}>{s.title}</h2>
-              <div className={styles.chips}>
-                {s.isAnonymous && <span className={`${styles.chip} ${styles.chipMint}`}>Анонимно</span>}
-                {s.isSuggestionBox && <span className={`${styles.chip} ${styles.chipPeach}`}>Ящик предложений</span>}
-                <span className={`${styles.chip} ${styles.chipLilac}`}>
-                  {s.questions.length} {plural(s.questions.length, "вопрос", "вопроса", "вопросов")}
-                </span>
-              </div>
-              <div className={styles.progress}>
-                <ProgressBar percent={percent} />
-                <span className={styles.progressText}>Отвечено {answered} из {s.questions.length}</span>
-              </div>
-            </div>
 
             <ol className={styles.questions}>
               {s.questions.map((q, idx) => (
@@ -143,28 +154,52 @@ export default function SurveysPage() {
             </ol>
 
             <FormError message={error?.id === s.id ? error.message : null} />
-            <div className={styles.actions}>
-              <Button onClick={() => handleSubmit(s)} disabled={sending && sendingId === s.id}>
-                {sending && sendingId === s.id ? "Отправляем..." : "Отправить ответы"}
-              </Button>
-            </div>
-          </section>
-        );
-      })}
+        <div className={styles.actions}>
+          <Button onClick={() => handleSubmit(s)} disabled={sending && sendingId === s.id}>
+            {sending && sendingId === s.id ? "Отправляем..." : "Отправить ответы"}
+          </Button>
+        </div>
+      </section>
+    );
+  }
 
-      {done.length > 0 && (
-        <>
-          <h2 className={styles.sectionTitle}>Пройденные</h2>
-          <div className={styles.doneList}>
-            {done.map((s) => (
-              <div key={s.id} className={styles.doneRow}>
-                <span className={styles.doneIcon}>✓</span>
-                <span className={styles.doneTitle}>{s.title}</span>
-                <span className={styles.doneLabel}>Спасибо, вы прошли</span>
-              </div>
-            ))}
-          </div>
-        </>
+  return (
+    <PageShell title="Опросы">
+      {list.length === 0 ? (
+        <div className={styles.empty}>
+          <div className={styles.emptyIcon}>✓</div>
+          <div className={styles.emptyTitle}>Сейчас нет активных опросов</div>
+          <div className={styles.emptyText}>Когда появится новый опрос, он будет здесь.</div>
+        </div>
+      ) : (
+        <div className={styles.layout}>
+          <nav className={styles.side} aria-label="Список опросов">
+            <div className={styles.sideTitle}>Все опросы <span className={styles.count}>{list.length}</span></div>
+            <div className={styles.sideList}>
+              {list.map((sv) => {
+                const isActive = active?.id === sv.id;
+                return (
+                  <button
+                    key={sv.id}
+                    type="button"
+                    className={`${styles.sideItem} ${isActive ? styles.sideItemActive : ""}`}
+                    onClick={() => setActiveId(sv.id)}
+                    aria-current={isActive ? "true" : undefined}
+                  >
+                    <span className={`${styles.dot} ${sv.completed ? styles.dotDone : styles.dotOpen}`}>
+                      {sv.completed ? "✓" : ""}
+                    </span>
+                    <span className={styles.sideName}>{sv.title}</span>
+                    <span className={styles.sideMeta}>
+                      {sv.completed ? "Пройден" : answeredCount(sv) > 0 ? `${answeredCount(sv)}/${sv.questions.length}` : "Новый"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+          <div className={styles.content}>{active && renderSurvey(active)}</div>
+        </div>
       )}
     </PageShell>
   );
