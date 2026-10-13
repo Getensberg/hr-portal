@@ -3,45 +3,82 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
-.hubCard {
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 210px;
+  padding: 26px;
+  border-radius: 28px;
   text-decoration: none;
-  color: inherit;
-  display: block;
+  color: var(--color-text-primary);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.hubCard > div { margin-bottom: 0; padding: 28px; transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; }
-.hubCard:hover > div { border-color: var(--color-accent); box-shadow: 0 10px 24px rgba(79, 70, 229, 0.10); transform: translateY(-2px); }
+.tile:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(0, 2, 9, 0.10); }
+
+/* Декоративные круги */
+.tile::before,
+.tile::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+}
+.tile::before { right: -50px; top: -50px; width: 190px; height: 190px; }
+.tile::after { right: 70px; top: 90px; width: 64px; height: 64px; }
+
+.tintLilac { background: var(--tint-lilac-bg); --fg: var(--tint-lilac-fg); }
+.tintMint { background: var(--tint-mint-bg); --fg: var(--tint-mint-fg); }
+.tintPeach { background: var(--tint-peach-bg); --fg: var(--tint-peach-fg); }
+
 .icon {
+  position: relative;
+  z-index: 1;
   width: 56px;
   height: 56px;
-  border-radius: 18px;
+  border-radius: 50%;
+  background: var(--color-white);
+  color: var(--fg);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 18px;
+  flex-shrink: 0;
 }
-.tintLilac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
-.tintMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
-.tintPeach { background: var(--tint-peach-bg); color: var(--tint-peach-fg); }
+.text { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; padding-right: 44px; }
+.title { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; line-height: 1.2; }
+.desc { font-size: 14px; line-height: 1.45; color: var(--color-text-secondary); }
+.arrow {
+  position: absolute;
+  z-index: 1;
+  right: 22px;
+  bottom: 22px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-white);
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-/* Телефон: две карточки в ряд, значок и название по центру */
+/* Телефон: большая карточка сверху, две поменьше под ней */
 @media (max-width: 640px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .hubCard > div {
-    height: 100%;
-    min-height: 150px;
-    padding: 20px 12px;
-    border-radius: 22px;
-    align-items: center;
-    justify-content: flex-start;
-    text-align: center;
-  }
-  .hubCard :global(p) { display: none; }
-  .icon { width: 52px; height: 52px; border-radius: 18px; margin: 0; flex-shrink: 0; }
-  .icon svg { width: 26px; height: 26px; }
-  .hubCard > div > :last-child {
-    margin: 14px 0 0;
-    font-size: 15px;
-    line-height: 1.25;
-    min-height: 2.5em;
-  }
+  .tile { min-height: 156px; padding: 18px; gap: 16px; border-radius: 24px; }
+  .tileWide { grid-column: 1 / -1; min-height: 150px; }
+  .icon { width: 48px; height: 48px; }
+  .icon svg { width: 24px; height: 24px; }
+  .text { padding-right: 0; }
+  .title { font-size: 17px; }
+  .desc { display: none; }
+  .tileWide .desc { display: block; font-size: 13px; }
+  .tileWide .text { padding-right: 48px; }
+  .arrow { right: 16px; bottom: 16px; width: 36px; height: 36px; }
+  .tile:not(.tileWide) .arrow { display: none; }
 }
