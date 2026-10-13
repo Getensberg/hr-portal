@@ -1,0 +1,8 @@
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}

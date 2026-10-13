@@ -1,14 +1,19 @@
 .footer {
-  border-top: 1px solid var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
   background: var(--color-white);
-  padding: 24px;
+  padding: 24px 32px;
   margin-top: 48px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
   gap: 16px;
 }
-.links { display: flex; gap: 16px; flex-wrap: wrap; }
+.links { display: flex; gap: 8px 20px; flex-wrap: wrap; }
 .links a { color: var(--color-text-secondary); text-decoration: none; font-size: 14px; }
-.links a:hover { color: var(--color-text-primary); text-decoration: underline; }
+.links a:hover { color: var(--color-accent); }
 .copy { font-size: 12px; color: var(--color-text-tertiary); }
+
+@media (max-width: 640px) {
+  .footer { padding: 20px 16px; margin-top: 32px; }
+}

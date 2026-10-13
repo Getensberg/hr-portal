@@ -1,17 +1,14 @@
-.shell {
-  max-width: 1360px;
-  margin: 40px auto;
-  padding: 0 32px;
+.badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
 }
-.wide {
-  max-width: 1360px;
-}
-.pageTitle {
-  margin-bottom: 16px;
-}
-@media (max-width: 640px) {
-  .shell {
-    margin: 24px auto;
-    padding: 0 16px;
-  }
-}
+.pending { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
+.inProgress { background: var(--tint-sky-bg); color: var(--tint-sky-fg); }
+.done { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
