@@ -27,6 +27,7 @@ export default function ManagerRequestsPage() {
 
   return (
     <PageShell title="Заявки моей команды" wide>
+      <div className="table-scroll">
       <table className={styles.table}>
         <thead>
           <tr><th>Сотрудник</th><th>Тип</th><th>Детали</th><th>Статус</th></tr>
@@ -50,6 +51,7 @@ export default function ManagerRequestsPage() {
           ))}
         </tbody>
       </table>
+      </div>
       {requests?.length === 0 && <p className="text-s">В твоей команде пока нет заявок</p>}
     </PageShell>
   );

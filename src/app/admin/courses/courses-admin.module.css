@@ -6,5 +6,5 @@
 .actions { display: flex; gap: 8px; align-items: center; }
 .meta { font-size: 13px; color: var(--color-text-tertiary); margin: 4px 0 0; }
 .badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; margin-left: 8px; }
-.draft { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-text-muted); }
-.published { background: #E6F9E1; color: #157A00; }
+.draft { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.published { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }

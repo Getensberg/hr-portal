@@ -1,6 +1,6 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 .hubCard {
@@ -8,3 +8,17 @@
   color: inherit;
   display: block;
 }
+.hubCard > div { margin-bottom: 0; padding: 28px; transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; }
+.hubCard:hover > div { border-color: var(--color-accent); box-shadow: 0 10px 24px rgba(79, 70, 229, 0.10); transform: translateY(-2px); }
+.icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.tintLilac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
+.tintMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+.tintPeach { background: var(--tint-peach-bg); color: var(--tint-peach-fg); }

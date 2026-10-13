@@ -4,13 +4,13 @@
 .formRow > * { flex: 1; min-width: 160px; }
 .hint { font-size: 13px; color: var(--color-text-tertiary); margin: 0; line-height: 1.5; }
 .errors { color: var(--color-danger); font-size: 14px; margin: 0; padding-left: 18px; }
-.success { color: #157A00; font-size: 14px; margin: 0; }
+.success { color: var(--tint-mint-fg); font-size: 14px; margin: 0; }
 .error { color: var(--color-danger); font-size: 14px; margin: 0; }
 .yearRow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .yearBtn {
   width: 36px; height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--color-text-muted);
+  border: 1px solid var(--color-border-strong);
   background: var(--color-white);
   cursor: pointer;
   font-size: 16px;
@@ -22,8 +22,8 @@
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  border: 1px solid var(--color-text-muted);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   margin-bottom: 8px;
   background: var(--color-white);
 }

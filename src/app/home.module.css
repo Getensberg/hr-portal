@@ -394,6 +394,8 @@
   color: inherit;
   display: flex;
 }
+.tileLink > div { transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; }
+.tileLink:hover > div { border-color: var(--color-accent); box-shadow: 0 10px 24px rgba(79, 70, 229, 0.10); transform: translateY(-2px); }
 
 /* ===== Телефон ===== */
 @media (max-width: 640px) {

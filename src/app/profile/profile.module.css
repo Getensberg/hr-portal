@@ -1,0 +1,59 @@
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-accent);
+  border-radius: 32px;
+  padding: 36px 40px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -120px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+}
+.avatar {
+  position: relative;
+  z-index: 1;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--color-white);
+  color: var(--color-accent);
+  font-size: 30px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.heroText { position: relative; z-index: 1; min-width: 0; }
+.name { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; color: var(--color-white); }
+.position { margin-top: 4px; font-size: 16px; color: rgba(255, 255, 255, 0.85); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.chip {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  overflow-wrap: anywhere;
+}
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.cards > div { margin-bottom: 0; }
+.cta { align-self: flex-start; margin-top: 8px; text-decoration: none; }
+
+@media (max-width: 640px) {
+  .hero { flex-direction: column; align-items: flex-start; padding: 26px 22px; border-radius: 24px; gap: 16px; }
+  .avatar { width: 68px; height: 68px; font-size: 24px; }
+  .name { font-size: 22px; }
+}

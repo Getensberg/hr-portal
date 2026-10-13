@@ -2,7 +2,7 @@
 .yearBtn {
   width: 36px; height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--color-text-muted);
+  border: 1px solid var(--color-border-strong);
   background: var(--color-white);
   cursor: pointer;
   font-size: 16px;
@@ -28,10 +28,10 @@
 .preview { font-size: 14px; color: var(--color-text-tertiary); margin: 0; }
 .error { color: var(--color-danger); font-size: 14px; margin: 0; }
 .warning {
-  background: #FFF3CD;
-  color: #7A5B00;
-  border: 1px solid #E6CF85;
-  border-radius: var(--radius-sm);
+  background: var(--tint-sand-bg);
+  color: var(--tint-sand-fg);
+  border: 1px solid var(--tint-sand-line);
+  border-radius: var(--radius-md);
   padding: 12px 16px;
   font-size: 14px;
   margin: 0;
@@ -39,10 +39,10 @@
 
 .infoGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 32px; }
 .blockedBox {
-  background: #FFF3CD;
-  color: #7A5B00;
-  border: 1px solid #E6CF85;
-  border-radius: var(--radius-sm);
+  background: var(--tint-sand-bg);
+  color: var(--tint-sand-fg);
+  border: 1px solid var(--tint-sand-line);
+  border-radius: var(--radius-md);
   padding: 20px 24px;
 }
 .blockedBox h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
@@ -52,5 +52,5 @@
 .entryRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .entryActions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
-.planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-text-muted); }
-.confirmed { background: #E6F9E1; color: #157A00; }
+.planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.confirmed { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }

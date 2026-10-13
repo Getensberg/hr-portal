@@ -1,12 +1,13 @@
 .block {
-  border: 1px solid var(--color-bg-card);
-  border-radius: var(--radius-sm);
-  padding: 16px 20px 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  border-radius: 24px;
+  padding: 20px 24px 24px;
   min-width: 0;
   max-width: 100%;
 }
 .blockLarge { flex: 1 1 100%; }
-.leadership { margin-bottom: 24px; background: rgba(0, 0, 0, 0.04); }
+.leadership { margin-bottom: 24px; background: var(--color-accent-soft); border-color: transparent; }
 .depts { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; margin-bottom: 8px; }
 .blockTitle { margin: 0 0 16px; text-align: center; }
 .blockScroll { overflow-x: auto; padding-bottom: 8px; }
@@ -17,13 +18,13 @@
 .personCard {
   width: 180px;
   background: var(--color-white);
-  border: 1px solid var(--color-text-muted);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 10px 14px;
   cursor: pointer;
   text-align: left;
 }
-.personCard:hover { border-color: var(--color-text-primary); }
+.personCard:hover { border-color: var(--color-accent); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.12); }
 .personName { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
 .personPosition { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
 .contacts {

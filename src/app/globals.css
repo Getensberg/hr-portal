@@ -30,6 +30,13 @@
   --tint-sand-bg: #FFF1CC;
   --tint-sand-fg: #7A5200;
 
+  --tint-rose-bg: #FDE8EC;
+  --tint-rose-fg: #B4234A;
+  --tint-rose-line: #F6C5D0;
+  --tint-mint-line: #BFE6B5;
+  --tint-sand-line: #EBD9A0;
+  --color-border-strong: #DADCE5;
+
   --radius-pill: 40px;
   --radius-lg: 24px;
   --radius-md: 16px;
@@ -86,13 +93,14 @@ img {
   .text-h4 { font-size: 14px; }
 }
 
-/* Инпуты по киту */
+/* Поля ввода */
 .input, .textarea, select.input {
   font-family: var(--font-sans);
   font-size: 16px;
-  border: 1px solid var(--color-text-muted);
+  border: 1px solid var(--color-border-strong);
   background: var(--color-white);
   color: var(--color-text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .input {
   height: 48px;
@@ -103,11 +111,15 @@ img {
   padding: 12px 20px;
   border-radius: var(--radius-md);
   width: 100%;
+  resize: vertical;
 }
+.input::placeholder, .textarea::placeholder { color: var(--color-text-muted); }
 .input:focus, .textarea:focus {
   outline: none;
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
 }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-accent); }
 
 /* Широкие таблицы не ломают страницу на телефоне */
 .table-scroll {

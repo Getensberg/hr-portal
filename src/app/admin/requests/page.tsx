@@ -35,6 +35,7 @@ export default function AdminRequestsPage() {
 
   return (
     <PageShell title="Очередь заявок" wide>
+      <div className="table-scroll">
       <table className={styles.table}>
         <thead>
           <tr>
@@ -77,6 +78,7 @@ export default function AdminRequestsPage() {
           ))}
         </tbody>
       </table>
+      </div>
     </PageShell>
   );
 }

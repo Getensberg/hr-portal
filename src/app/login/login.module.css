@@ -1,12 +1,108 @@
-.form {
+.stage {
+  position: relative;
+  overflow: hidden;
+  max-width: 1360px;
+  margin: 24px auto 48px;
+  padding: 72px 24px;
+  background: var(--color-accent);
+  border-radius: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 260px);
+}
+.decor1 {
+  position: absolute;
+  right: -90px;
+  top: -130px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+}
+.decor2 {
+  position: absolute;
+  left: -80px;
+  bottom: -140px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--color-white);
+  border-radius: 28px;
+  padding: 40px 36px 32px;
+  box-shadow: 0 24px 60px rgba(0, 2, 9, 0.22);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 360px;
-  margin: 100px auto 0;
+  gap: 18px;
 }
+.icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--tint-lilac-bg);
+  color: var(--tint-lilac-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.title {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  color: var(--color-text-primary);
+}
+.subtitle {
+  margin: -8px 0 6px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+}
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.label { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+.passwordWrap { position: relative; display: block; }
+.passwordInput { width: 100%; padding-right: 96px; }
+.toggle {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+.toggle:hover { background: var(--color-accent-soft); }
+.field > .input { width: 100%; }
+
 .error {
-  color: var(--color-danger);
-  font-size: 14px;
   margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--tint-rose-bg);
+  border: 1px solid var(--tint-rose-line);
+  color: var(--tint-rose-fg);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.submit { width: 100%; margin-top: 4px; }
+.hint { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--color-text-muted); text-align: center; }
+
+@media (max-width: 640px) {
+  .stage { margin: 16px 16px 32px; padding: 32px 16px; border-radius: 24px; min-height: 0; }
+  .card { padding: 28px 22px 24px; border-radius: 24px; }
+  .title { font-size: 24px; }
 }
