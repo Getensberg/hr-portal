@@ -5,9 +5,17 @@ import { useRouter } from "next/navigation";
 import { useGetAdminSurveysQuery, useCreateSurveyMutation, useGetSurveyResultsQuery, useDeleteSurveyMutation } from "@/store/api";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { Select } from "@/components/Select";
+import { FormError } from "@/components/FormError";
+import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/Button";
 import styles from "./surveys-admin.module.css";
+
+const QUESTION_TYPES = [
+  { value: "SCALE_1_5", label: "Шкала 1–5" },
+  { value: "YES_NO", label: "Да/Нет" },
+  { value: "TEXT", label: "Текст" },
+];
 
 export default function AdminSurveysPage() {
   const { data: session, status } = useSession();
@@ -47,6 +55,9 @@ export default function AdminSurveysPage() {
   function addQuestion() {
     setQuestions([...questions, { text: "", type: "SCALE_1_5" }]);
   }
+  function removeQuestion(i: number) {
+    setQuestions(questions.filter((_, idx) => idx !== i));
+  }
   function updateQuestion(i: number, field: "text" | "type", value: string) {
     const copy = [...questions];
     copy[i] = { ...copy[i], [field]: value };
@@ -85,85 +96,139 @@ export default function AdminSurveysPage() {
       setStartDate("");
       setEndDate("");
       setQuestions([{ text: "", type: "SCALE_1_5" }]);
-    } catch (err: any) {
-      setError(err?.data?.error ?? "Не удалось создать опрос");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось создать опрос"));
     }
   }
 
   return (
     <PageShell title="Управление опросами" wide>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название опроса" />
+      <div className={styles.layout}>
+        <form onSubmit={handleSubmit} className={styles.panel}>
+          <h2 className={styles.panelTitle}>Новый опрос</h2>
 
-        <div className={styles.checkboxRow}>
-          <label><input type="checkbox" checked={isAnonymous} onChange={(e) => setIsAnonymous(e.target.checked)} /> Анонимный</label>
-          <label><input type="checkbox" checked={isSuggestionBox} onChange={(e) => setIsSuggestionBox(e.target.checked)} /> Ящик предложений</label>
-        </div>
+          <label className={styles.field}>
+            <span className={styles.label}>Название</span>
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например, вовлечённость команды" />
+          </label>
 
-        <div className={styles.dateRow}>
-          <label>Начало: <input className="input" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="по умолчанию — сегодня" maxLength={10} /></label>
-          <label>Конец: <input className="input" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="необязательно" maxLength={10} /></label>
-        </div>
+          <div className={styles.toggles}>
+            <button type="button" className={`${styles.toggle} ${isAnonymous ? styles.toggleOn : ""}`} aria-pressed={isAnonymous} onClick={() => setIsAnonymous(!isAnonymous)}>
+              <span className={styles.check}>{isAnonymous ? "✓" : ""}</span> Анонимный
+            </button>
+            <button type="button" className={`${styles.toggle} ${isSuggestionBox ? styles.toggleOn : ""}`} aria-pressed={isSuggestionBox} onClick={() => setIsSuggestionBox(!isSuggestionBox)}>
+              <span className={styles.check}>{isSuggestionBox ? "✓" : ""}</span> Ящик предложений
+            </button>
+          </div>
 
-        {!isSuggestionBox && (
-          <div>
-            <span className="text-h4">Вопросы</span>
-            {questions.map((q, i) => (
-              <div key={i} className={styles.questionRow}>
-                <input className="input" value={q.text} onChange={(e) => updateQuestion(i, "text", e.target.value)} placeholder="Текст вопроса" />
-                <select className="input" value={q.type} onChange={(e) => updateQuestion(i, "type", e.target.value)}>
-                  <option value="SCALE_1_5">Шкала 1-5</option>
-                  <option value="YES_NO">Да/Нет</option>
-                  <option value="TEXT">Текст</option>
-                </select>
+          <div className={styles.dates}>
+            <label className={styles.field}>
+              <span className={styles.label}>Начало</span>
+              <input className="input" inputMode="numeric" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="по умолчанию сегодня" maxLength={10} />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>Конец</span>
+              <input className="input" inputMode="numeric" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="необязательно" maxLength={10} />
+            </label>
+          </div>
+
+          {!isSuggestionBox ? (
+            <div className={styles.questions}>
+              <span className={styles.label}>Вопросы</span>
+              {questions.map((q, i) => (
+                <div key={i} className={styles.qCard}>
+                  <span className={styles.qNum}>{i + 1}</span>
+                  <div className={styles.qFields}>
+                    <input className="input" value={q.text} onChange={(e) => updateQuestion(i, "text", e.target.value)} placeholder="Текст вопроса" />
+                    <Select value={q.type} onChange={(v) => updateQuestion(i, "type", v)} options={QUESTION_TYPES} ariaLabel="Тип вопроса" />
+                  </div>
+                  {questions.length > 1 && (
+                    <button type="button" className={styles.remove} onClick={() => removeQuestion(i)} aria-label="Удалить вопрос">×</button>
+                  )}
+                </div>
+              ))}
+              <Button type="button" variant="secondary" onClick={addQuestion}>+ Добавить вопрос</Button>
+            </div>
+          ) : (
+            <p className={styles.note}>В ящике предложений будет один свободный вопрос «Ваше предложение».</p>
+          )}
+
+          <FormError message={error || null} />
+          {success && <p className={styles.success}>{success}</p>}
+          <Button type="submit">Создать опрос</Button>
+        </form>
+
+        <div>
+          <h2 className={styles.listTitle}>Опросы <span className={styles.count}>{surveys?.length ?? 0}</span></h2>
+          {surveys?.length === 0 && <p className={styles.empty}>Опросов пока нет</p>}
+          {surveys?.map((s) => (
+            <div key={s.id} className={styles.item}>
+              <div className={styles.itemHead}>
+                <div className={styles.itemInfo}>
+                  <div className={styles.itemTitle}>{s.title}</div>
+                  <div className={styles.chips}>
+                    <span className={`${styles.chip} ${styles.chipLilac}`}>Прошли: {s.completionsCount ?? 0}</span>
+                    {s.isAnonymous && <span className={`${styles.chip} ${styles.chipMint}`}>Анонимный</span>}
+                    {s.isSuggestionBox && <span className={`${styles.chip} ${styles.chipPeach}`}>Ящик предложений</span>}
+                  </div>
+                </div>
+                <div className={styles.itemActions}>
+                  <Button size="sm" variant="secondary" onClick={() => setResultsOpenId(resultsOpenId === s.id ? null : s.id)}>
+                    {resultsOpenId === s.id ? "Скрыть" : "Результаты"}
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => handleDelete(s.id)}>Удалить</Button>
+                </div>
               </div>
-            ))}
-            <Button type="button" variant="secondary" onClick={addQuestion} style={{ marginTop: 8 }}>+ Добавить вопрос</Button>
-          </div>
-        )}
-
-        {error && <p className="text-xs" style={{ color: "var(--color-danger)", margin: 0 }}>{error}</p>}
-        {success && <p className="text-xs" style={{ color: "var(--tint-mint-fg)", margin: 0 }}>{success}</p>}
-        <Button type="submit">Создать опрос</Button>
-      </form>
-
-      {surveys?.map((s) => (
-        <Card key={s.id}>
-          <div className={styles.itemRow}>
-            <CardTitle>{s.title}</CardTitle>
-            <span className="text-xs">прошли: {s.completionsCount ?? 0}{s.isAnonymous ? " · анонимный" : ""}</span>
-            <Button variant="danger" onClick={() => handleDelete(s.id)}>Удалить</Button>
-          </div>
-          <Button variant="secondary" onClick={() => setResultsOpenId(resultsOpenId === s.id ? null : s.id)}>
-            {resultsOpenId === s.id ? "Скрыть результаты" : "Показать результаты"}
-          </Button>
-          {resultsOpenId === s.id && <SurveyResults surveyId={s.id} />}
-        </Card>
-      ))}
+              {resultsOpenId === s.id && <SurveyResults surveyId={s.id} />}
+            </div>
+          ))}
+        </div>
+      </div>
     </PageShell>
   );
 }
 
 function SurveyResults({ surveyId }: { surveyId: string }) {
   const { data, isLoading } = useGetSurveyResultsQuery(surveyId);
-  if (isLoading) return <p className="text-s">Загрузка результатов...</p>;
+  if (isLoading) return <p className={styles.empty}>Загрузка результатов...</p>;
   if (!data) return null;
 
   return (
     <div className={styles.results}>
-      {data.questions.map((q) => (
-        <div key={q.id} style={{ marginBottom: 8 }}>
-          <span className="text-s"><strong>{q.text}</strong></span>
-          {q.type === "SCALE_1_5" && <p className="text-xs">Средняя оценка: {q.average?.toFixed(2) ?? "нет данных"}</p>}
-          {q.type === "YES_NO" && <p className="text-xs">Да: {q.counts?.yes ?? 0} · Нет: {q.counts?.no ?? 0}</p>}
-          {q.type === "TEXT" && (
-            <ul>
-              {q.texts?.map((t, i) => <li key={i} className="text-xs">{t}</li>)}
-              {q.texts?.length === 0 && <li className="text-xs">Пока нет ответов</li>}
-            </ul>
-          )}
-        </div>
-      ))}
+      {data.questions.map((q, idx) => {
+        const yes = q.counts?.yes ?? 0;
+        const no = q.counts?.no ?? 0;
+        const total = yes + no;
+        return (
+          <div key={q.id} className={styles.res}>
+            <div className={styles.resText}><span className={styles.qNumSm}>{idx + 1}</span>{q.text}</div>
+            {q.type === "SCALE_1_5" && (
+              q.average != null ? (
+                <div className={styles.avgRow}>
+                  <div className={styles.avgBar}><div className={styles.avgFill} style={{ width: `${(q.average / 5) * 100}%` }} /></div>
+                  <span className={styles.avgValue}>{q.average.toFixed(2)} <span className={styles.of}>из 5</span></span>
+                </div>
+              ) : <p className={styles.muted}>Нет данных</p>
+            )}
+            {q.type === "YES_NO" && (
+              total > 0 ? (
+                <div>
+                  <div className={styles.ynBar}>
+                    <div className={styles.ynYes} style={{ width: `${(yes / total) * 100}%` }} />
+                  </div>
+                  <div className={styles.ynLegend}><span>Да: {yes}</span><span>Нет: {no}</span></div>
+                </div>
+              ) : <p className={styles.muted}>Нет данных</p>
+            )}
+            {q.type === "TEXT" && (
+              <div className={styles.texts}>
+                {q.texts?.map((t, i) => <div key={i} className={styles.textAns}>{t}</div>)}
+                {(q.texts?.length ?? 0) === 0 && <p className={styles.muted}>Пока нет ответов</p>}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

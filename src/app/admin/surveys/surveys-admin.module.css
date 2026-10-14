@@ -1,8 +1,67 @@
-.form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
-.checkboxRow { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
-.checkboxRow label { display: flex; gap: 6px; align-items: center; font-size: 14px; color: var(--color-text-secondary); }
-.dateRow { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
-.dateRow label { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--color-text-secondary); }
-.questionRow { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.itemRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-.results { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--color-text-muted); }
+.layout { display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.panel {
+  background: var(--color-white); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
+  padding: 24px; display: flex; flex-direction: column; gap: 16px;
+}
+.panelTitle { margin: 0; font-size: 18px; font-weight: 600; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.label { font-size: 12px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--color-border-strong); background: var(--color-white);
+  color: var(--color-text-secondary); font-family: inherit; font-size: 14px; font-weight: 500;
+  padding: 8px 16px 8px 10px; border-radius: var(--radius-pill); cursor: pointer;
+}
+.toggleOn { background: var(--color-accent-soft); border-color: var(--color-accent); color: var(--color-accent); }
+.check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--color-border-strong); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.toggleOn .check { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.questions { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.qCard { position: relative; width: 100%; display: flex; gap: 10px; background: #F6F5FF; border-radius: 18px; padding: 12px; align-items: flex-start; }
+.qNum, .qNumSm { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--color-white); color: var(--color-accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 10px; }
+.qFields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.remove { flex: none; width: 32px; height: 32px; margin-top: 6px; border: none; border-radius: 50%; background: var(--color-white); color: var(--color-text-muted); font-size: 20px; line-height: 1; cursor: pointer; }
+.remove:hover { color: var(--color-danger); }
+.note { margin: 0; font-size: 13px; color: var(--color-text-muted); background: var(--tint-peach-bg); border-radius: 14px; padding: 10px 14px; }
+.success { margin: 0; font-size: 14px; color: var(--tint-mint-fg); background: var(--tint-mint-bg); border-radius: 12px; padding: 10px 14px; }
+
+.listTitle { margin: 0 0 14px; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.count { background: var(--color-bg-alt); border-radius: var(--radius-pill); padding: 2px 10px; font-size: 13px; color: var(--color-text-secondary); font-weight: 500; }
+.empty, .muted { margin: 0; font-size: 14px; color: var(--color-text-muted); }
+.item { background: var(--color-white); border: 1px solid var(--color-border); border-radius: 22px; box-shadow: var(--shadow-card); padding: 18px; margin-bottom: 12px; }
+.itemHead { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.itemInfo { min-width: 0; flex: 1; }
+.itemTitle { font-size: 16px; font-weight: 600; margin-bottom: 8px; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 4px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; }
+.chipLilac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
+.chipMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+.chipPeach { background: var(--tint-peach-bg); color: var(--tint-peach-fg); }
+.itemActions { display: flex; gap: 8px; }
+
+.results { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 14px; }
+.res { background: #F6F5FF; border-radius: 16px; padding: 14px; }
+.resText { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+.qNumSm { margin-top: 0; }
+.avgRow { display: flex; align-items: center; gap: 12px; }
+.avgBar { flex: 1; height: 10px; border-radius: 6px; background: var(--color-white); overflow: hidden; }
+.avgFill { height: 100%; background: var(--color-accent); border-radius: 6px; }
+.avgValue { font-size: 16px; font-weight: 700; color: var(--color-accent); white-space: nowrap; }
+.of { font-size: 12px; font-weight: 500; color: var(--color-text-muted); }
+.ynBar { height: 10px; border-radius: 6px; background: var(--tint-peach-bg); overflow: hidden; }
+.ynYes { height: 100%; background: var(--tint-mint-fg); }
+.ynLegend { display: flex; justify-content: space-between; font-size: 13px; color: var(--color-text-secondary); margin-top: 6px; }
+.texts { display: flex; flex-direction: column; gap: 6px; }
+.textAns { background: var(--color-white); border-radius: 12px; padding: 8px 12px; font-size: 13px; color: var(--color-text-secondary); overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .panel { padding: 18px 14px; border-radius: 22px; }
+  .item { padding: 14px; border-radius: 20px; }
+  .itemActions { width: 100%; }
+  .itemActions > * { flex: 1; }
+}
