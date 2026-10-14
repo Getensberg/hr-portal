@@ -4,10 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetAllRequestsQuery, useUpdateRequestStatusMutation, useDeleteRequestMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Button } from "@/components/Button";
-import styles from "./requests-admin.module.css";
-
-const STATUS_OPTIONS = ["PENDING", "IN_PROGRESS", "DONE"];
+import { RequestsBoard } from "@/components/RequestsBoard";
 
 export default function AdminRequestsPage() {
   const { data: session, status } = useSession();
@@ -35,50 +32,11 @@ export default function AdminRequestsPage() {
 
   return (
     <PageShell title="Очередь заявок" wide>
-      <div className="table-scroll">
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Сотрудник</th>
-            <th>Тип</th>
-            <th>Детали</th>
-            <th>Файлы</th>
-            <th>Статус</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {requests?.map((r) => (
-            <tr key={r.id}>
-              <td>{r.user?.fullName}</td>
-              <td>{r.type}</td>
-              <td>{r.payload?.description ?? "—"}</td>
-              <td>
-                {r.files && r.files.length > 0
-                  ? r.files.map((f, i) => (
-                      <a key={i} href={f.url} target="_blank" rel="noopener noreferrer" style={{ marginRight: 8 }}>
-                        📎
-                      </a>
-                    ))
-                  : "—"}
-              </td>
-              <td>
-                <select
-                  className={styles.select}
-                  value={r.status}
-                  onChange={(e) => updateStatus({ id: r.id, status: e.target.value as any })}
-                >
-                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </td>
-              <td>
-                <Button variant="danger" onClick={() => handleDelete(r.id)}>Удалить</Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
+      <RequestsBoard
+        requests={requests ?? []}
+        onStatus={(id, s) => updateStatus({ id, status: s as any })}
+        onDelete={handleDelete}
+      />
     </PageShell>
   );
 }

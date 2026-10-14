@@ -4,9 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetTeamRequestsQuery, useUpdateRequestStatusMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import styles from "./manager-requests.module.css";
-
-const STATUS_OPTIONS = ["PENDING", "IN_PROGRESS", "DONE"];
+import { RequestsBoard } from "@/components/RequestsBoard";
 
 export default function ManagerRequestsPage() {
   const { data: session, status } = useSession();
@@ -27,32 +25,11 @@ export default function ManagerRequestsPage() {
 
   return (
     <PageShell title="Заявки моей команды" wide>
-      <div className="table-scroll">
-      <table className={styles.table}>
-        <thead>
-          <tr><th>Сотрудник</th><th>Тип</th><th>Детали</th><th>Статус</th></tr>
-        </thead>
-        <tbody>
-          {requests?.map((r) => (
-            <tr key={r.id}>
-              <td>{r.user?.fullName}</td>
-              <td>{r.type}</td>
-              <td>{r.payload?.description ?? "—"}</td>
-              <td>
-                <select
-                  className={styles.select}
-                  value={r.status}
-                  onChange={(e) => updateStatus({ id: r.id, status: e.target.value as any })}
-                >
-                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
-      {requests?.length === 0 && <p className="text-s">В твоей команде пока нет заявок</p>}
+      <RequestsBoard
+        requests={requests ?? []}
+        onStatus={(id, s) => updateStatus({ id, status: s as any })}
+        emptyText="В вашей команде пока нет заявок"
+      />
     </PageShell>
   );
 }
