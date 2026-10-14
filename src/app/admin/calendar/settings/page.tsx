@@ -10,13 +10,20 @@ import {
   useCreateBlockedPeriodMutation,
   useDeleteBlockedPeriodMutation,
 } from "@/store/api";
-import { parseHolidayLines, parseISODate, formatRu } from "@/lib/vacation";
-import { autoFormatRuDate, parseRuDate } from "@/lib/date";
+import { parseHolidayLines, formatRu } from "@/lib/vacation";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
+import { MonthGrid } from "@/components/MonthGrid";
 import { FormError } from "@/components/FormError";
 import { getErrorMessage } from "@/lib/errors";
 import styles from "./settings.module.css";
+
+type Mode = "HOLIDAY" | "BLOCKED";
+
+function isoToRu(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
 
 export default function CalendarSettingsPage() {
   const { data: session, status } = useSession();
@@ -35,167 +42,238 @@ export default function CalendarSettingsPage() {
   const [createBlocked, { isLoading: addingBlocked }] = useCreateBlockedPeriodMutation();
   const [deleteBlocked] = useDeleteBlockedPeriodMutation();
 
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [holidayText, setHolidayText] = useState("");
-  const [holidayErrors, setHolidayErrors] = useState<string[]>([]);
-  const [holidayResult, setHolidayResult] = useState("");
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
 
-  const [blockStart, setBlockStart] = useState("");
-  const [blockEnd, setBlockEnd] = useState("");
-  const [blockReason, setBlockReason] = useState("");
-  const [blockError, setBlockError] = useState("");
+  const [mode, setMode] = useState<Mode>("HOLIDAY");
+  const [selStart, setSelStart] = useState<string | null>(null);
+  const [selEnd, setSelEnd] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [label, setLabel] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const [bulkText, setBulkText] = useState("");
+  const [bulkErrors, setBulkErrors] = useState<string[]>([]);
+  const [bulkResult, setBulkResult] = useState("");
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
   }
 
-  const yearHolidays = (holidays ?? []).filter((h) => new Date(h.date).getUTCFullYear() === year);
+  function handlePick(iso: string) {
+    setSuccess("");
+    setError("");
+    if (!picking) {
+      setSelStart(iso);
+      setSelEnd(iso);
+      setPicking(true);
+      return;
+    }
+    if (selStart && iso < selStart) {
+      setSelEnd(selStart);
+      setSelStart(iso);
+    } else {
+      setSelEnd(iso);
+    }
+    setPicking(false);
+  }
 
-  async function handleAddHolidays(e: React.FormEvent) {
+  function clearSelection() {
+    setSelStart(null);
+    setSelEnd(null);
+    setPicking(false);
+    setLabel("");
+    setError("");
+  }
+
+  function switchMode(next: Mode) {
+    setMode(next);
+    setError("");
+    setSuccess("");
+  }
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setHolidayResult("");
-
-    const { items, errors } = parseHolidayLines(holidayText);
-    if (errors.length > 0) {
-      setHolidayErrors(errors);
+    setError("");
+    setSuccess("");
+    if (!selStart || !selEnd) {
+      setError("Выберите дату или период в календаре");
       return;
     }
-    if (items.length === 0) {
-      setHolidayErrors(["Не найдено ни одной даты"]);
-      return;
-    }
-    setHolidayErrors([]);
-
     try {
-      const res = await addHolidays({ items }).unwrap();
-      setHolidayResult(`Добавлено: ${res.created}, уже были в списке: ${items.length - res.created}`);
-      setHolidayText("");
+      if (mode === "HOLIDAY") {
+        const line = `${isoToRu(selStart)}${selStart !== selEnd ? `-${isoToRu(selEnd)}` : ""} ${label.trim()}`;
+        const { items, errors } = parseHolidayLines(line);
+        if (errors.length > 0) {
+          setError(errors[0]);
+          return;
+        }
+        const res = await addHolidays({ items }).unwrap();
+        setSuccess(
+          res.created > 0
+            ? `Добавлено дней: ${res.created}${items.length - res.created > 0 ? `, уже были: ${items.length - res.created}` : ""}`
+            : "Эти дни уже отмечены как праздничные"
+        );
+      } else {
+        if (!label.trim()) {
+          setError("Укажите причину");
+          return;
+        }
+        await createBlocked({ startDate: selStart, endDate: selEnd, reason: label.trim() }).unwrap();
+        setSuccess("Запретный период добавлен");
+      }
+      clearSelection();
     } catch (err) {
-      setHolidayErrors([getErrorMessage(err, "Не удалось сохранить")]);
+      setError(getErrorMessage(err, "Не удалось сохранить"));
     }
   }
 
-  async function handleAddBlocked(e: React.FormEvent) {
+  async function handleBulk(e: React.FormEvent) {
     e.preventDefault();
-    setBlockError("");
-
-    const startISO = parseRuDate(blockStart);
-    const endISO = parseRuDate(blockEnd);
-    if (!startISO || !endISO || !parseISODate(startISO) || !parseISODate(endISO)) {
-      setBlockError("Введите обе даты в формате дд.мм.гггг");
-      return;
-    }
-    if (!blockReason.trim()) {
-      setBlockError("Укажите причину");
-      return;
-    }
-
+    setBulkResult("");
+    const { items, errors } = parseHolidayLines(bulkText);
+    if (errors.length > 0) return setBulkErrors(errors);
+    if (items.length === 0) return setBulkErrors(["Не найдено ни одной даты"]);
+    setBulkErrors([]);
     try {
-      await createBlocked({ startDate: startISO, endDate: endISO, reason: blockReason }).unwrap();
-      setBlockStart("");
-      setBlockEnd("");
-      setBlockReason("");
+      const res = await addHolidays({ items }).unwrap();
+      setBulkResult(`Добавлено: ${res.created}, уже были в списке: ${items.length - res.created}`);
+      setBulkText("");
     } catch (err) {
-      setBlockError(getErrorMessage(err, "Не удалось сохранить период"));
+      setBulkErrors([getErrorMessage(err, "Не удалось сохранить")]);
     }
   }
 
   function handleDeleteHoliday(id: string) {
     if (confirm("Удалить этот день из календаря праздников?")) deleteHoliday(id);
   }
-
   function handleDeleteBlocked(id: string) {
     if (confirm("Удалить этот запретный период?")) deleteBlocked(id);
   }
 
+  const yearHolidays = (holidays ?? [])
+    .filter((h) => new Date(h.date).getUTCFullYear() === year)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const yearBlocked = (blocked ?? [])
+    .filter((b) => new Date(b.startDate).getUTCFullYear() <= year && new Date(b.endDate).getUTCFullYear() >= year)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  const hasSel = Boolean(selStart && selEnd);
+  const lo = selStart && selEnd && selStart > selEnd ? selEnd : selStart;
+  const hi = selStart && selEnd && selStart > selEnd ? selStart : selEnd;
+  const selText = !hasSel || !lo || !hi ? "" : lo === hi ? isoToRu(lo) : `${isoToRu(lo)} – ${isoToRu(hi)}`;
+
   return (
     <PageShell title="Праздники и запретные периоды" wide>
-      <section className={styles.section}>
-        <h2 className={styles.h2}>Производственный календарь</h2>
+      <div className={styles.layout}>
+        <section className={styles.panel}>
+          <MonthGrid
+            year={year}
+            month={month}
+            onChange={(y, m) => { setYear(y); setMonth(m); }}
+            entries={[]}
+            holidays={holidays ?? []}
+            blocked={blocked ?? []}
+            selStart={selStart}
+            selEnd={selEnd}
+            onPick={handlePick}
+          />
+        </section>
 
-        <form onSubmit={handleAddHolidays} className={styles.panel}>
+        <form onSubmit={handleSave} className={styles.panel}>
+          <h2 className={styles.h2}>Что отметить</h2>
+          <div className={styles.segment} role="tablist">
+            <button type="button" role="tab" aria-selected={mode === "HOLIDAY"} className={`${styles.seg} ${mode === "HOLIDAY" ? styles.segHoliday : ""}`} onClick={() => switchMode("HOLIDAY")}>
+              Праздник
+            </button>
+            <button type="button" role="tab" aria-selected={mode === "BLOCKED"} className={`${styles.seg} ${mode === "BLOCKED" ? styles.segBlocked : ""}`} onClick={() => switchMode("BLOCKED")}>
+              Запретный период
+            </button>
+          </div>
           <p className={styles.hint}>
-            Вставьте список, по одной записи на строку. Можно одну дату или диапазон, название необязательно.
-            Например: 01.01.2027 - Новый год или 01.01.2027-08.01.2027 Новогодние каникулы.
-            Даты, которые уже есть в календаре, будут пропущены.
+            {mode === "HOLIDAY"
+              ? "Нерабочие дни: в них не считаются дни отпуска. Это может быть один день или период, например новогодние каникулы."
+              : "В эти даты сотрудники увидят предупреждение, что отпуск лучше не планировать. Внести период при этом всё равно можно."}
+          </p>
+
+          <div className={styles.selBox}>
+            <span className={styles.selLabel}>Выбрано</span>
+            {hasSel ? (
+              <span className={styles.selValue}>{selText}</span>
+            ) : (
+              <span className={styles.selEmpty}>Нажмите на дату в календаре, для периода нажмите на вторую дату</span>
+            )}
+            {hasSel && <button type="button" className={styles.clear} onClick={clearSelection}>Сбросить</button>}
+          </div>
+
+          <label className={styles.field}>
+            <span className={styles.label}>{mode === "HOLIDAY" ? "Название (необязательно)" : "Причина"}</span>
+            <input
+              className="input"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder={mode === "HOLIDAY" ? "Например, Новый год" : "Например, закрытие квартала"}
+            />
+          </label>
+
+          <FormError message={error || null} />
+          {success && <p className={styles.success}>{success}</p>}
+          <Button type="submit" disabled={addingHolidays || addingBlocked || !hasSel}>
+            {mode === "HOLIDAY" ? "Добавить праздник" : "Добавить запретный период"}
+          </Button>
+        </form>
+      </div>
+
+      <div className={styles.lists}>
+        <section>
+          <h2 className={styles.listTitle}>Праздники {year} <span className={styles.count}>{yearHolidays.length}</span></h2>
+          {yearHolidays.map((h) => (
+            <div key={h.id} className={styles.row}>
+              <span className={styles.rowText}>
+                <span className={`${styles.rowDate} ${styles.dateHoliday}`}>{formatRu(h.date)}</span>
+                {h.name}
+              </span>
+              <Button size="sm" variant="danger" onClick={() => handleDeleteHoliday(h.id)}>Удалить</Button>
+            </div>
+          ))}
+          {yearHolidays.length === 0 && <p className={styles.empty}>На {year} год праздников пока нет</p>}
+        </section>
+
+        <section>
+          <h2 className={styles.listTitle}>Запретные периоды <span className={styles.count}>{yearBlocked.length}</span></h2>
+          {yearBlocked.map((b) => (
+            <div key={b.id} className={styles.row}>
+              <span className={styles.rowText}>
+                <span className={`${styles.rowDate} ${styles.dateBlocked}`}>{formatRu(b.startDate)} – {formatRu(b.endDate)}</span>
+                {b.reason}
+              </span>
+              <Button size="sm" variant="danger" onClick={() => handleDeleteBlocked(b.id)}>Удалить</Button>
+            </div>
+          ))}
+          {yearBlocked.length === 0 && <p className={styles.empty}>Запретных периодов пока нет</p>}
+        </section>
+      </div>
+
+      <details className={styles.bulk}>
+        <summary>Добавить праздники списком</summary>
+        <form onSubmit={handleBulk} className={styles.bulkForm}>
+          <p className={styles.hint}>
+            По одной записи на строку: дата или диапазон, название необязательно. Например: 01.01.2027 Новый год
+            или 01.01.2027-08.01.2027 Новогодние каникулы. Даты, которые уже есть, будут пропущены.
           </p>
           <textarea
             className="textarea"
-            rows={6}
-            value={holidayText}
-            onChange={(e) => setHolidayText(e.target.value)}
-            placeholder={"01.01.2027-08.01.2027 Новогодние каникулы\n23.02.2027 День защитника Отечества\n08.03.2027 Международный женский день"}
+            rows={5}
+            value={bulkText}
+            onChange={(e) => setBulkText(e.target.value)}
+            placeholder={"01.01.2027-08.01.2027 Новогодние каникулы\n23.02.2027 День защитника Отечества"}
           />
-          {holidayErrors.length > 0 && (
-            <ul className={styles.errors}>
-              {holidayErrors.map((err, i) => <li key={i}>{err}</li>)}
-            </ul>
-          )}
-          {holidayResult && <p className={styles.success}>{holidayResult}</p>}
-          <div>
-            <Button type="submit" disabled={addingHolidays}>Добавить праздники</Button>
-          </div>
+          {bulkErrors.length > 0 && <ul className={styles.errors}>{bulkErrors.map((err, i) => <li key={i}>{err}</li>)}</ul>}
+          {bulkResult && <p className={styles.success}>{bulkResult}</p>}
+          <div><Button type="submit" disabled={addingHolidays}>Добавить списком</Button></div>
         </form>
-
-        <div className={styles.yearRow}>
-          <button className={styles.yearBtn} onClick={() => setYear(year - 1)} aria-label="Предыдущий год">‹</button>
-          <span className={styles.yearLabel}>{year}</span>
-          <button className={styles.yearBtn} onClick={() => setYear(year + 1)} aria-label="Следующий год">›</button>
-        </div>
-
-        {yearHolidays.map((h) => (
-          <div key={h.id} className={styles.row}>
-            <span className={styles.rowText}><span className={styles.rowDate}>{formatRu(h.date)}</span>{h.name}</span>
-            <Button size="sm" variant="danger" onClick={() => handleDeleteHoliday(h.id)}>Удалить</Button>
-          </div>
-        ))}
-        {yearHolidays.length === 0 && <p className="text-s">На {year} год праздников пока нет</p>}
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.h2}>Запретные периоды</h2>
-        <p className={styles.hint}>
-          В эти даты сотрудники увидят жёлтое предупреждение, что отпуск лучше не планировать.
-          Внести период при этом всё равно можно.
-        </p>
-
-        <form onSubmit={handleAddBlocked} className={styles.panel}>
-          <div className={styles.formRow}>
-            <input
-              className="input"
-              value={blockStart}
-              onChange={(e) => setBlockStart(autoFormatRuDate(e.target.value))}
-              placeholder="Начало: дд.мм.гггг"
-              maxLength={10}
-            />
-            <input
-              className="input"
-              value={blockEnd}
-              onChange={(e) => setBlockEnd(autoFormatRuDate(e.target.value))}
-              placeholder="Конец: дд.мм.гггг"
-              maxLength={10}
-            />
-          </div>
-          <input
-            className="input"
-            value={blockReason}
-            onChange={(e) => setBlockReason(e.target.value)}
-            placeholder="Причина, например: закрытие квартала"
-          />
-          <FormError message={blockError || null} />
-          <div>
-            <Button type="submit" disabled={addingBlocked}>Добавить период</Button>
-          </div>
-        </form>
-
-        {blocked?.map((b) => (
-          <div key={b.id} className={styles.row}>
-            <span className={styles.rowText}><span className={styles.rowDate}>{formatRu(b.startDate)} – {formatRu(b.endDate)}</span>{b.reason}</span>
-            <Button size="sm" variant="danger" onClick={() => handleDeleteBlocked(b.id)}>Удалить</Button>
-          </div>
-        ))}
-        {blocked?.length === 0 && <p className="text-s">Запретных периодов пока нет</p>}
-      </section>
+      </details>
     </PageShell>
   );
 }
