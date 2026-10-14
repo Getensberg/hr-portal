@@ -4,10 +4,24 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetUsersQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { FormError } from "@/components/FormError";
+import { getErrorMessage } from "@/lib/errors";
+import { Select } from "@/components/Select";
 import { Button } from "@/components/Button";
 import { DepartmentInput } from "@/components/DepartmentInput";
 import styles from "./users-admin.module.css";
+
+const ROLE_OPTIONS = [
+  { value: "EMPLOYEE", label: "Сотрудник" },
+  { value: "MANAGER", label: "Руководитель" },
+  { value: "HR_ADMIN", label: "HR" },
+];
+const ROLE_LABEL: Record<string, string> = { EMPLOYEE: "Сотрудник", MANAGER: "Руководитель", HR_ADMIN: "HR" };
+const ROLE_CLASS: Record<string, string> = { EMPLOYEE: "roleEmployee", MANAGER: "roleManager", HR_ADMIN: "roleHr" };
+
+function initials(name: string) {
+  return (name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
+}
 
 export default function AdminUsersPage() {
   const { data: session, status } = useSession();
@@ -34,6 +48,7 @@ export default function AdminUsersPage() {
   const [lastCreated, setLastCreated] = useState<{ email: string; tempPassword: string } | null>(null);
   const [error, setError] = useState("");
   const [managerId, setManagerId] = useState("");
+  const [search, setSearch] = useState("");
 
   if (status === "loading" || !session || session.user.role !== "HR_ADMIN") {
     return <p className="text-s">Загрузка...</p>;
@@ -56,8 +71,8 @@ export default function AdminUsersPage() {
         setLastCreated({ email: result.user.email, tempPassword: result.tempPassword });
         resetForm();
       }
-    } catch (err: any) {
-      setError(err?.data?.error || "Не удалось сохранить");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось сохранить"));
     }
   }
 
@@ -71,6 +86,8 @@ export default function AdminUsersPage() {
     setRole(u.role);
     setManagerId(u.managerId ?? "");
     setLastCreated(null);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleDelete(u: any) {
@@ -80,64 +97,96 @@ export default function AdminUsersPage() {
     if (ok) deleteUser(u.id);
   }
 
+  const q = search.trim().toLowerCase();
+  const filtered = (users ?? []).filter((u: any) =>
+    !q || [u.fullName, u.email, u.department, u.position, u.phone].some((v) => (v ?? "").toLowerCase().includes(q))
+  );
+
   return (
     <PageShell title="Сотрудники" wide>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formRow}>
-          <input className="input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="ФИО" />
-          <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" />
+      <form onSubmit={handleSubmit} className={styles.panel}>
+        <h2 className={styles.panelTitle}>{editingId ? "Редактирование сотрудника" : "Новый сотрудник"}</h2>
+        <div className={styles.fields}>
+          <label className={styles.field}>
+            <span className={styles.label}>ФИО</span>
+            <input className="input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Иванов Иван" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Email</span>
+            <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.ru" type="email" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Отдел</span>
+            <DepartmentInput value={department} onChange={setDepartment} placeholder="Выберите или введите" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Должность</span>
+            <input className="input" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Должность" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Телефон</span>
+            <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7" />
+          </label>
+          <div className={styles.field}>
+            <span className={styles.label}>Роль</span>
+            <Select value={role} onChange={setRole} options={ROLE_OPTIONS} ariaLabel="Роль" />
+          </div>
+          <div className={styles.field}>
+            <span className={styles.label}>Руководитель</span>
+            <Select
+              value={managerId}
+              onChange={setManagerId}
+              ariaLabel="Руководитель"
+              options={[
+                { value: "", label: "Без руководителя" },
+                ...(users ?? []).filter((u: any) => u.id !== editingId).map((u: any) => ({ value: u.id, label: u.fullName })),
+              ]}
+            />
+          </div>
         </div>
-        <div className={styles.formRow}>
-          <DepartmentInput value={department} onChange={setDepartment} />
-          <input className="input" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Должность" />
-          <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Телефон" />
-          <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="EMPLOYEE">Сотрудник</option>
-            <option value="MANAGER">Руководитель</option>
-            <option value="HR_ADMIN">HR</option>
-          </select>
-          <select className="input" value={managerId} onChange={(e) => setManagerId(e.target.value)}>
-            <option value="">Без руководителя</option>
-            {users
-              ?.filter((u: any) => u.id !== editingId)
-              .map((u: any) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-          </select>
-        </div>
-        
-        <div>
+        <FormError message={error || null} />
+        <div className={styles.actions}>
           <Button type="submit" disabled={creating}>{editingId ? "Сохранить" : "Создать сотрудника"}</Button>
-          {editingId && (
-            <Button type="button" variant="secondary" onClick={resetForm} style={{ marginLeft: 8 }}>Отмена</Button>
-          )}
+          {editingId && <Button type="button" variant="secondary" onClick={resetForm}>Отмена</Button>}
         </div>
-        {error && <p className={styles.error}>{error}</p>}
       </form>
 
       {lastCreated && (
-        <Card>
-          <CardTitle>Аккаунт создан</CardTitle>
-          <p className="text-s">Email: {lastCreated.email}</p>
-          <p className="text-s">Временный пароль: <strong>{lastCreated.tempPassword}</strong></p>
-          <p className="text-xs">Передай эти данные сотруднику лично — здесь они больше не сохраняются и не показываются повторно.</p>
-        </Card>
+        <div className={styles.created}>
+          <div className={styles.createdTitle}>Аккаунт создан</div>
+          <p>Email: <strong>{lastCreated.email}</strong></p>
+          <p>Временный пароль: <strong className={styles.pass}>{lastCreated.tempPassword}</strong></p>
+          <p className={styles.createdNote}>Передайте эти данные сотруднику лично: здесь они больше не сохраняются и не показываются повторно.</p>
+        </div>
       )}
 
-      <h2 className="text-h2">Все сотрудники</h2>
-      {users?.map((u: any) => (
-        <Card key={u.id}>
-          <div className={styles.userRow}>
-            <span className="text-s">
-              <strong>{u.fullName}</strong> · {u.email} · {u.role}
-              {u.department ? ` · ${u.department}` : ""}
-              {u.phone ? ` · ${u.phone}` : ""}
-            </span>
-            <div className={styles.userActions}>
+      <div className={styles.listHead}>
+        <h2 className={styles.listTitle}>Все сотрудники <span className={styles.count}>{filtered.length}</span></h2>
+        <input className={`input ${styles.search}`} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск по имени, email, отделу" />
+      </div>
+
+      <div className={styles.list}>
+        {filtered.map((u: any) => (
+          <div key={u.id} className={styles.row}>
+            <span className={styles.avatar}>{initials(u.fullName)}</span>
+            <div className={styles.info}>
+              <div className={styles.nameLine}>
+                <span className={styles.name}>{u.fullName}</span>
+                <span className={`${styles.role} ${styles[ROLE_CLASS[u.role] ?? "roleEmployee"]}`}>{ROLE_LABEL[u.role] ?? u.role}</span>
+              </div>
+              <div className={styles.meta}>
+                {[u.position, u.department].filter(Boolean).join(" · ") || "—"}
+              </div>
+              <div className={styles.meta}>{[u.email, u.phone].filter(Boolean).join(" · ")}</div>
+            </div>
+            <div className={styles.rowActions}>
               <Button size="sm" variant="secondary" onClick={() => startEdit(u)}>Изменить</Button>
               <Button size="sm" variant="danger" onClick={() => handleDelete(u)}>Удалить</Button>
             </div>
           </div>
-        </Card>
-      ))}
+        ))}
+        {filtered.length === 0 && <p className={styles.empty}>Никого не найдено</p>}
+      </div>
     </PageShell>
   );
 }
