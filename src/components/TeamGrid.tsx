@@ -84,7 +84,7 @@ export function TeamGrid({ year, month, onChange, users, entries, holidays, bloc
         <button className={styles.navBtn} onClick={() => go(1)} aria-label="Следующий месяц">›</button>
         <label className={styles.option}>
           <input type="checkbox" checked={hideAbsent} onChange={(e) => setHideAbsent(e.target.checked)} />
-          Только те, кто отсутствует в этом месяце
+          Только с отпусками в этом месяце
         </label>
       </div>
 
