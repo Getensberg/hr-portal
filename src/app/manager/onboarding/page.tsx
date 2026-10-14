@@ -11,9 +11,11 @@ import {
 } from "@/store/api";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { Select } from "@/components/Select";
+import { FormError } from "@/components/FormError";
 import { Button } from "@/components/Button";
 import styles from "./manager-onboarding.module.css";
+import adm from "../../admin/onboarding/onboarding-admin.module.css";
 import { getErrorMessage } from "@/lib/errors";
 
 export default function ManagerOnboardingPage() {
@@ -59,7 +61,7 @@ export default function ManagerOnboardingPage() {
     try {
       await createPlan({ newcomerId, mentorId: mentorId || null, startDate: startIso, endDate: endIso }).unwrap();
       setNewcomerId(""); setMentorId(""); setStartDate(""); setEndDate("");
-    } catch (err: any) {
+    } catch (err) {
       setError(getErrorMessage(err, "Не удалось создать план"));
     }
   }
@@ -89,56 +91,82 @@ export default function ManagerOnboardingPage() {
 
   return (
     <PageShell title="Онбординг команды" wide>
-      <form onSubmit={handleCreatePlan} className={styles.form}>
-        <div className={styles.formRow}>
-          <select className="input" value={newcomerId} onChange={(e) => setNewcomerId(e.target.value)}>
-            <option value="">Выбрать сотрудника из команды</option>
-            {availableUsers.map((u) => <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>)}
-          </select>
-          <select className="input" value={mentorId} onChange={(e) => setMentorId(e.target.value)}>
-            <option value="">Без наставника</option>
-            {teamUsers?.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-          </select>
-        </div>
-        <div className={styles.formRow}>
-          <input className="input" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="Начало: дд.мм.гггг" maxLength={10} />
-          <input className="input" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="Конец (необязательно)" maxLength={10} />
-        </div>
-        {error && <p className="text-xs" style={{ color: "var(--color-danger)" }}>{error}</p>}
-        <div><Button type="submit">Создать план</Button></div>
-      </form>
+      <div className={adm.layout}>
+        <form onSubmit={handleCreatePlan} className={adm.panel}>
+          <h2 className={adm.panelTitle}>Новый план</h2>
+          <div className={adm.field}>
+            <span className={adm.label}>Сотрудник</span>
+            <Select
+              value={newcomerId}
+              onChange={setNewcomerId}
+              placeholder="Выбрать сотрудника из команды"
+              ariaLabel="Сотрудник"
+              options={availableUsers.map((u) => ({ value: u.id, label: `${u.fullName} (${u.email})` }))}
+            />
+          </div>
+          <div className={adm.field}>
+            <span className={adm.label}>Наставник</span>
+            <Select
+              value={mentorId}
+              onChange={setMentorId}
+              ariaLabel="Наставник"
+              options={[{ value: "", label: "Без наставника" }, ...(teamUsers ?? []).map((u) => ({ value: u.id, label: u.fullName }))]}
+            />
+          </div>
+          <div className={adm.dates}>
+            <label className={adm.field}>
+              <span className={adm.label}>Начало</span>
+              <input className="input" inputMode="numeric" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="дд.мм.гггг" maxLength={10} />
+            </label>
+            <label className={adm.field}>
+              <span className={adm.label}>Конец</span>
+              <input className="input" inputMode="numeric" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="необязательно" maxLength={10} />
+            </label>
+          </div>
+          <FormError message={error || null} />
+          <Button type="submit">Создать план</Button>
+        </form>
 
-      {plans?.map((p) => {
-        const doneCount = p.tasks.filter((t) => t.done).length;
-        return (
-          <Card key={p.id}>
-            <CardTitle>{p.newcomer.fullName}</CardTitle>
-            <p className="text-xs">
-              Наставник: {p.mentor?.fullName ?? "не назначен"} · Выполнено {doneCount} из {p.tasks.length}
-            </p>
-            <div>
-              {p.tasks.map((t) => (
-                <div key={t.id} className={styles.taskRow}>
-                  <span className={t.done ? styles.done : styles.pending}>{t.done ? "✓" : "○"}</span>
-                  <span className={`${styles.taskTitle} text-s`}>
-                    {t.title}
-                    {t.done && t.completedAt ? ` · выполнено ${new Date(t.completedAt).toLocaleDateString("ru-RU")}` : ""}
-                  </span>
-                  <Button size="sm" variant="danger" onClick={() => handleDeleteTask(t.id, t.title)}>Удалить</Button>
+        <div>
+          <h2 className={adm.listTitle}>Планы <span className={adm.count}>{plans?.length ?? 0}</span></h2>
+          {plans?.map((p) => {
+            const doneCount = p.tasks.filter((t) => t.done).length;
+            return (
+              <div key={p.id} className={adm.plan}>
+                <div className={adm.planHead}>
+                  <span className={adm.avatar}>{p.newcomer.fullName.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}</span>
+                  <div>
+                    <div className={adm.planName}>{p.newcomer.fullName}</div>
+                    <div className={adm.meta}>
+                      Наставник: {p.mentor?.fullName ?? "не назначен"} · выполнено {doneCount} из {p.tasks.length}
+                    </div>
+                  </div>
                 </div>
-              ))}
-              {p.tasks.length === 0 && <p className="text-xs">Пока нет задач</p>}
-            </div>
-            <div className={styles.taskForm}>
-              <input className="input" placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
-              <input className="input" placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} />
-              <input className="input" placeholder="дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} />
-              <Button type="button" variant="secondary" onClick={() => handleAddTask(p.id)}>+ Добавить задачу</Button>
-            </div>
-          </Card>
-        );
-      })}
-      {plans?.length === 0 && <p className="text-s">В твоей команде нет новичков с планом онбординга</p>}
+                <div className={styles.taskList}>
+                  {p.tasks.map((t) => (
+                    <div key={t.id} className={styles.taskRow}>
+                      <span className={t.done ? styles.done : styles.pending}>{t.done ? "✓" : ""}</span>
+                      <span className={styles.taskTitle}>
+                        {t.title}
+                        {t.done && t.completedAt ? <span className={styles.when}> · выполнено {new Date(t.completedAt).toLocaleDateString("ru-RU")}</span> : null}
+                      </span>
+                      <Button size="sm" variant="danger" onClick={() => handleDeleteTask(t.id, t.title)}>Удалить</Button>
+                    </div>
+                  ))}
+                  {p.tasks.length === 0 && <p className={adm.meta}>Пока нет задач</p>}
+                </div>
+                <div className={adm.taskForm}>
+                  <input className="input" placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
+                  <input className="input" placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} />
+                  <input className="input" inputMode="numeric" placeholder="дедлайн дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} />
+                  <Button type="button" variant="secondary" onClick={() => handleAddTask(p.id)}>+ Добавить задачу</Button>
+                </div>
+              </div>
+            );
+          })}
+          {plans?.length === 0 && <p className={adm.meta}>В вашей команде нет новичков с планом онбординга</p>}
+        </div>
+      </div>
     </PageShell>
   );
 }

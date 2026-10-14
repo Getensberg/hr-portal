@@ -14,6 +14,8 @@ import { parseHolidayLines, parseISODate, formatRu } from "@/lib/vacation";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
+import { FormError } from "@/components/FormError";
+import { getErrorMessage } from "@/lib/errors";
 import styles from "./settings.module.css";
 
 export default function CalendarSettingsPage() {
@@ -68,8 +70,8 @@ export default function CalendarSettingsPage() {
       const res = await addHolidays({ items }).unwrap();
       setHolidayResult(`Добавлено: ${res.created}, уже были в списке: ${items.length - res.created}`);
       setHolidayText("");
-    } catch (err: any) {
-      setHolidayErrors([err?.data?.error || "Не удалось сохранить"]);
+    } catch (err) {
+      setHolidayErrors([getErrorMessage(err, "Не удалось сохранить")]);
     }
   }
 
@@ -93,8 +95,8 @@ export default function CalendarSettingsPage() {
       setBlockStart("");
       setBlockEnd("");
       setBlockReason("");
-    } catch (err: any) {
-      setBlockError(err?.data?.error || "Не удалось сохранить период");
+    } catch (err) {
+      setBlockError(getErrorMessage(err, "Не удалось сохранить период"));
     }
   }
 
@@ -109,9 +111,9 @@ export default function CalendarSettingsPage() {
   return (
     <PageShell title="Праздники и запретные периоды" wide>
       <section className={styles.section}>
-        <h2 className="text-h2">Производственный календарь</h2>
+        <h2 className={styles.h2}>Производственный календарь</h2>
 
-        <form onSubmit={handleAddHolidays} className={styles.form}>
+        <form onSubmit={handleAddHolidays} className={styles.panel}>
           <p className={styles.hint}>
             Вставьте список, по одной записи на строку. Можно одну дату или диапазон, название необязательно.
             Например: 01.01.2027 - Новый год или 01.01.2027-08.01.2027 Новогодние каникулы.
@@ -137,13 +139,13 @@ export default function CalendarSettingsPage() {
 
         <div className={styles.yearRow}>
           <button className={styles.yearBtn} onClick={() => setYear(year - 1)} aria-label="Предыдущий год">‹</button>
-          <span className="text-h3">{year}</span>
+          <span className={styles.yearLabel}>{year}</span>
           <button className={styles.yearBtn} onClick={() => setYear(year + 1)} aria-label="Следующий год">›</button>
         </div>
 
         {yearHolidays.map((h) => (
           <div key={h.id} className={styles.row}>
-            <span className="text-s">{formatRu(h.date)} · {h.name}</span>
+            <span className={styles.rowText}><span className={styles.rowDate}>{formatRu(h.date)}</span>{h.name}</span>
             <Button size="sm" variant="danger" onClick={() => handleDeleteHoliday(h.id)}>Удалить</Button>
           </div>
         ))}
@@ -151,13 +153,13 @@ export default function CalendarSettingsPage() {
       </section>
 
       <section className={styles.section}>
-        <h2 className="text-h2">Запретные периоды</h2>
+        <h2 className={styles.h2}>Запретные периоды</h2>
         <p className={styles.hint}>
           В эти даты сотрудники увидят жёлтое предупреждение, что отпуск лучше не планировать.
           Внести период при этом всё равно можно.
         </p>
 
-        <form onSubmit={handleAddBlocked} className={styles.form}>
+        <form onSubmit={handleAddBlocked} className={styles.panel}>
           <div className={styles.formRow}>
             <input
               className="input"
@@ -180,7 +182,7 @@ export default function CalendarSettingsPage() {
             onChange={(e) => setBlockReason(e.target.value)}
             placeholder="Причина, например: закрытие квартала"
           />
-          {blockError && <p className={styles.error}>{blockError}</p>}
+          <FormError message={blockError || null} />
           <div>
             <Button type="submit" disabled={addingBlocked}>Добавить период</Button>
           </div>
@@ -188,7 +190,7 @@ export default function CalendarSettingsPage() {
 
         {blocked?.map((b) => (
           <div key={b.id} className={styles.row}>
-            <span className="text-s">{formatRu(b.startDate)} – {formatRu(b.endDate)} · {b.reason}</span>
+            <span className={styles.rowText}><span className={styles.rowDate}>{formatRu(b.startDate)} – {formatRu(b.endDate)}</span>{b.reason}</span>
             <Button size="sm" variant="danger" onClick={() => handleDeleteBlocked(b.id)}>Удалить</Button>
           </div>
         ))}

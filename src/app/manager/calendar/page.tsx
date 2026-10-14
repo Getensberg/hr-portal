@@ -53,7 +53,7 @@ export default function ManagerCalendarPage() {
     <PageShell title="Календарь команды" wide>
       <div className={styles.yearRow}>
         <button className={styles.yearBtn} onClick={() => setYear(year - 1)} aria-label="Предыдущий год">‹</button>
-        <span className="text-h3">{year}</span>
+        <span className={styles.yearLabel}>{year}</span>
         <button className={styles.yearBtn} onClick={() => setYear(year + 1)} aria-label="Следующий год">›</button>
       </div>
 
@@ -67,7 +67,7 @@ export default function ManagerCalendarPage() {
         blocked={blocked ?? []}
       />
 
-      <h2 className="text-h2">Остатки по команде за {year} год</h2>
+      <h2 className={styles.h2}>Остатки по команде за {year} год</h2>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
