@@ -14,7 +14,9 @@ import {
 } from "@/store/api";
 import { buildTree, getDescendantIds, type OrgPersonNode } from "@/lib/orgTree";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { Select } from "@/components/Select";
+import { AttachButton } from "@/components/AttachButton";
+import { FormError } from "@/components/FormError";
 import { Button } from "@/components/Button";
 import styles from "./org-admin.module.css";
 import { DepartmentInput } from "@/components/DepartmentInput";
@@ -61,7 +63,7 @@ export default function AdminOrgPage() {
   const [deleteDepartment] = useDeleteDepartmentMutation();
   const [newDeptName, setNewDeptName] = useState("");
   const [uploadFile] = useUploadFileMutation();
-  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docFiles, setDocFiles] = useState<File[]>([]);
 
   const [docError, setDocError] = useState("");
   const [deptError, setDeptError] = useState("");
@@ -100,18 +102,21 @@ export default function AdminOrgPage() {
   async function handleAddDepartment(e: React.FormEvent) {
   e.preventDefault();
   if (!newDeptName.trim()) return;
+  setDeptError("");
   try {
     await createDepartment({ name: newDeptName }).unwrap();
     setNewDeptName("");
-  } catch {}
+  } catch (err) {
+    setDeptError(getErrorMessage(err, "Не удалось добавить отдел"));
+  }
 }
 
 async function handleDeleteDepartment(id: string) {
   setDeptError("");
   try {
     await deleteDepartment(id).unwrap();
-  } catch (err: any) {
-    setDeptError(err?.data?.error || "Не удалось удалить отдел");
+  } catch (err) {
+    setDeptError(getErrorMessage(err, "Не удалось удалить отдел"));
   }
 }
 
@@ -140,8 +145,8 @@ async function handleDeleteDepartment(id: string) {
         await createOrgPerson(payload).unwrap();
       }
       resetPersonForm();
-    } catch (err: any) {
-      setPersonError(err?.data?.error || "Не удалось сохранить");
+    } catch (err) {
+      setPersonError(getErrorMessage(err, "Не удалось сохранить"));
     }
   }
 
@@ -170,14 +175,15 @@ async function handleDeleteDepartment(id: string) {
 function renderNode(node: OrgPersonNode, depth: number): React.ReactNode {
   return (
     <div key={node.id}>
-      <div className={styles.treeRow} style={{ paddingLeft: depth * 24 }}>
-        <span className="text-s">
-          <strong>{node.fullName}</strong>
-          {node.position ? ` · ${node.position}` : ""}
-          {node.department ? ` · ${node.department}` : ""}
-          {(node as any).isDepartmentHead ? " · руководитель отдела" : ""}
-          {node.linkedUserId ? " · связан с аккаунтом" : ""}
-        </span>
+      <div className={styles.treeRow} style={{ marginLeft: depth * 20 }}>
+        <div className={styles.treeInfo}>
+          <div className={styles.treeName}>
+            {node.fullName}
+            {(node as any).isDepartmentHead && <span className={`${styles.pill} ${styles.pillLilac}`}>Руководитель отдела</span>}
+            {node.linkedUserId && <span className={`${styles.pill} ${styles.pillMint}`}>Есть аккаунт</span>}
+          </div>
+          <div className={styles.treeMeta}>{[node.position, node.department].filter(Boolean).join(" · ") || "—"}</div>
+        </div>
         <div className={styles.treeActions}>
           <Button size="sm" variant="secondary" onClick={() => startEditPerson(node)}>Изменить</Button>
           <Button size="sm" variant="danger" onClick={() => handleDeletePerson(node)}>Удалить</Button>
@@ -199,16 +205,16 @@ setDocError("");
   try {
   let fileUrl: string | undefined;
   let fileName: string | undefined;
-  if (docFile) {
+  if (docFiles[0]) {
     const formData = new FormData();
-    formData.append("file", docFile);
+    formData.append("file", docFiles[0]);
     const uploaded = await uploadFile(formData).unwrap();
     fileUrl = uploaded.url;
     fileName = uploaded.name;
   }
 
   await createDoc({ title: docTitle, description: docDescription, fileUrl, fileName }).unwrap();
-  setDocTitle(""); setDocDescription(""); setDocFile(null);
+  setDocTitle(""); setDocDescription(""); setDocFiles([]);
   } catch (err) {
     setDocError(getErrorMessage(err, "Не удалось создать пункт"));
   }
@@ -219,105 +225,126 @@ setDocError("");
   }
 
   return (
-    <PageShell title="Оргструктура — управление" wide>
-      <h2 className="text-h2">Сотрудники и подчинённость</h2>
-      <form onSubmit={handlePersonSubmit} className={styles.form}>
-        <div className={styles.formRow}>
-          <input className="input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="ФИО" />
-          <input className="input" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Должность" />
-        </div>
-        <div className={styles.formRow}>
-          <DepartmentInput value={department} onChange={applyDepartment} placeholder="Отдел (пусто — руководство компании)" />
-          <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Телефон" />
-          <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-        </div>
-        <label className="text-s" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <input
-          type="checkbox"
-          checked={isHead}
-          disabled={!department.trim()}
-          onChange={(e) => {
-            setIsHead(e.target.checked);
-            if (e.target.checked && !managerTouched && !editingId) setManagerId("");
-          }}
-        />
-        Руководитель отдела{department.trim() ? ` «${department}»` : ""}
-      </label>
-        <div className={styles.formRow}>
-          <select className="input" value={managerId} onChange={(e) => { setManagerId(e.target.value); setManagerTouched(true); }}>
-            <option value="">Без руководителя (верхний уровень)</option>
-            {managerOptions.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
-          </select>
-          <select className="input" value={linkedUserId} onChange={(e) => handleLinkedUserChange(e.target.value)}>
-            <option value="">Без связанного аккаунта</option>
-            {(users ?? []).map((u: any) => <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>)}
-          </select>
-        </div>
-        {personError && <p className={styles.error}>{personError}</p>}
-        <div>
-          <Button type="submit">{editingId ? "Сохранить" : "Добавить в структуру"}</Button>
-          {editingId && (
-            <Button type="button" variant="secondary" onClick={resetPersonForm} style={{ marginLeft: 8 }}>Отмена</Button>
-          )}
-        </div>
-      </form>
-
-      <Card>
-        {tree.length > 0 ? tree.map((n) => renderNode(n, 0)) : <p className="text-s">Пока никто не добавлен</p>}
-      </Card>
-
-      <h2 className="text-h2">Файлы оргструктуры</h2>
-      <Card>
-        <p className="text-xs">
-          Можно отдельно прикрепить готовый файл (например, экспорт из Miro) — он не связан с деревом выше.
-        </p>
-      </Card>
-
-      <form onSubmit={handleDocSubmit} className={styles.form}>
-        <input className="input" value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="Название (например, «Схема отделов 2026»)" />
-        <textarea className="textarea" value={docDescription} onChange={(e) => setDocDescription(e.target.value)} placeholder="Описание (необязательно)" rows={3} />
-                  <div>
-  <label className="text-xs">Файл (например, экспорт схемы из Miro)</label>
-  <input type="file" onChange={(e) => setDocFile(e.target.files?.[0] ?? null)} />
-</div>
-        <Button type="submit">Добавить</Button>
-        {docError && <p className={styles.error}>{docError}</p>}
-      </form>
-
-      {docs?.map((d) => (
-        <Card key={d.id}>
-          <div className={styles.itemRow}>
-            <div>
-              <CardTitle>{d.title}</CardTitle>
-              {d.description && <p className="text-xs">{d.description}</p>}
-            </div>
-            <Button variant="danger" onClick={() => handleDeleteDoc(d.id)}>Удалить</Button>
+    <PageShell title="Оргструктура: управление" wide>
+      <h2 className={styles.h2}>Сотрудники и подчинённость</h2>
+      <form onSubmit={handlePersonSubmit} className={styles.panel}>
+        <div className={styles.fields}>
+          <label className={styles.field}>
+            <span className={styles.label}>ФИО</span>
+            <input className="input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="ФИО" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Должность</span>
+            <input className="input" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Должность" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Отдел</span>
+            <DepartmentInput value={department} onChange={applyDepartment} placeholder="Пусто: руководство компании" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Телефон</span>
+            <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Email</span>
+            <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.ru" />
+          </label>
+          <div className={styles.field}>
+            <span className={styles.label}>Руководитель</span>
+            <Select
+              value={managerId}
+              onChange={(v) => { setManagerId(v); setManagerTouched(true); }}
+              ariaLabel="Руководитель"
+              options={[{ value: "", label: "Без руководителя (верхний уровень)" }, ...managerOptions.map((p) => ({ value: p.id, label: p.fullName }))]}
+            />
           </div>
-        </Card>
-      ))}
-      {docs?.length === 0 && <p className="text-s">Пока ничего не добавлено</p>}
+          <div className={styles.field}>
+            <span className={styles.label}>Связанный аккаунт</span>
+            <Select
+              value={linkedUserId}
+              onChange={handleLinkedUserChange}
+              ariaLabel="Связанный аккаунт"
+              options={[{ value: "", label: "Без связанного аккаунта" }, ...(users ?? []).map((u: any) => ({ value: u.id, label: `${u.fullName} (${u.email})` }))]}
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          className={`${styles.toggle} ${isHead ? styles.toggleOn : ""}`}
+          aria-pressed={isHead}
+          disabled={!department.trim()}
+          onClick={() => {
+            const next = !isHead;
+            setIsHead(next);
+            if (next && !managerTouched && !editingId) setManagerId("");
+          }}
+        >
+          <span className={styles.check}>{isHead ? "✓" : ""}</span>
+          Руководитель отдела{department.trim() ? ` «${department}»` : ""}
+        </button>
+        <FormError message={personError || null} />
+        <div className={styles.actions}>
+          <Button type="submit">{editingId ? "Сохранить" : "Добавить в структуру"}</Button>
+          {editingId && <Button type="button" variant="secondary" onClick={resetPersonForm}>Отмена</Button>}
+        </div>
+      </form>
 
-      <h2 className="text-h2">Отделы и цвета</h2>
-<form onSubmit={handleAddDepartment} className={styles.form}>
-  <input className="input" value={newDeptName} onChange={(e) => setNewDeptName(e.target.value)} placeholder="Название нового отдела" />
-  <div><Button type="submit">Добавить отдел</Button></div>
-</form>
-<Card>
-  {departments?.map((d) => (
-    <div key={d.id} className={styles.deptRow}>
-      <span className={`${styles.deptName} text-s`}>{d.name}</span>
-      <input
-        type="color"
-        className={styles.colorInput}
-        value={d.color}
-        onChange={(e) => updateDepartmentColor({ id: d.id, color: e.target.value })}
-      />
-      <Button size="sm" variant="danger" onClick={() => handleDeleteDepartment(d.id)}>Удалить</Button>
-    </div>
-  ))}
-  {departments?.length === 0 && <p className="text-s">Отделов пока нет</p>}
-</Card>
-{deptError && <p className={styles.error}>{deptError}</p>}
+      <div className={styles.tree}>
+        {tree.length > 0 ? tree.map((n) => renderNode(n, 0)) : <p className={styles.muted}>Пока никто не добавлен</p>}
+      </div>
+
+      <h2 className={styles.h2}>Файлы оргструктуры</h2>
+      <p className={styles.note}>Можно отдельно прикрепить готовый файл (например, экспорт из Miro). Он не связан с деревом выше.</p>
+      <form onSubmit={handleDocSubmit} className={styles.panel}>
+        <label className={styles.field}>
+          <span className={styles.label}>Название</span>
+          <input className="input" value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="Например, «Схема отделов 2026»" />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Описание</span>
+          <textarea className="textarea" value={docDescription} onChange={(e) => setDocDescription(e.target.value)} placeholder="Необязательно" rows={3} />
+        </label>
+        <AttachButton files={docFiles} onChange={(f) => setDocFiles(f.slice(-1))} label="Прикрепить файл" />
+        <FormError message={docError || null} />
+        <div className={styles.actions}><Button type="submit">Добавить</Button></div>
+      </form>
+
+      <div className={styles.items}>
+        {docs?.map((d) => (
+          <div key={d.id} className={styles.item}>
+            <div className={styles.itemInfo}>
+              <div className={styles.itemTitle}>{d.title}</div>
+              {d.description && <div className={styles.treeMeta}>{d.description}</div>}
+            </div>
+            <Button size="sm" variant="danger" onClick={() => handleDeleteDoc(d.id)}>Удалить</Button>
+          </div>
+        ))}
+        {docs?.length === 0 && <p className={styles.muted}>Пока ничего не добавлено</p>}
+      </div>
+
+      <h2 className={styles.h2}>Отделы и цвета</h2>
+      <form onSubmit={handleAddDepartment} className={styles.deptForm}>
+        <input className="input" value={newDeptName} onChange={(e) => setNewDeptName(e.target.value)} placeholder="Название нового отдела" />
+        <Button type="submit">Добавить отдел</Button>
+      </form>
+      <FormError message={deptError || null} />
+      <div className={styles.items}>
+        {departments?.map((d) => (
+          <div key={d.id} className={styles.item}>
+            <span className={styles.dot} style={{ background: d.color }} />
+            <span className={styles.itemTitle} style={{ flex: 1 }}>{d.name}</span>
+            <input
+              type="color"
+              className={styles.colorInput}
+              value={d.color}
+              onChange={(e) => updateDepartmentColor({ id: d.id, color: e.target.value })}
+              aria-label={`Цвет отдела ${d.name}`}
+            />
+            <Button size="sm" variant="danger" onClick={() => handleDeleteDepartment(d.id)}>Удалить</Button>
+          </div>
+        ))}
+        {departments?.length === 0 && <p className={styles.muted}>Отделов пока нет</p>}
+      </div>
     </PageShell>
   );
 }
