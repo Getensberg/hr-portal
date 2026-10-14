@@ -46,6 +46,8 @@ interface TopNode {
   size: number;
 }
 
+const MIN_SCALE = 0.15;
+const MAX_SCALE = 1.3;
 const FALLBACK_COLOR = "#999A9D";
 const SelectContext = createContext<(p: ChartPerson) => void>(() => {});
 
@@ -252,6 +254,9 @@ export function OrgChart({ people, departments }: { people: ChartPerson[]; depar
   }, [departments]);
 
   const [scale, setScale] = useState(1);
+  const [vw, setVw] = useState(0);
+  // Пока человек сам не менял масштаб, схема подстраивается под ширину экрана
+  const [auto, setAuto] = useState(true);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [selected, setSelected] = useState<ChartPerson | null>(null);
   const viewport = useRef<HTMLDivElement>(null);
@@ -270,11 +275,27 @@ export function OrgChart({ people, departments }: { people: ChartPerson[]; depar
     return () => ro.disconnect();
   }, [people.length]);
 
-  function fit() {
-    if (!viewport.current || size.w === 0) return;
-    const next = Math.min(1, (viewport.current.clientWidth - 8) / size.w);
-    setScale(Math.max(0.3, Math.round(next * 100) / 100));
-    viewport.current.scrollTo({ left: 0, top: 0 });
+  // Ширина области просмотра
+  useEffect(() => {
+    const el = viewport.current;
+    if (!el) return;
+    const update = () => setVw(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [people.length]);
+
+  useEffect(() => {
+    if (!auto || vw === 0 || size.w === 0) return;
+    const next = Math.min(1, (vw - 4) / size.w);
+    setScale(Math.max(MIN_SCALE, Math.round(next * 100) / 100));
+    viewport.current?.scrollTo({ left: 0, top: 0 });
+  }, [auto, vw, size.w]);
+
+  function zoom(factor: number) {
+    setAuto(false);
+    setScale((s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, Math.round(s * factor * 100) / 100)));
   }
 
   function handleSelect(p: ChartPerson) {
@@ -305,12 +326,15 @@ export function OrgChart({ people, departments }: { people: ChartPerson[]; depar
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
-        <button type="button" className={styles.tool} onClick={() => setScale((s) => Math.max(0.3, Math.round((s - 0.1) * 10) / 10))}>−</button>
+        <button type="button" className={styles.tool} onClick={() => zoom(1 / 1.25)} aria-label="Уменьшить">−</button>
         <span className={styles.scale}>{Math.round(scale * 100)}%</span>
-        <button type="button" className={styles.tool} onClick={() => setScale((s) => Math.min(1.3, Math.round((s + 0.1) * 10) / 10))}>+</button>
-        <button type="button" className={styles.tool} onClick={() => setScale(1)}>100%</button>
-        <button type="button" className={styles.tool} onClick={fit}>Уместить по ширине</button>
-        <span className={styles.tip}>Схему можно двигать мышью</span>
+        <button type="button" className={styles.tool} onClick={() => zoom(1.25)} aria-label="Увеличить">+</button>
+        <button type="button" className={`${styles.tool} ${styles.toolHideMobile}`} onClick={() => { setAuto(false); setScale(1); }}>100%</button>
+        <button type="button" className={styles.tool} onClick={() => setAuto(true)}>Уместить</button>
+        <span className={styles.tip}>
+          <span className={styles.tipDesktop}>Схему можно двигать мышью</span>
+          <span className={styles.tipMobile}>Двигайте схему пальцем, нажмите на карточку — откроются контакты</span>
+        </span>
       </div>
 
       <div
