@@ -13,6 +13,7 @@ import {
 } from "@/store/api";
 import { Button } from "./Button";
 import { QuestionEditForm } from "./QuestionEditForm";
+import { Select } from "./Select";
 import styles from "./TestEditor.module.css";
 
 
@@ -58,21 +59,15 @@ function AccessBlock({ test }: { test: TestDetail }) {
 
   return (
     <>
-      <h3 className={`${styles.subtitle} text-h4`}>Доступ</h3>
+      <h3 className={styles.subtitle}>Доступ</h3>
       <p className={styles.hint}>Тест виден только тем, кому выдан доступ.</p>
       <div className={styles.form} style={{ marginTop: 12 }}>
         <div className={styles.formRow}>
-          <select className="input" value={userId} onChange={(e) => setUserId(e.target.value)}>
-            <option value="">Выбрать сотрудника</option>
-            {available.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-          </select>
+          <Select value={userId} onChange={setUserId} placeholder="Выбрать сотрудника" ariaLabel="Сотрудник" options={available.map((u) => ({ value: u.id, label: u.fullName }))} />
           <div><Button type="button" variant="secondary" onClick={grantUser}>Выдать доступ</Button></div>
         </div>
         <div className={styles.formRow}>
-          <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
-            <option value="">Выбрать отдел</option>
-            {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+          <Select value={department} onChange={setDepartment} placeholder="Выбрать отдел" ariaLabel="Отдел" options={departments.map((d) => ({ value: d, label: d }))} />
           <div><Button type="button" variant="secondary" onClick={grantDepartment}>Выдать всему отделу</Button></div>
         </div>
         {message && <p className={styles.ok}>{message}</p>}
@@ -201,10 +196,15 @@ function TestForm({ test, onDeleted }: { test: TestDetail; onDeleted?: () => voi
         {standalone && (
           <div className={styles.formRow}>
             <input className="input" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Направление" />
-            <select className="input" value={accessMode} onChange={(e) => setAccessMode(e.target.value as "OPEN" | "RESTRICTED")}>
-              <option value="OPEN">Открыт всем сотрудникам</option>
-              <option value="RESTRICTED">Доступ выдаёт HR</option>
-            </select>
+            <Select
+              value={accessMode}
+              onChange={(v) => setAccessMode(v as "OPEN" | "RESTRICTED")}
+              ariaLabel="Доступ"
+              options={[
+                { value: "OPEN", label: "Открыт всем сотрудникам" },
+                { value: "RESTRICTED", label: "Доступ выдаёт HR" },
+              ]}
+            />
           </div>
         )}
         <div className={styles.formRow}>
@@ -225,7 +225,7 @@ function TestForm({ test, onDeleted }: { test: TestDetail; onDeleted?: () => voi
         </div>
       </div>
 
-      <h3 className={`${styles.subtitle} text-h4`}>Вопросы</h3>
+      <h3 className={styles.subtitle}>Вопросы</h3>
       {test.questions.map((q, i) =>
         editingQuestionId === q.id ? (
           <QuestionEditForm
@@ -251,7 +251,7 @@ function TestForm({ test, onDeleted }: { test: TestDetail; onDeleted?: () => voi
               <ul className={styles.options}>
                 {q.options.map((o) => (
                   <li key={o.id} className={o.isCorrect ? styles.correct : ""}>
-                    {o.isCorrect ? "✓ " : "○ "}{o.text}
+                    <span className={styles.optMark}>{o.isCorrect ? "✓" : ""}</span>{o.text}
                   </li>
                 ))}
               </ul>
@@ -263,13 +263,18 @@ function TestForm({ test, onDeleted }: { test: TestDetail; onDeleted?: () => voi
 
       {attempts === 0 && (
         <>
-          <h3 className={`${styles.subtitle} text-h4`}>Новый вопрос</h3>
+          <h3 className={styles.subtitle}>Новый вопрос</h3>
           <form onSubmit={submitQuestion} className={styles.form}>
             <textarea className="textarea" value={qText} onChange={(e) => setQText(e.target.value)} rows={2} placeholder="Текст вопроса" />
-            <select className="input" value={kind} onChange={(e) => setKind(e.target.value as "CHOICE" | "OPEN")}>
-              <option value="CHOICE">Выбор ответа (проверяется автоматически)</option>
-              <option value="OPEN">Свободный ответ (проверяет HR)</option>
-            </select>
+            <Select
+              value={kind}
+              onChange={(v) => setKind(v as "CHOICE" | "OPEN")}
+              ariaLabel="Тип вопроса"
+              options={[
+                { value: "CHOICE", label: "Выбор ответа (проверяется автоматически)" },
+                { value: "OPEN", label: "Свободный ответ (проверяет HR)" },
+              ]}
+            />
 
             {kind === "CHOICE" && (
               <>
