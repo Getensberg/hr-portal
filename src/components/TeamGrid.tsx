@@ -88,47 +88,62 @@ export function TeamGrid({ year, month, onChange, users, entries, holidays, bloc
         </label>
       </div>
 
-      <div className={styles.scroll}>
-        <div className={styles.grid} style={{ gridTemplateColumns: `220px repeat(${total}, 30px)` }}>
-          <div className={styles.corner} />
-          {dayList.map((d) => (
-            <div
-              key={`head-${d.key}`}
-              className={`${styles.dayHead} ${d.cls} ${d.key === today ? `${colors.today} ${styles.todayHead}` : ""}`}
-              title={d.hint}
-            >
-              <strong>{d.day}</strong>
-              <span>{WEEKDAY_SHORT[d.weekday]}</span>
+      <div className={styles.board} style={{ ["--rows" as string]: visibleRows.length }}>
+        {/* Слева: сотрудники, не прокручиваются */}
+        <div className={styles.names}>
+          <div className={styles.namesHead}>Сотрудники</div>
+          {visibleRows.map(({ user }) => (
+            <div key={user.id} className={styles.nameCell} title={`${user.fullName}${user.department ? ` · ${user.department}` : ""}`}>
+              {user.fullName}
             </div>
           ))}
-
-          {visibleRows.map(({ user, map }) => (
-            <Fragment key={user.id}>
-              <div className={styles.nameCell} title={`${user.fullName}${user.department ? ` · ${user.department}` : ""}`}>
-                {user.fullName}
-              </div>
-              {dayList.map((d) => {
-                const entry = map.get(d.key);
-                const cls = entry ? entryClass(entry.type, entry.status) : d.cls;
-                const hint = entry
-                  ? `${user.fullName}: ${TYPE_LABELS[entry.type]} ${formatRu(entry.startDate)} – ${formatRu(entry.endDate)}, ${
-                      entry.status === "CONFIRMED" ? "подтверждено" : "запланировано"
-                    }`
-                  : undefined;
-                return <div key={`${user.id}-${d.key}`} className={`${styles.dayCell} ${cls}`} title={hint} />;
-              })}
-            </Fragment>
-          ))}
-
           <div className={styles.footLabel}>Отсутствуют</div>
-          {counts.map((c, i) => (
-            <div key={`count-${i}`} className={styles.countCell}>{c > 0 ? c : ""}</div>
-          ))}
+        </div>
+
+        {/* Справа: линия дат, прокручивается по горизонтали */}
+        <div className={styles.scroll}>
+          <div className={styles.grid} style={{ gridTemplateColumns: `repeat(${total}, 30px)` }}>
+            {dayList.map((d) => (
+              <div
+                key={`head-${d.key}`}
+                className={`${styles.dayHead} ${d.cls} ${d.key === today ? `${colors.today} ${styles.todayHead}` : ""}`}
+                title={d.hint}
+              >
+                <strong>{d.day}</strong>
+                <span>{WEEKDAY_SHORT[d.weekday]}</span>
+              </div>
+            ))}
+
+            {visibleRows.map(({ user, map }) => (
+              <Fragment key={user.id}>
+                {dayList.map((d) => {
+                  const entry = map.get(d.key);
+                  const cls = entry ? entryClass(entry.type, entry.status) : d.cls;
+                  const hint = entry
+                    ? `${user.fullName}: ${TYPE_LABELS[entry.type]} ${formatRu(entry.startDate)} – ${formatRu(entry.endDate)}, ${
+                        entry.status === "CONFIRMED" ? "подтверждено" : "запланировано"
+                      }`
+                    : undefined;
+                  return <div key={`${user.id}-${d.key}`} className={`${styles.dayCell} ${cls}`} title={hint} />;
+                })}
+              </Fragment>
+            ))}
+
+            {counts.map((c, i) => (
+              <div key={`count-${i}`} className={styles.countCell}>{c > 0 ? c : ""}</div>
+            ))}
+          </div>
         </div>
       </div>
 
       {visibleRows.length === 0 && <p className="text-s">Нет сотрудников по выбранным фильтрам</p>}
-      <CalendarLegend />
+      <div className={styles.legendDesktop}>
+        <CalendarLegend />
+      </div>
+      <details className={styles.legendMobile}>
+        <summary>Обозначения цветов</summary>
+        <CalendarLegend />
+      </details>
     </div>
   );
 }

@@ -4,63 +4,56 @@
 .navBtn {
   width: 36px; height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-white);
+  border: none;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px; line-height: 1;
 }
-.navBtn:hover { background: var(--color-bg-card); }
+.navBtn:hover { background: #DEDBFF; }
 .option { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--color-text-secondary); }
 
-.scroll { overflow-x: auto; padding-bottom: 8px; }
-.grid { display: grid; gap: 2px; width: max-content; }
-
-.corner { position: sticky; left: 0; z-index: 2; background: var(--color-bg-page); }
+.board { display: flex; align-items: flex-start; gap: 0; }
+.names {
+  flex: none; width: 220px; display: grid; gap: 2px;
+  grid-template-rows: 40px repeat(var(--rows, 1), 30px) 26px;
+  padding-bottom: 8px; background: var(--color-bg-page); position: relative; z-index: 1;
+}
+.namesHead { height: 40px; display: flex; align-items: flex-end; padding: 0 8px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); }
 .nameCell {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: var(--color-bg-page);
-  height: 30px;
-  line-height: 30px;
-  padding: 0 8px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  height: 30px; line-height: 30px; padding: 0 8px; font-size: 13px; color: var(--color-text-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.footLabel {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: var(--color-bg-page);
-  height: 26px;
-  line-height: 26px;
-  padding: 0 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
+.footLabel { height: 26px; line-height: 26px; padding: 0 8px; font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+
+.scroll { flex: 1; min-width: 0; overflow-x: auto; padding-bottom: 8px; }
+.grid { display: grid; gap: 2px; width: max-content; grid-template-rows: 40px repeat(var(--rows, 1), 30px) 26px; }
+.board .grid { grid-template-rows: 40px repeat(var(--rows, 1), 30px) 26px; }
 .dayHead {
-  height: 40px;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  line-height: 1.2;
+  height: 40px; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1.2;
 }
 .dayHead strong { font-size: 12px; }
 .dayCell { height: 30px; border-radius: 4px; }
-.countCell {
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
+.countCell { height: 26px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--color-text-primary); }
 .todayHead { outline-offset: -2px !important; }
+
+.legendMobile { display: none; }
+.legendDesktop { display: block; }
+
+@media (max-width: 640px) {
+  .header { gap: 10px; }
+  .title { min-width: 0; flex: 1; font-size: 17px; }
+  .option { margin-left: 0; flex-basis: 100%; background: #F6F5FF; border-radius: 14px; padding: 10px 12px; font-size: 13px; }
+  .names { width: 112px; }
+  .namesHead { font-size: 10px; }
+  .nameCell { font-size: 12px; padding: 0 6px; }
+  .footLabel { font-size: 12px; padding: 0 6px; }
+  .legendDesktop { display: none; }
+  .legendMobile { display: block; margin-top: 12px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-white); }
+  .legendMobile summary { list-style: none; cursor: pointer; padding: 12px 14px; font-size: 14px; font-weight: 600; color: var(--color-accent); display: flex; justify-content: space-between; align-items: center; }
+  .legendMobile summary::-webkit-details-marker { display: none; }
+  .legendMobile summary::after { content: "▾"; transition: transform 0.15s; }
+  .legendMobile[open] summary::after { transform: rotate(180deg); }
+  .legendMobile > div { margin: 0 14px 14px; }
+}
