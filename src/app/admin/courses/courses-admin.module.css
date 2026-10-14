@@ -1,10 +1,27 @@
-.form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
-.formRow { display: flex; gap: 12px; flex-wrap: wrap; }
-.formRow > * { flex: 1; min-width: 180px; }
-.error { color: var(--color-danger); font-size: 14px; margin: 0; }
+.form {
+  display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px;
+  background: var(--color-white); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: 24px;
+}
+.formTitle { margin: 0; font-size: 18px; font-weight: 600; }
+.formRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.formRow > * { min-width: 0; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .actions { display: flex; gap: 8px; align-items: center; }
-.meta { font-size: 13px; color: var(--color-text-tertiary); margin: 4px 0 0; }
-.badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; margin-left: 8px; }
-.draft { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.item {
+  background: var(--color-white); border: 1px solid var(--color-border);
+  border-radius: 22px; box-shadow: var(--shadow-card); padding: 18px 20px; margin-bottom: 12px;
+}
+.itemTitle { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 16px; font-weight: 600; color: var(--color-text-primary); }
+.meta { font-size: 13px; color: var(--color-text-muted); margin: 6px 0 0; }
+.badge { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: var(--radius-pill); white-space: nowrap; }
+.draft { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
 .published { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+
+@media (max-width: 640px) {
+  .form { padding: 18px 14px; border-radius: 22px; }
+  .formRow { grid-template-columns: minmax(0, 1fr); }
+  .item { padding: 14px; border-radius: 20px; }
+  .actions { width: 100%; }
+  .actions > * { flex: 1; text-align: center; justify-content: center; }
+}

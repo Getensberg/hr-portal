@@ -5,10 +5,17 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetAdminCoursesQuery, useCreateCourseMutation, useDeleteCourseMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { Select } from "@/components/Select";
+import { FormError } from "@/components/FormError";
+import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/Button";
 import buttonStyles from "@/components/Button.module.css";
 import styles from "./courses-admin.module.css";
+
+const ACCESS_OPTIONS = [
+  { value: "OPEN", label: "Открыт всем сотрудникам" },
+  { value: "RESTRICTED", label: "Доступ выдаёт HR" },
+];
 
 export default function AdminCoursesPage() {
   const { data: session, status } = useSession();
@@ -44,8 +51,8 @@ export default function AdminCoursesPage() {
     try {
       const created = await createCourse({ title, description, category, accessMode }).unwrap();
       router.push(`/admin/courses/${created.id}`);
-    } catch (err: any) {
-      setError(err?.data?.error || "Не удалось создать курс");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось создать курс"));
     }
   }
 
@@ -59,6 +66,7 @@ export default function AdminCoursesPage() {
   return (
     <PageShell title="Корпоративный университет: курсы" wide>
       <form onSubmit={handleCreate} className={styles.form}>
+        <h2 className={styles.formTitle}>Новый курс</h2>
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название курса" />
         <textarea
           className="textarea"
@@ -78,25 +86,27 @@ export default function AdminCoursesPage() {
           <datalist id="course-categories">
             {categories.map((c) => <option key={c} value={c} />)}
           </datalist>
-          <select className="input" value={accessMode} onChange={(e) => setAccessMode(e.target.value as "OPEN" | "RESTRICTED")}>
-            <option value="OPEN">Открыт всем сотрудникам</option>
-            <option value="RESTRICTED">Доступ выдаёт HR</option>
-          </select>
+          <Select
+            value={accessMode}
+            onChange={(v) => setAccessMode(v as "OPEN" | "RESTRICTED")}
+            options={ACCESS_OPTIONS}
+            ariaLabel="Доступ"
+          />
         </div>
-        {error && <p className={styles.error}>{error}</p>}
+        <FormError message={error || null} />
         <div><Button type="submit" disabled={creating}>Создать курс</Button></div>
       </form>
 
       {courses?.map((c) => (
-        <Card key={c.id}>
+        <div key={c.id} className={styles.item}>
           <div className={styles.row}>
             <div>
-              <CardTitle>
+              <div className={styles.itemTitle}>
                 {c.title}
                 <span className={`${styles.badge} ${c.status === "PUBLISHED" ? styles.published : styles.draft}`}>
                   {c.status === "PUBLISHED" ? "Опубликован" : "Черновик"}
                 </span>
-              </CardTitle>
+              </div>
               <p className={styles.meta}>
                 {c.category ?? "Без направления"} · уроков: {c.lessonsCount} · тестов: {c.testsCount} ·{" "}
                 {c.accessMode === "OPEN" ? "открыт всем" : `доступ выдан: ${c.accessCount}`}
@@ -112,7 +122,7 @@ export default function AdminCoursesPage() {
               <Button size="sm" variant="danger" onClick={() => handleDelete(c.id, c.title)}>Удалить</Button>
             </div>
           </div>
-        </Card>
+        </div>
       ))}
       {courses?.length === 0 && <p className="text-s">Курсов пока нет</p>}
     </PageShell>

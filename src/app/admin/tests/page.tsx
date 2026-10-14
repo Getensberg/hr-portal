@@ -5,10 +5,17 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetAdminTestsQuery, useCreateTestMutation, useDeleteTestMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { Select } from "@/components/Select";
+import { FormError } from "@/components/FormError";
+import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/Button";
 import buttonStyles from "@/components/Button.module.css";
 import styles from "../courses/courses-admin.module.css";
+
+const ACCESS_OPTIONS = [
+  { value: "OPEN", label: "Открыт всем сотрудникам" },
+  { value: "RESTRICTED", label: "Доступ выдаёт HR" },
+];
 
 export default function AdminTestsPage() {
   const { data: session, status } = useSession();
@@ -43,8 +50,8 @@ export default function AdminTestsPage() {
     try {
       const created = await createTest({ title, category, accessMode }).unwrap();
       router.push(`/admin/tests/${created.id}`);
-    } catch (err: any) {
-      setError(err?.data?.error || "Не удалось создать тест");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось создать тест"));
     }
   }
 
@@ -52,14 +59,15 @@ export default function AdminTestsPage() {
     if (!confirm(`Удалить тест «${testTitle}» вместе со всеми вопросами?`)) return;
     try {
       await deleteTest(id).unwrap();
-    } catch (err: any) {
-      setError(err?.data?.error || "Не удалось удалить тест");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось удалить тест"));
     }
   }
 
   return (
     <PageShell title="Корпоративный университет: отдельные тесты" wide>
       <form onSubmit={handleCreate} className={styles.form}>
+        <h2 className={styles.formTitle}>Новый тест</h2>
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название теста" />
         <div className={styles.formRow}>
           <input
@@ -72,25 +80,27 @@ export default function AdminTestsPage() {
           <datalist id="test-categories">
             {categories.map((c) => <option key={c} value={c} />)}
           </datalist>
-          <select className="input" value={accessMode} onChange={(e) => setAccessMode(e.target.value as "OPEN" | "RESTRICTED")}>
-            <option value="OPEN">Открыт всем сотрудникам</option>
-            <option value="RESTRICTED">Доступ выдаёт HR</option>
-          </select>
+          <Select
+            value={accessMode}
+            onChange={(v) => setAccessMode(v as "OPEN" | "RESTRICTED")}
+            options={ACCESS_OPTIONS}
+            ariaLabel="Доступ"
+          />
         </div>
-        {error && <p className={styles.error}>{error}</p>}
+        <FormError message={error || null} />
         <div><Button type="submit" disabled={creating}>Создать тест</Button></div>
       </form>
 
       {tests?.map((t) => (
-        <Card key={t.id}>
+        <div key={t.id} className={styles.item}>
           <div className={styles.row}>
             <div>
-              <CardTitle>
+              <div className={styles.itemTitle}>
                 {t.title}
                 <span className={`${styles.badge} ${t.status === "PUBLISHED" ? styles.published : styles.draft}`}>
                   {t.status === "PUBLISHED" ? "Опубликован" : "Черновик"}
                 </span>
-              </CardTitle>
+              </div>
               <p className={styles.meta}>
                 {t.category ?? "Без направления"} · вопросов: {t.questionsCount} · попыток прохождения: {t.attemptsCount} ·{" "}
                 {t.accessMode === "OPEN" ? "открыт всем" : `доступ выдан: ${t.accessCount}`}
@@ -106,7 +116,7 @@ export default function AdminTestsPage() {
               <Button size="sm" variant="danger" onClick={() => handleDelete(t.id, t.title)}>Удалить</Button>
             </div>
           </div>
-        </Card>
+        </div>
       ))}
       {tests?.length === 0 && <p className="text-s">Отдельных тестов пока нет. Тесты внутри курсов создаются в редакторе курса.</p>}
     </PageShell>
