@@ -17,3 +17,5 @@
   .controls > div:first-child { flex: 1 1 100%; }
   .thumb { height: 200px; }
 }
+
+.important { margin: 0 0 8px; font-size: 12px; }

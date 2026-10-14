@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
           }
         : {}),
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ isImportant: "desc" }, { createdAt: "desc" }],
     ...(limit ? { take: Number(limit) } : {}),
   });
   return NextResponse.json(items);
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       content: body.content,
       type: body.type,
       category: body.category,
+      ...(body.isImportant !== undefined ? { isImportant: body.isImportant } : {}),
       createdBy: session.user.id,
       ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
       ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),

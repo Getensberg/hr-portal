@@ -5,13 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { parseISODate } from "@/lib/vacation";
 import { parseBody } from "@/lib/validate";
 import { holidaysSchema } from "@/lib/schemas";
+import { expandHolidayPeriods, daysToPeriods } from "@/lib/holidays";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const holidays = await prisma.companyHoliday.findMany({ orderBy: { date: "asc" } });
-  return NextResponse.json(holidays);
+  // Для остального кода отдаём праздники по дням (id у дней одного периода общий)
+  const periods = await prisma.companyHoliday.findMany({ orderBy: { startDate: "asc" } });
+  return NextResponse.json(expandHolidayPeriods(periods));
 }
 
 export async function POST(req: NextRequest) {
@@ -29,6 +31,16 @@ export async function POST(req: NextRequest) {
     name: item.name,
   }));
 
-  const result = await prisma.companyHoliday.createMany({ data, skipDuplicates: true });
-  return NextResponse.json({ created: result.count }, { status: 201 });
+  // Дни, которые уже отмечены, пропускаем; остальные склеиваем в периоды
+  const existing = expandHolidayPeriods(await prisma.companyHoliday.findMany());
+  const taken = new Set(existing.map((h) => h.date.toISOString().slice(0, 10)));
+  const unique = new Map<string, { date: Date; name: string }>();
+  for (const d of data) {
+    const key = d.date.toISOString().slice(0, 10);
+    if (!taken.has(key)) unique.set(key, d);
+  }
+
+  const periods = daysToPeriods(Array.from(unique.values()));
+  if (periods.length > 0) await prisma.companyHoliday.createMany({ data: periods });
+  return NextResponse.json({ created: unique.size }, { status: 201 });
 }

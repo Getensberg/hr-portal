@@ -328,6 +328,7 @@ const contentBase = {
   fileUrl: z.string().nullish().transform((v) => v ?? undefined),
   fileName: z.string().nullish().transform((v) => v ?? undefined),
   imageUrl: z.string().nullish().transform((v) => v ?? undefined),
+  isImportant: z.boolean().optional(),
   files: z.array(fileRef).max(30, "Слишком много файлов").nullish().transform((v) => v?.map((f) => ({ url: f.url, name: f.name }))),
 };
 

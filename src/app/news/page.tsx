@@ -5,6 +5,7 @@ import { useGetContentQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Select } from "@/components/Select";
 import { Card } from "@/components/Card";
+import { ImportantMark } from "@/components/ImportantMark";
 import styles from "./news-list.module.css";
 
 export default function NewsListPage() {
@@ -43,6 +44,7 @@ export default function NewsListPage() {
         <Link key={item.id} href={`/news/${item.id}`} className={styles.card}>
           <Card>
             {item.imageUrl && <img src={item.imageUrl} alt="" className={styles.thumb} />}
+            {item.isImportant && <p className={styles.important}><ImportantMark /></p>}
             <span className="text-h4">{item.title}</span>
             <p className={`${styles.preview} text-s`}>{item.content}</p>
             <p className={styles.date}>

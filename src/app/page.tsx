@@ -14,6 +14,7 @@ import { VACATION_LIMITS, daysInYearExcludingHolidays } from "@/lib/vacation";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NewsSlider } from "@/components/NewsSlider";
 import buttonStyles from "@/components/Button.module.css";
+import { ImportantMark } from "@/components/ImportantMark";
 import styles from "./home.module.css";
 
 const CATEGORY_TINTS = ["tintLilac", "tintMint", "tintPeach", "tintSky"] as const;
@@ -221,7 +222,7 @@ export default function HomePage() {
                   <img src={featured.imageUrl} alt="" className={styles.featuredPhoto} />
                 )}
                 <span className={styles.featuredShade} />
-                <span className={styles.featuredChip}>{featured.category || (featured.type === "NEWS_POST" ? "Новости" : "Статья")}</span>
+                <span className={styles.featuredChip}>{featured.isImportant && <ImportantMark />}{featured.category || (featured.type === "NEWS_POST" ? "Новости" : "Статья")}</span>
                 <span className={styles.featuredTitle}>{featured.title}</span>
                 <span className={styles.featuredMeta}>{formatDay(featured.createdAt)}</span>
               </Link>
@@ -234,6 +235,7 @@ export default function HomePage() {
                 {rest.map((item, i) => (
                   <Link key={item.id} href={`/news/${item.id}`} className={styles.newsCard}>
                     <span className={`${styles.chip} ${styles[CATEGORY_TINTS[i % CATEGORY_TINTS.length]]}`}>
+                      {item.isImportant && <ImportantMark />}
                       {item.category || (item.type === "NEWS_POST" ? "Новости" : "Статья")}
                     </span>
                     <span className={styles.newsTitle}>{item.title}</span>

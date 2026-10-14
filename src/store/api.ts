@@ -33,6 +33,7 @@ export interface ContentItem {
   fileName?: string | null;
   files?: ContentFile[] | null;
   imageUrl?: string | null;
+  isImportant?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -146,7 +146,7 @@ export default function CalendarSettingsPage() {
   }
 
   async function handleDeleteHolidayGroup(g: { ids: string[]; start: string; end: string }) {
-    const text = g.ids.length > 1 ? `Удалить период ${formatRu(g.start)} – ${formatRu(g.end)} из праздников?` : "Удалить этот день из календаря праздников?";
+    const text = g.start !== g.end ? `Удалить период ${formatRu(g.start)} – ${formatRu(g.end)} из праздников?` : "Удалить этот день из календаря праздников?";
     if (!confirm(text)) return;
     for (const id of g.ids) {
       try {
@@ -164,13 +164,13 @@ export default function CalendarSettingsPage() {
   const yearHolidays = (holidays ?? [])
     .filter((h) => new Date(h.date).getUTCFullYear() === year)
     .sort((a, b) => a.date.localeCompare(b.date));
-  // В базе каждый праздничный день хранится отдельно, а в списке подряд идущие дни с одним названием показываем одним периодом
+  // API отдаёт праздники по дням, у дней одного периода общий id: собираем их обратно в период
   const holidayGroups: { ids: string[]; start: string; end: string; name: string }[] = [];
   for (const h of yearHolidays) {
     const day = h.date.slice(0, 10);
     const last = holidayGroups[holidayGroups.length - 1];
     const nextDay = last ? new Date(Date.parse(last.end) + 86400000).toISOString().slice(0, 10) : "";
-    if (last && last.name === h.name && nextDay === day) {
+    if (last && last.ids[0] === h.id && nextDay === day) {
       last.ids.push(h.id);
       last.end = day;
     } else {

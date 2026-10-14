@@ -69,6 +69,7 @@ export default function AdminContentPage() {
   const [content, setContent] = useState("");
   const [newsType, setNewsType] = useState("NEWS_POST");
   const [category, setCategory] = useState("");
+  const [isImportant, setIsImportant] = useState(false);
   const [driveLink, setDriveLink] = useState("");
   const [existingFiles, setExistingFiles] = useState<DocFile[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -115,6 +116,7 @@ export default function AdminContentPage() {
     setContent(item?.content ?? "");
     setNewsType(item && item.type === "KNOWLEDGE_ARTICLE" ? "KNOWLEDGE_ARTICLE" : "NEWS_POST");
     setCategory(item?.category ?? presetCategory ?? "");
+    setIsImportant(Boolean(item?.isImportant));
     setDriveLink(item && item.type === "GALLERY_ALBUM" ? item.fileUrl ?? "" : "");
     setExistingFiles(item && item.type === "POLICY_DOCUMENT" ? itemFiles(item) : []);
     setNewFiles([]);
@@ -144,6 +146,7 @@ export default function AdminContentPage() {
 
     const type = tab === "news" ? newsType : tab === "docs" ? "POLICY_DOCUMENT" : "GALLERY_ALBUM";
     const body: Partial<ContentItem> = { title: title.trim(), content, type: type as ContentItem["type"], category: category.trim() || null };
+    if (tab === "news") body.isImportant = isImportant;
 
     if (tab === "docs") {
       const uploaded: DocFile[] = [];
@@ -228,6 +231,7 @@ export default function AdminContentPage() {
             <div className={styles.itemBody}>
               <div className={styles.itemTitle}>{item.title}</div>
               <div className={styles.meta}>
+                {item.isImportant && <span className={`${styles.chip} ${styles.chipImportant}`}>Важное</span>}
                 <span className={styles.chip}>{item.type === "NEWS_POST" ? "Новость" : "Статья"}</span>
                 {item.category && <span>{item.category}</span>}
                 <span>{formatDate(item.createdAt)}</span>
@@ -382,6 +386,14 @@ export default function AdminContentPage() {
             <div className={styles.field}>
               <span className={styles.label}>Тип</span>
               <Select value={newsType} onChange={setNewsType} options={NEWS_TYPE_OPTIONS} ariaLabel="Тип материала" />
+            </div>
+          )}
+
+          {tab === "news" && (
+            <div className={styles.field}>
+              <button type="button" className={`${styles.toggle} ${isImportant ? styles.toggleOn : ""}`} aria-pressed={isImportant} onClick={() => setIsImportant(!isImportant)}>
+                <span className={styles.check}>{isImportant ? "✓" : ""}</span> Важное — показывать выше остальных
+              </button>
             </div>
           )}
 

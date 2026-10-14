@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import type { ContentItem } from "@/store/api";
+import { ImportantMark } from "./ImportantMark";
 import styles from "./NewsSlider.module.css";
 
 const TINTS = ["tintPeach", "tintMint", "tintLilac", "tintSky"] as const;
@@ -50,7 +51,7 @@ export function NewsSlider({ items }: { items: ContentItem[] }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.imageUrl} alt="" className={styles.photo} />
             )}
-            <span className={styles.chip}>{item.category || (item.type === "NEWS_POST" ? "Новости" : "Статья")}</span>
+            <span className={styles.chip}>{item.isImportant && <ImportantMark />}{item.category || (item.type === "NEWS_POST" ? "Новости" : "Статья")}</span>
             <span className={styles.title}>{item.title}</span>
             <span className={styles.meta}>{formatDay(item.createdAt)}</span>
           </Link>

@@ -242,9 +242,10 @@ model VacationEntry {
 }
 
 model CompanyHoliday {
-  id   String   @id @default(cuid())
-  date DateTime @unique @db.Date
-  name String
+  id        String   @id @default(cuid())
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  name      String
 }
 
 model BlockedPeriod {
@@ -311,6 +312,7 @@ model ContentItem {
   fileName    String?
   files       Json?
   imageUrl    String?
+  isImportant Boolean     @default(false)
   createdBy   String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

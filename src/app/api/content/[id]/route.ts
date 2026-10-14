@@ -40,6 +40,7 @@ export async function PATCH(
         content: body.content,
         type: body.type,
         category: body.category,
+        ...(body.isImportant !== undefined ? { isImportant: body.isImportant } : {}),
         ...(body.fileUrl !== undefined ? { fileUrl: body.fileUrl, fileName: body.fileName } : {}),
         ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),
         ...(body.files !== undefined ? { files: body.files } : {}),

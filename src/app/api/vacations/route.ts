@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { expandHolidayPeriods } from "@/lib/holidays";
 import { VACATION_LIMITS, parseISODate, rangesOverlap, daysInYearExcludingHolidays } from "@/lib/vacation";
 import { parseBody } from "@/lib/validate";
 import { vacationCreateSchema } from "@/lib/schemas";
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     prisma.vacationEntry.findMany({ where: { userId: session.user.id } }),
     prisma.companyHoliday.findMany(),
   ]);
-  const holidaySet = new Set(holidays.map((h) => h.date.toISOString().slice(0, 10)));
+  const holidaySet = new Set(expandHolidayPeriods(holidays).map((h) => h.date.toISOString().slice(0, 10)));
 
   // Пересечение с любым уже внесённым периодом (отпуск и отгул нельзя брать в один день)
   const clash = existing.find((e) => rangesOverlap(start, end, e.startDate, e.endDate));
