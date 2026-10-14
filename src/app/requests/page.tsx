@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useGetMyRequestsQuery, useCreateRequestMutation, useUploadFileMutation } from "@/store/api";
+import { useGetMyRequestsQuery, useCreateRequestMutation, useUploadFileMutation, useGetRequestTemplatesQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -25,10 +25,13 @@ export default function RequestsPage() {
   const { data: requests, isLoading } = useGetMyRequestsQuery();
   const [createRequest, { isLoading: creating }] = useCreateRequestMutation();
   const [uploadFile] = useUploadFileMutation();
+  const { data: templates } = useGetRequestTemplatesQuery();
   const [type, setType] = useState("DOCUMENT");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
+
+  const template = templates?.find((t) => t.requestType === type);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,6 +60,16 @@ export default function RequestsPage() {
     <PageShell title="Мои заявки">
       <form onSubmit={handleSubmit} className={styles.form}>
         <Select value={type} onChange={setType} options={TYPE_OPTIONS} ariaLabel="Тип заявки" />
+        {template && (
+          <div className={styles.template}>
+            <span className={styles.templateText}>
+              Для этой заявки есть бланк: скачайте, заполните и прикрепите к заявке.
+            </span>
+            <a href={template.fileUrl} target="_blank" rel="noopener noreferrer" download className={styles.templateLink}>
+              Скачать шаблон
+            </a>
+          </div>
+        )}
         <textarea
           className="textarea"
           value={description}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useGetAllRequestsQuery, useUpdateRequestStatusMutation, useDeleteRequestMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { RequestsBoard } from "@/components/RequestsBoard";
+import { RequestTemplates } from "@/components/RequestTemplates";
 
 export default function AdminRequestsPage() {
   const { data: session, status } = useSession();
@@ -32,6 +33,7 @@ export default function AdminRequestsPage() {
 
   return (
     <PageShell title="Очередь заявок" wide>
+      <RequestTemplates />
       <RequestsBoard
         requests={requests ?? []}
         onStatus={(id, s) => updateStatus({ id, status: s as any })}

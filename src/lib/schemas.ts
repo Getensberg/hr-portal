@@ -77,6 +77,12 @@ export const userUpdateSchema = z.object({
 
 const fileRef = z.object({ url: z.string().min(1), name: z.string() });
 
+export const requestTemplateSchema = z.object({
+  requestType: z.enum(["DOCUMENT", "LEAVE", "BUSINESS_TRIP", "EQUIPMENT", "ACCESS"], { error: "Неизвестный тип заявки" }),
+  title: z.string({ error: "Укажите название файла" }).trim().min(1, "Укажите название файла").max(300),
+  fileUrl: z.string({ error: "Файл не загружен" }).min(1, "Файл не загружен").max(2000),
+});
+
 export const requestCreateSchema = z.object({
   type: z.enum(["DOCUMENT", "LEAVE", "BUSINESS_TRIP", "EQUIPMENT", "ACCESS"], { error: "Неизвестный тип заявки" }),
   // Содержимое зависит от шаблона заявки, поэтому проверяем только что это объект

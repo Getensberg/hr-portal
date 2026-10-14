@@ -6,6 +6,14 @@ import type {
 } from "@/generated/prisma/client";
 import type { SurveyFrequency, QuestionType } from "@/generated/prisma/client";
 
+export interface RequestTemplateItem {
+  id: string;
+  requestType: string;
+  title: string;
+  fileUrl: string;
+  updatedAt: string;
+}
+
 export interface RequestItem {
   id: string;
   type: RequestType;
@@ -494,8 +502,21 @@ export const apiSlice = createApi({
     "Test",
     "Learning",
     "Review",
+    "RequestTemplate",
   ],
   endpoints: (builder) => ({
+    getRequestTemplates: builder.query<RequestTemplateItem[], void>({
+      query: () => "/request-templates",
+      providesTags: ["RequestTemplate"],
+    }),
+    saveRequestTemplate: builder.mutation<RequestTemplateItem, { requestType: string; title: string; fileUrl: string }>({
+      query: (body) => ({ url: "/request-templates", method: "PUT", body }),
+      invalidatesTags: ["RequestTemplate"],
+    }),
+    deleteRequestTemplate: builder.mutation<{ type: string }, string>({
+      query: (type) => ({ url: `/request-templates?type=${encodeURIComponent(type)}`, method: "DELETE" }),
+      invalidatesTags: ["RequestTemplate"],
+    }),
     getMyRequests: builder.query<RequestItem[], void>({
       query: () => "/requests",
       providesTags: ["Request"],
@@ -1012,6 +1033,9 @@ export const {
   useDeleteVacationMutation,
   useGetAdminVacationsQuery,
   useSetVacationStatusMutation, 
+  useGetRequestTemplatesQuery,
+  useSaveRequestTemplateMutation,
+  useDeleteRequestTemplateMutation,
   useGetHolidaysQuery, 
   useAddHolidaysMutation, 
   useDeleteHolidayMutation, 

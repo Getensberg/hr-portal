@@ -261,6 +261,7 @@ model DocumentTemplate {
   id          String   @id @default(cuid())
   title       String
   description String?
+  requestType RequestType? @unique // для какого типа заявки это шаблон заявления (один файл на тип)
   fileUrl     String              // путь к исходному шаблону (Word/PDF)
   fields      Json                // схема плейсхолдеров: [{ key: "fullName", label: "ФИО" }, ...]
   createdBy   String
