@@ -1,21 +1,24 @@
-.yearRow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.yearRow { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.yearLabel { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; min-width: 56px; text-align: center; }
 .yearBtn {
   width: 36px; height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-white);
+  border: none;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px; line-height: 1;
 }
-.yearBtn:hover { background: var(--color-bg-card); }
+.yearBtn:hover { background: #DEDBFF; }
 .controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
-.controls select { flex: 0 0 220px; }
+.filter { flex: 0 0 220px; }
 .controls input { flex: 1; min-width: 200px; }
-.tableWrap { overflow-x: auto; margin-bottom: 40px; }
-.table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.h2 { margin: 28px 0 14px; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+.tableWrap { overflow-x: auto; margin-bottom: 32px; border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
 .table th {
   text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--color-text-tertiary); padding: 12px 16px; background: var(--color-bg-alt);
+  color: var(--color-text-muted); padding: 14px 16px; background: #F6F5FF;
   border-bottom: 1px solid var(--color-border); white-space: nowrap;
 }
 .table td { padding: 12px 16px; border-bottom: 1px solid var(--color-border); font-size: 14px; color: var(--color-text-secondary); vertical-align: middle; }
@@ -23,6 +26,14 @@
 .table tbody tr:hover td { background: var(--color-bg-alt); }
 .actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; display: inline-block; }
-.planned { background: var(--color-white); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.planned { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
 .confirmed { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
 .settingsLink { margin-left: auto; }
+.type { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-pill); white-space: nowrap; }
+.typeVac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
+.typeOff { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
+@media (max-width: 640px) {
+  .filter { flex: 1 1 100%; }
+  .controls input { flex: 1 1 100%; }
+  .settingsLink { margin-left: 0; width: 100%; justify-content: center; text-align: center; }
+}

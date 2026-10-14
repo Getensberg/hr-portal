@@ -14,6 +14,7 @@ import {
 import { VACATION_LIMITS, daysInYear, countDays, formatRu, daysInYearExcludingHolidays } from "@/lib/vacation";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
+import { Select } from "@/components/Select";
 import { TeamGrid } from "@/components/TeamGrid";
 import buttonStyles from "@/components/Button.module.css";
 import styles from "./calendar-admin.module.css";
@@ -85,7 +86,7 @@ function usedDays(userId: string, kind: string) {
     <PageShell title="Календарь отпусков: все сотрудники" wide>
       <div className={styles.yearRow}>
         <button className={styles.yearBtn} onClick={() => setYear(year - 1)} aria-label="Предыдущий год">‹</button>
-        <span className="text-h3">{year}</span>
+        <span className={styles.yearLabel}>{year}</span>
         <button className={styles.yearBtn} onClick={() => setYear(year + 1)} aria-label="Следующий год">›</button>
         <Link
           href="/admin/calendar/settings"
@@ -102,18 +103,27 @@ function usedDays(userId: string, kind: string) {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Поиск по сотруднику"
         />
-        <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
-          <option value="">Все отделы</option>
-          {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">Все статусы</option>
-          <option value="PLANNED">Запланировано</option>
-          <option value="CONFIRMED">Подтверждено</option>
-        </select>
+        <Select
+          className={styles.filter}
+          value={department}
+          onChange={setDepartment}
+          ariaLabel="Отдел"
+          options={[{ value: "", label: "Все отделы" }, ...departments.map((d) => ({ value: d, label: d }))]}
+        />
+        <Select
+          className={styles.filter}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          ariaLabel="Статус"
+          options={[
+            { value: "", label: "Все статусы" },
+            { value: "PLANNED", label: "Запланировано" },
+            { value: "CONFIRMED", label: "Подтверждено" },
+          ]}
+        />
       </div>
 
-      <h2 className="text-h2">Обзор по месяцам</h2>
+      <h2 className={styles.h2}>Обзор по месяцам</h2>
       <TeamGrid
         year={year}
         month={month}
@@ -124,7 +134,7 @@ function usedDays(userId: string, kind: string) {
         blocked={blocked ?? []}
       />
 
-      <h2 className="text-h2">Периоды</h2>
+      <h2 className={styles.h2}>Периоды</h2>
       {isLoading && <p className="text-s">Загрузка...</p>}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -145,7 +155,7 @@ function usedDays(userId: string, kind: string) {
               <tr key={e.id}>
                 <td>{e.user.fullName}</td>
                 <td>{e.user.department ?? "—"}</td>
-                <td>{TYPE_LABELS[e.type]}</td>
+                <td><span className={`${styles.type} ${e.type === "VACATION" ? styles.typeVac : styles.typeOff}`}>{TYPE_LABELS[e.type]}</span></td>
                 <td>{formatRu(e.startDate)} – {formatRu(e.endDate)}</td>
                 <td>{countDays(new Date(e.startDate), new Date(e.endDate))}</td>
                 <td>{e.comment ?? "—"}</td>
@@ -175,7 +185,7 @@ function usedDays(userId: string, kind: string) {
         {filtered.length === 0 && !isLoading && <p className="text-s">Записей не найдено</p>}
       </div>
 
-      <h2 className="text-h2">Остатки по сотрудникам за {year} год</h2>
+      <h2 className={styles.h2}>Остатки по сотрудникам за {year} год</h2>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>

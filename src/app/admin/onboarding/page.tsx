@@ -10,7 +10,7 @@ import {
 } from "@/store/api";
 import { autoFormatRuDate, parseRuDate } from "@/lib/date";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { Select } from "@/components/Select";
 import { Button } from "@/components/Button";
 import styles from "./onboarding-admin.module.css";
 import { getErrorMessage } from "@/lib/errors";
@@ -78,43 +78,68 @@ export default function AdminOnboardingPage() {
     }
   }
 
+  const userOptions = (users ?? []).map((u) => ({ value: u.id, label: `${u.fullName} (${u.email})` }));
+
   return (
     <PageShell title="Онбординг" wide>
-      <form onSubmit={handleCreatePlan} className={styles.form}>
-        <div className={styles.formRow}>
-          <select className="input" value={newcomerId} onChange={(e) => setNewcomerId(e.target.value)}>
-            <option value="">Выбрать новичка</option>
-            {users?.map((u) => <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>)}
-          </select>
-          <select className="input" value={mentorId} onChange={(e) => setMentorId(e.target.value)}>
-            <option value="">Без наставника</option>
-            {users?.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-          </select>
-        </div>
-        <div className={styles.formRow}>
-          <input className="input" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="Начало: 10.09.2026" maxLength={10} />
-          <input className="input" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="Конец (необязательно)" maxLength={10} />
-        </div>
-        <Button type="submit">Создать план</Button>
-      </form>
-      <FormError message={error} />
-
-      {plans?.map((p) => (
-        <Card key={p.id}>
-          <CardTitle>{p.newcomer.fullName}</CardTitle>
-          <p className="text-xs">Наставник: {p.mentor?.fullName ?? "не назначен"}</p>
-          <ul>
-            {p.tasks.map((t) => <li key={t.id} className="text-s">{t.title}</li>)}
-            {p.tasks.length === 0 && <li className="text-xs">Пока нет задач</li>}
-          </ul>
-          <div className={styles.taskForm}>
-            <input className="input" placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
-            <input className="input" placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} />
-            <input className="input" placeholder="дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} />
-            <Button type="button" variant="secondary" onClick={() => handleAddTask(p.id)}>+ Добавить задачу</Button>
+      <div className={styles.layout}>
+        <form onSubmit={handleCreatePlan} className={styles.panel}>
+          <h2 className={styles.panelTitle}>Новый план</h2>
+          <div className={styles.field}>
+            <span className={styles.label}>Новичок</span>
+            <Select value={newcomerId} onChange={setNewcomerId} placeholder="Выбрать новичка" ariaLabel="Новичок" options={userOptions} />
           </div>
-        </Card>
-      ))}
+          <div className={styles.field}>
+            <span className={styles.label}>Наставник</span>
+            <Select
+              value={mentorId}
+              onChange={setMentorId}
+              ariaLabel="Наставник"
+              options={[{ value: "", label: "Без наставника" }, ...(users ?? []).map((u) => ({ value: u.id, label: u.fullName }))]}
+            />
+          </div>
+          <div className={styles.dates}>
+            <label className={styles.field}>
+              <span className={styles.label}>Начало</span>
+              <input className="input" inputMode="numeric" value={startDate} onChange={(e) => setStartDate(autoFormatRuDate(e.target.value))} placeholder="10.09.2026" maxLength={10} />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>Конец</span>
+              <input className="input" inputMode="numeric" value={endDate} onChange={(e) => setEndDate(autoFormatRuDate(e.target.value))} placeholder="необязательно" maxLength={10} />
+            </label>
+          </div>
+          <FormError message={error} />
+          <Button type="submit">Создать план</Button>
+        </form>
+
+        <div>
+          <h2 className={styles.listTitle}>Планы <span className={styles.count}>{plans?.length ?? 0}</span></h2>
+          {plans?.map((p) => (
+            <div key={p.id} className={styles.plan}>
+              <div className={styles.planHead}>
+                <span className={styles.avatar}>{p.newcomer.fullName.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}</span>
+                <div>
+                  <div className={styles.planName}>{p.newcomer.fullName}</div>
+                  <div className={styles.meta}>Наставник: {p.mentor?.fullName ?? "не назначен"}</div>
+                </div>
+              </div>
+              <ul className={styles.tasks}>
+                {p.tasks.map((t) => (
+                  <li key={t.id} className={styles.task}><span className={styles.taskDot} />{t.title}</li>
+                ))}
+                {p.tasks.length === 0 && <li className={styles.meta}>Пока нет задач</li>}
+              </ul>
+              <div className={styles.taskForm}>
+                <input className="input" placeholder="Название задачи" value={taskDrafts[p.id]?.title ?? ""} onChange={(e) => updateDraft(p.id, "title", e.target.value)} />
+                <input className="input" placeholder="Описание" value={taskDrafts[p.id]?.description ?? ""} onChange={(e) => updateDraft(p.id, "description", e.target.value)} />
+                <input className="input" inputMode="numeric" placeholder="дедлайн дд.мм.гггг" value={taskDrafts[p.id]?.dueDate ?? ""} onChange={(e) => updateDraft(p.id, "dueDate", autoFormatRuDate(e.target.value))} maxLength={10} />
+                <Button type="button" variant="secondary" onClick={() => handleAddTask(p.id)}>+ Добавить задачу</Button>
+              </div>
+            </div>
+          ))}
+          {plans?.length === 0 && <p className={styles.meta}>Планов пока нет</p>}
+        </div>
+      </div>
     </PageShell>
   );
 }
