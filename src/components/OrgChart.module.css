@@ -9,9 +9,10 @@
 .tool:hover { border-color: var(--color-text-primary); }
 .scale { font-size: 13px; color: var(--color-text-tertiary); min-width: 40px; text-align: center; }
 .tip { font-size: 13px; color: var(--color-text-tertiary); margin-left: 8px; }
+.tipMobile { display: none; }
 
 .viewport {
-  overflow: auto; height: min(78vh, 900px); cursor: grab; user-select: none;
+  overflow: auto; max-height: min(78vh, 900px); cursor: grab; user-select: none;
   background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md);
 }
 .viewport:active { cursor: grabbing; }
@@ -85,3 +86,20 @@
 .modalList dt { color: var(--color-text-tertiary); }
 .modalList dd { margin: 0; color: var(--color-text-primary); word-break: break-word; }
 .modalList a { color: var(--color-text-primary); }
+
+@media (max-width: 640px) {
+  .toolbar { gap: 6px; margin-bottom: 10px; }
+  .tool { height: 38px; min-width: 38px; padding: 0 14px; }
+  .toolHideMobile { display: none; }
+  .tip { flex-basis: 100%; margin: 2px 0 0; line-height: 1.35; }
+  .tipDesktop { display: none; }
+  .tipMobile { display: inline; }
+  .viewport { max-height: 72vh; max-height: 72dvh; border-radius: 14px; -webkit-overflow-scrolling: touch; }
+  .canvas { padding: 16px; }
+  .overlay { align-items: flex-end; padding: 0; }
+  .modal { max-width: none; border-radius: 22px 22px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); }
+  .modalName { font-size: 18px; }
+  .modalList { grid-template-columns: 1fr; gap: 2px; }
+  .modalList dd { margin-bottom: 10px; font-size: 15px; }
+  .close { width: 40px; height: 40px; top: 10px; right: 10px; }
+}
