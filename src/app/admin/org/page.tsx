@@ -8,20 +8,15 @@ import {
   useUpdateOrgPersonMutation,
   useDeleteOrgPersonMutation,
   useGetUsersQuery,
-  useGetOrgDocumentsQuery,
-  useCreateOrgDocumentMutation,
-  useDeleteOrgDocumentMutation,
 } from "@/store/api";
 import { buildTree, getDescendantIds, type OrgPersonNode } from "@/lib/orgTree";
 import { PageShell } from "@/components/PageShell";
 import { Select } from "@/components/Select";
-import { AttachButton } from "@/components/AttachButton";
 import { FormError } from "@/components/FormError";
 import { Button } from "@/components/Button";
 import styles from "./org-admin.module.css";
 import { DepartmentInput } from "@/components/DepartmentInput";
 import { useGetDepartmentsQuery, useCreateDepartmentMutation, useUpdateDepartmentColorMutation, useDeleteDepartmentMutation } from "@/store/api";
-import { useUploadFileMutation } from "@/store/api";
 import { getErrorMessage } from "@/lib/errors";
 
 export default function AdminOrgPage() {
@@ -40,10 +35,6 @@ export default function AdminOrgPage() {
   const [updateOrgPerson] = useUpdateOrgPersonMutation();
   const [deleteOrgPerson] = useDeleteOrgPersonMutation();
 
-  const { data: docs } = useGetOrgDocumentsQuery();
-  const [createDoc] = useCreateOrgDocumentMutation();
-  const [deleteDoc] = useDeleteOrgDocumentMutation();
-
   const [fullName, setFullName] = useState("");
   const [position, setPosition] = useState("");
   const [department, setDepartment] = useState("");
@@ -54,18 +45,11 @@ export default function AdminOrgPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [personError, setPersonError] = useState("");
 
-  const [docTitle, setDocTitle] = useState("");
-  const [docDescription, setDocDescription] = useState("");
-
   const { data: departments } = useGetDepartmentsQuery();
   const [createDepartment] = useCreateDepartmentMutation();
   const [updateDepartmentColor] = useUpdateDepartmentColorMutation();
   const [deleteDepartment] = useDeleteDepartmentMutation();
   const [newDeptName, setNewDeptName] = useState("");
-  const [uploadFile] = useUploadFileMutation();
-  const [docFiles, setDocFiles] = useState<File[]>([]);
-
-  const [docError, setDocError] = useState("");
   const [deptError, setDeptError] = useState("");
 
   const [isHead, setIsHead] = useState(false);
@@ -194,36 +178,6 @@ function renderNode(node: OrgPersonNode, depth: number): React.ReactNode {
   );
 }
 
-async function handleDocSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  if (!docTitle) {
-  setDocError("Укажите название");
-  return;
-}
-setDocError("");
-
-  try {
-  let fileUrl: string | undefined;
-  let fileName: string | undefined;
-  if (docFiles[0]) {
-    const formData = new FormData();
-    formData.append("file", docFiles[0]);
-    const uploaded = await uploadFile(formData).unwrap();
-    fileUrl = uploaded.url;
-    fileName = uploaded.name;
-  }
-
-  await createDoc({ title: docTitle, description: docDescription, fileUrl, fileName }).unwrap();
-  setDocTitle(""); setDocDescription(""); setDocFiles([]);
-  } catch (err) {
-    setDocError(getErrorMessage(err, "Не удалось создать пункт"));
-  }
-}
-
-  function handleDeleteDoc(id: string) {
-    if (confirm("Удалить этот пункт оргструктуры?")) deleteDoc(id);
-  }
-
   return (
     <PageShell title="Оргструктура: управление" wide>
       <h2 className={styles.h2}>Сотрудники и подчинённость</h2>
@@ -291,35 +245,6 @@ setDocError("");
 
       <div className={styles.tree}>
         {tree.length > 0 ? tree.map((n) => renderNode(n, 0)) : <p className={styles.muted}>Пока никто не добавлен</p>}
-      </div>
-
-      <h2 className={styles.h2}>Файлы оргструктуры</h2>
-      <p className={styles.note}>Можно отдельно прикрепить готовый файл (например, экспорт из Miro). Он не связан с деревом выше.</p>
-      <form onSubmit={handleDocSubmit} className={styles.panel}>
-        <label className={styles.field}>
-          <span className={styles.label}>Название</span>
-          <input className="input" value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="Например, «Схема отделов 2026»" />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.label}>Описание</span>
-          <textarea className="textarea" value={docDescription} onChange={(e) => setDocDescription(e.target.value)} placeholder="Необязательно" rows={3} />
-        </label>
-        <AttachButton files={docFiles} onChange={(f) => setDocFiles(f.slice(-1))} label="Прикрепить файл" />
-        <FormError message={docError || null} />
-        <div className={styles.actions}><Button type="submit">Добавить</Button></div>
-      </form>
-
-      <div className={styles.items}>
-        {docs?.map((d) => (
-          <div key={d.id} className={styles.item}>
-            <div className={styles.itemInfo}>
-              <div className={styles.itemTitle}>{d.title}</div>
-              {d.description && <div className={styles.treeMeta}>{d.description}</div>}
-            </div>
-            <Button size="sm" variant="danger" onClick={() => handleDeleteDoc(d.id)}>Удалить</Button>
-          </div>
-        ))}
-        {docs?.length === 0 && <p className={styles.muted}>Пока ничего не добавлено</p>}
       </div>
 
       <h2 className={styles.h2}>Отделы и цвета</h2>

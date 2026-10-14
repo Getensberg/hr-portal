@@ -19,6 +19,7 @@ import {
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
 import { TestEditor } from "@/components/TestEditor";
+import { AttachButton } from "@/components/AttachButton";
 import styles from "./course-editor.module.css";
 
 function MainSection({ course }: { course: CourseDetail }) {
@@ -85,8 +86,7 @@ function LessonsSection({ course }: { course: CourseDetail }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
-  const [files, setFiles] = useState<FileList | null>(null);
-  const [fileKey, setFileKey] = useState(0);
+  const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -95,8 +95,7 @@ function LessonsSection({ course }: { course: CourseDetail }) {
     setTitle("");
     setContent("");
     setVideoUrl("");
-    setFiles(null);
-    setFileKey((k) => k + 1);
+    setFiles([]);
   }
 
   async function submit(e: React.FormEvent) {
@@ -105,9 +104,9 @@ function LessonsSection({ course }: { course: CourseDetail }) {
     setSaving(true);
     try {
       let uploaded: ContentFile[] | undefined;
-      if (files && files.length > 0) {
+      if (files.length > 0) {
         uploaded = [];
-        for (const f of Array.from(files)) {
+        for (const f of files) {
           const formData = new FormData();
           formData.append("file", f);
           const res = await uploadFile(formData).unwrap();
@@ -132,8 +131,7 @@ function LessonsSection({ course }: { course: CourseDetail }) {
     setTitle(l.title);
     setContent(l.content);
     setVideoUrl(l.videoUrl ?? "");
-    setFiles(null);
-    setFileKey((k) => k + 1);
+    setFiles([]);
     setError("");
   }
 
@@ -165,8 +163,7 @@ function LessonsSection({ course }: { course: CourseDetail }) {
         <textarea className="textarea" value={content} onChange={(e) => setContent(e.target.value)} rows={6} placeholder="Текст урока" />
         <input className="input" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="Ссылка на видео (YouTube, Rutube, Google Drive)" />
         <div>
-          <label className="text-xs">Файлы к уроку (можно несколько)</label>
-          <input key={fileKey} type="file" multiple onChange={(e) => setFiles(e.target.files)} />
+          <AttachButton files={files} onChange={setFiles} label="Прикрепить файлы к уроку" multiple />
           {editingId && <p className={styles.hint}>Если выбрать новые файлы, они заменят прежние. Если не выбирать, прежние останутся.</p>}
         </div>
         {error && <p className={styles.error}>{error}</p>}

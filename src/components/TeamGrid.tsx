@@ -94,7 +94,7 @@ export function TeamGrid({ year, month, onChange, users, entries, holidays, bloc
           {dayList.map((d) => (
             <div
               key={`head-${d.key}`}
-              className={`${styles.dayHead} ${d.cls} ${d.key === today ? colors.today : ""}`}
+              className={`${styles.dayHead} ${d.cls} ${d.key === today ? `${colors.today} ${styles.todayHead}` : ""}`}
               title={d.hint}
             >
               <strong>{d.day}</strong>

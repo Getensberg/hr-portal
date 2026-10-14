@@ -23,6 +23,7 @@ const MORE_LINKS: NavLink[] = [
   { href: "/surveys", label: "Опросы" },
   { href: "/onboarding", label: "Онбординг" },
   { href: "/jobs", label: "Вакансии" },
+  { href: "/org", label: "Оргструктура" },
   { href: "/profile", label: "Профиль" },
 ];
 

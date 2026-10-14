@@ -63,3 +63,4 @@
   font-weight: 600;
   color: var(--color-text-primary);
 }
+.todayHead { outline-offset: -2px !important; }
