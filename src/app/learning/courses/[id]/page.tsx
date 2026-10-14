@@ -7,6 +7,7 @@ import { getVideoEmbedUrl } from "@/lib/video";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/Button";
 import { ProgressBar } from "@/components/ProgressBar";
+import { FileTypeIcon } from "@/components/FileTypeIcon";
 import { StatusPill, testStatusKey } from "@/components/LearningStatus";
 import styles from "./course.module.css";
 
@@ -56,7 +57,10 @@ export default function LearningCoursePage() {
   return (
     <PageShell title={course.title} wide>
       <div className={styles.header}>
-        {course.category && <div className={styles.headerMeta}>{course.category}</div>}
+        <div className={styles.headerTop}>
+          {course.category && <span className={styles.chip}>{course.category}</span>}
+          <span className={styles.percent}>{percent}%</span>
+        </div>
         {course.description && <p className={styles.desc}>{course.description}</p>}
         <ProgressBar percent={percent} />
         <div className={styles.progressLine}>
@@ -65,7 +69,7 @@ export default function LearningCoursePage() {
         </div>
       </div>
 
-      {course.completed && <div className={styles.completed}>Курс пройден. Поздравляем!</div>}
+      {course.completed && <div className={styles.completed}><span className={styles.completedIcon}>✓</span> Курс пройден. Поздравляем!</div>}
 
       <div className={styles.layout}>
         <aside className={styles.aside}>
@@ -77,8 +81,8 @@ export default function LearningCoursePage() {
               className={`${styles.outlineItem} ${active?.id === l.id ? styles.outlineActive : ""}`}
               onClick={() => setActiveId(l.id)}
             >
-              <span className={`${styles.mark} ${l.done ? styles.markDone : ""}`}>{l.done ? "✓" : "○"}</span>
-              <span>{i + 1}. {l.title}</span>
+              <span className={`${styles.mark} ${l.done ? styles.markDone : ""}`}>{l.done ? "✓" : i + 1}</span>
+              <span className={styles.outlineText}>{l.title}</span>
             </button>
           ))}
 
@@ -101,7 +105,8 @@ export default function LearningCoursePage() {
         <section className={styles.lesson}>
           {active ? (
             <>
-              <h2 className={`${styles.lessonTitle} text-h2`}>{active.title}</h2>
+              <div className={styles.lessonIndex}>Урок {activeIndex + 1} из {lessons.length}</div>
+              <h2 className={styles.lessonTitle}>{active.title}</h2>
 
               {active.videoUrl &&
                 (embed ? (
@@ -110,7 +115,7 @@ export default function LearningCoursePage() {
                   </div>
                 ) : (
                   <a className={styles.videoLink} href={active.videoUrl} target="_blank" rel="noopener noreferrer">
-                    🎬 Открыть видео
+                    ▶ Открыть видео
                   </a>
                 ))}
 
@@ -118,8 +123,13 @@ export default function LearningCoursePage() {
 
               {active.files && active.files.length > 0 && (
                 <div className={styles.files}>
+                  <div className={styles.filesTitle}>Материалы к уроку</div>
                   {active.files.map((f, i) => (
-                    <a key={i} href={f.url} target="_blank" rel="noopener noreferrer">📎 {f.name}</a>
+                    <a key={i} className={styles.file} href={f.url} target="_blank" rel="noopener noreferrer">
+                      <FileTypeIcon name={f.name || f.url} size={36} />
+                      <span className={styles.fileName}>{f.name}</span>
+                      <span className={styles.fileArrow} aria-hidden="true">↓</span>
+                    </a>
                   ))}
                 </div>
               )}

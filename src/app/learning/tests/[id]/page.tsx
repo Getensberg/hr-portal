@@ -72,21 +72,23 @@ export default function LearningTestPage() {
       setSelected({});
       setTexts({});
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err: any) {
+    } catch (err) {
       setError(getErrorMessage(err, "Не удалось отправить ответы"));
     }
   }
 
   return (
     <PageShell title={test.title}>
+      <div className={styles.column}>
       <Link className={styles.backLink} href={test.courseId ? `/learning/courses/${test.courseId}` : "/learning"}>
         ← {test.courseTitle ? `К курсу «${test.courseTitle}»` : "К каталогу"}
       </Link>
 
       {test.description && <p className={styles.desc}>{test.description}</p>}
       <div className={styles.info}>
-        <span>Проходной балл: {test.passingScore}%</span>
-        <span>Попыток использовано: {test.attemptsUsed} из {test.maxAttempts}</span>
+        <span className={`${styles.chip} ${styles.chipLilac}`}>Проходной балл: {test.passingScore}%</span>
+        <span className={`${styles.chip} ${styles.chipSky}`}>Попыток: {test.attemptsUsed} из {test.maxAttempts}</span>
+        <span className={`${styles.chip} ${styles.chipMint}`}>Вопросов: {test.questions.length}</span>
       </div>
 
       {test.state === "PASSED" && <div className={`${styles.banner} ${styles.bannerPassed}`}>Тест сдан. Пересдавать его не нужно.</div>}
@@ -118,7 +120,10 @@ export default function LearningTestPage() {
         <form onSubmit={submit}>
           {test.questions.map((q, i) => (
             <div key={q.id} className={styles.question}>
-              <p className={styles.qText}>{i + 1}. {q.text}</p>
+              <div className={styles.qHead}>
+                <span className={styles.qNum}>{i + 1}</span>
+                <p className={styles.qText}>{q.text}</p>
+              </div>
               {q.kind === "CHOICE" ? (
                 <>
                   <p className={styles.qHint}>{q.multiple ? "Выберите все верные варианты" : "Выберите один вариант"}</p>
@@ -159,7 +164,7 @@ export default function LearningTestPage() {
 
       {test.attempts.length > 0 && (
         <>
-          <h2 className={`${styles.historyTitle} text-h2`}>Мои попытки</h2>
+          <h2 className={styles.historyTitle}>Мои попытки</h2>
           {test.attempts.map((a, i) => {
             const status: StatusKey = a.status === "IN_REVIEW" ? "IN_REVIEW" : a.passed ? "DONE" : "FAILED";
             return (
@@ -171,6 +176,7 @@ export default function LearningTestPage() {
           })}
         </>
       )}
+      </div>
     </PageShell>
   );
 }
