@@ -4,7 +4,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetReviewsQuery, useGetReviewQuery, useSubmitReviewMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
+import { FormError } from "@/components/FormError";
+import { getErrorMessage } from "@/lib/errors";
 import { Button } from "@/components/Button";
 import styles from "./reviews-admin.module.css";
 
@@ -29,8 +30,8 @@ function ReviewPanel({ attemptId, onSaved }: { attemptId: string; onSaved: (mess
     try {
       const res = await submitReview({ attemptId, verdicts }).unwrap();
       onSaved(`${review.user.fullName}, «${review.test.title}»: ${res.passed ? "сдан" : "не сдан"}`);
-    } catch (err: any) {
-      setError(err?.data?.error || "Не удалось сохранить результат");
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось сохранить результат"));
     }
   }
 
@@ -43,20 +44,22 @@ function ReviewPanel({ attemptId, onSaved }: { attemptId: string; onSaved: (mess
             <>
               <p className={styles.answerText}>{a.textAnswer}</p>
               <div className={styles.verdictRow}>
-                <Button
-                  size="sm"
-                  variant={verdicts[a.id] === true ? "primary" : "secondary"}
+                <button
+                  type="button"
+                  className={`${styles.verdict} ${verdicts[a.id] === true ? styles.vYes : ""}`}
+                  aria-pressed={verdicts[a.id] === true}
                   onClick={() => setVerdicts((v) => ({ ...v, [a.id]: true }))}
                 >
-                  Засчитать
-                </Button>
-                <Button
-                  size="sm"
-                  variant={verdicts[a.id] === false ? "danger" : "secondary"}
+                  ✓ Засчитать
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.verdict} ${verdicts[a.id] === false ? styles.vNo : ""}`}
+                  aria-pressed={verdicts[a.id] === false}
                   onClick={() => setVerdicts((v) => ({ ...v, [a.id]: false }))}
                 >
-                  Не засчитать
-                </Button>
+                  ✕ Не засчитать
+                </button>
               </div>
             </>
           ) : (
@@ -70,7 +73,7 @@ function ReviewPanel({ attemptId, onSaved }: { attemptId: string; onSaved: (mess
           )}
         </div>
       ))}
-      {error && <p className={styles.error}>{error}</p>}
+      <FormError message={error || null} />
       <div className={styles.actions}>
         <Button disabled={saving} onClick={save}>Сохранить результат</Button>
       </div>
@@ -101,10 +104,10 @@ export default function AdminReviewsPage() {
       {notice && <div className={styles.notice}>Результат сохранён. {notice}</div>}
 
       {reviews?.map((r) => (
-        <Card key={r.id}>
+        <div key={r.id} className={styles.item}>
           <div className={styles.head}>
             <div>
-              <CardTitle>{r.userName}</CardTitle>
+              <div className={styles.userName}>{r.userName}</div>
               <p className={styles.meta}>
                 {r.department ? `${r.department} · ` : ""}
                 «{r.testTitle}»{r.courseTitle ? ` · курс «${r.courseTitle}»` : ""} ·{" "}
@@ -124,7 +127,7 @@ export default function AdminReviewsPage() {
               }}
             />
           )}
-        </Card>
+        </div>
       ))}
       {reviews?.length === 0 && <p className="text-s">Ответов на проверке нет</p>}
     </PageShell>

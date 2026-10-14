@@ -10,7 +10,6 @@ import {
   useGetAdminReferralsQuery,
 } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Card, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import styles from "./jobs-admin.module.css";
 import { getErrorMessage } from "@/lib/errors";
@@ -54,36 +53,65 @@ export default function AdminJobsPage() {
 
   return (
     <PageShell title="Вакансии и рекомендации" wide>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название вакансии" />
-        <input className="input" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Отдел" />
-        <textarea className="textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Описание" rows={3} />
-        <FormError message={error} />
-        <Button type="submit">Создать вакансию</Button>
-      </form>
+      <div className={styles.layout}>
+        <form onSubmit={handleSubmit} className={styles.panel}>
+          <h2 className={styles.panelTitle}>Новая вакансия</h2>
+          <label className={styles.field}>
+            <span className={styles.label}>Название</span>
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название вакансии" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Отдел</span>
+            <input className="input" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Отдел" />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Описание</span>
+            <textarea className="textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Описание" rows={4} />
+          </label>
+          <FormError message={error} />
+          <Button type="submit">Создать вакансию</Button>
+        </form>
 
-      <CardTitle>Вакансии</CardTitle>
-      {jobs?.map((j) => (
-        <Card key={j.id}>
-          <div className={styles.itemRow}>
-            <span className="text-s"><strong>{j.title}</strong>{j.department ? ` · ${j.department}` : ""} — рекомендаций: {j.referralsCount ?? 0}</span>
-            <div className={styles.itemRow}>
-              <label className={styles.checkbox}>
-                <input type="checkbox" checked={j.isActive} onChange={(e) => updateJob({ id: j.id, isActive: e.target.checked })} /> Активна
-              </label>
-              <Button variant="danger" onClick={() => deleteJob(j.id)}>Удалить</Button>
+        <div>
+          <h2 className={styles.listTitle}>Вакансии <span className={styles.count}>{jobs?.length ?? 0}</span></h2>
+          {jobs?.map((j) => (
+            <div key={j.id} className={styles.item}>
+              <div className={styles.itemInfo}>
+                <div className={styles.itemTitle}>{j.title}</div>
+                <div className={styles.meta}>
+                  {j.department ? `${j.department} · ` : ""}рекомендаций: {j.referralsCount ?? 0}
+                </div>
+              </div>
+              <div className={styles.itemActions}>
+                <button
+                  type="button"
+                  className={`${styles.toggle} ${j.isActive ? styles.toggleOn : ""}`}
+                  aria-pressed={j.isActive}
+                  onClick={() => updateJob({ id: j.id, isActive: !j.isActive })}
+                >
+                  <span className={styles.check}>{j.isActive ? "✓" : ""}</span> Активна
+                </button>
+                <Button size="sm" variant="danger" onClick={() => deleteJob(j.id)}>Удалить</Button>
+              </div>
             </div>
-          </div>
-        </Card>
-      ))}
+          ))}
+          {jobs?.length === 0 && <p className={styles.empty}>Вакансий пока нет</p>}
 
-      <CardTitle>Все рекомендации</CardTitle>
-      <ul>
-        {referrals?.map((r) => (
-          <li key={r.id} className="text-s">{r.candidateName} ({r.candidateContact}) — на «{r.jobPosting?.title}», рекомендовал: {r.referrer?.fullName}</li>
-        ))}
-        {referrals?.length === 0 && <li className="text-xs">Пока нет рекомендаций</li>}
-      </ul>
+          <h2 className={`${styles.listTitle} ${styles.second}`}>Все рекомендации <span className={styles.count}>{referrals?.length ?? 0}</span></h2>
+          {referrals?.map((r) => (
+            <div key={r.id} className={styles.item}>
+              <div className={styles.itemInfo}>
+                <div className={styles.itemTitle}>{r.candidateName}</div>
+                <div className={styles.meta}>{r.candidateContact}</div>
+                <div className={styles.meta}>
+                  на «{r.jobPosting?.title}» · рекомендовал: {r.referrer?.fullName}
+                </div>
+              </div>
+            </div>
+          ))}
+          {referrals?.length === 0 && <p className={styles.empty}>Пока нет рекомендаций</p>}
+        </div>
+      </div>
     </PageShell>
   );
 }
