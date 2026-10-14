@@ -153,18 +153,18 @@ function usedDays(userId: string, kind: string) {
           <tbody>
             {filtered.map((e) => (
               <tr key={e.id}>
-                <td>{e.user.fullName}</td>
-                <td>{e.user.department ?? "—"}</td>
-                <td><span className={`${styles.type} ${e.type === "VACATION" ? styles.typeVac : styles.typeOff}`}>{TYPE_LABELS[e.type]}</span></td>
-                <td>{formatRu(e.startDate)} – {formatRu(e.endDate)}</td>
-                <td>{countDays(new Date(e.startDate), new Date(e.endDate))}</td>
-                <td>{e.comment ?? "—"}</td>
-                <td>
+                <td data-label="Сотрудник">{e.user.fullName}</td>
+                <td data-label="Отдел">{e.user.department ?? "—"}</td>
+                <td data-label="Тип"><span className={`${styles.type} ${e.type === "VACATION" ? styles.typeVac : styles.typeOff}`}>{TYPE_LABELS[e.type]}</span></td>
+                <td data-label="Период">{formatRu(e.startDate)} – {formatRu(e.endDate)}</td>
+                <td data-label="Дней">{countDays(new Date(e.startDate), new Date(e.endDate))}</td>
+                <td data-label="Комментарий">{e.comment ?? "—"}</td>
+                <td data-label="Статус">
                   <span className={`${styles.badge} ${e.status === "CONFIRMED" ? styles.confirmed : styles.planned}`}>
                     {e.status === "CONFIRMED" ? "Подтверждено" : "Запланировано"}
                   </span>
                 </td>
-                <td>
+                <td data-label="">
                   <div className={styles.actions}>
                     {e.status === "PLANNED" ? (
                       <Button size="sm" onClick={() => setVacationStatus({ id: e.id, status: "CONFIRMED" })}>
@@ -199,10 +199,10 @@ function usedDays(userId: string, kind: string) {
           <tbody>
             {filteredUsers.map((u) => (
               <tr key={u.id}>
-                <td>{u.fullName}</td>
-                <td>{u.department ?? "—"}</td>
-                <td>{usedDays(u.id, "VACATION")} / {VACATION_LIMITS.VACATION}</td>
-                <td>{usedDays(u.id, "DAY_OFF")} / {VACATION_LIMITS.DAY_OFF}</td>
+                <td data-label="Сотрудник">{u.fullName}</td>
+                <td data-label="Отдел">{u.department ?? "—"}</td>
+                <td data-label="Отпуск (внесено / лимит)">{usedDays(u.id, "VACATION")} / {VACATION_LIMITS.VACATION}</td>
+                <td data-label="Отгулы (внесено / лимит)">{usedDays(u.id, "DAY_OFF")} / {VACATION_LIMITS.DAY_OFF}</td>
               </tr>
             ))}
           </tbody>

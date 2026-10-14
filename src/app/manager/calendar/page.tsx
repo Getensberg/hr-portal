@@ -76,9 +76,9 @@ export default function ManagerCalendarPage() {
           <tbody>
             {teamUsers?.map((u) => (
               <tr key={u.id}>
-                <td>{u.fullName}</td>
-                <td>{usedDays(u.id, "VACATION")} / {VACATION_LIMITS.VACATION}</td>
-                <td>{usedDays(u.id, "DAY_OFF")} / {VACATION_LIMITS.DAY_OFF}</td>
+                <td data-label="Сотрудник">{u.fullName}</td>
+                <td data-label="Отпуск (внесено / лимит)">{usedDays(u.id, "VACATION")} / {VACATION_LIMITS.VACATION}</td>
+                <td data-label="Отгулы (внесено / лимит)">{usedDays(u.id, "DAY_OFF")} / {VACATION_LIMITS.DAY_OFF}</td>
               </tr>
             ))}
           </tbody>

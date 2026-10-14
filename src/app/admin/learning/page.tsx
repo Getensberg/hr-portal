@@ -86,10 +86,10 @@ export default function AdminLearningReportPage() {
                   {data.courses.map((c) => (
                     <Fragment key={c.id}>
                       <tr>
-                        <td className={styles.title}>{c.title}</td>
-                        <td>{c.restricted ? "По выдаче" : "Открыт всем"}</td>
-                        <td>{c.audience}</td>
-                        <td>
+                        <td data-label="Курс" className={styles.title}>{c.title}</td>
+                        <td data-label="Доступ">{c.restricted ? "По выдаче" : "Открыт всем"}</td>
+                        <td data-label="Сотрудников">{c.audience}</td>
+                        <td data-label="Не начали">
                           {c.notStarted > 0 ? (
                             <button
                               type="button"
@@ -100,8 +100,8 @@ export default function AdminLearningReportPage() {
                             </button>
                           ) : 0}
                         </td>
-                        <td>{c.inProgress}</td>
-                        <td>{c.done} ({pct(c.done, c.audience)}%)</td>
+                        <td data-label="В процессе">{c.inProgress}</td>
+                        <td data-label="Прошли">{c.done} ({pct(c.done, c.audience)}%)</td>
                       </tr>
                       {openCourse === c.id && (
                         <tr>
@@ -143,16 +143,16 @@ export default function AdminLearningReportPage() {
                 <tbody>
                   {data.tests.map((t) => (
                     <tr key={t.id}>
-                      <td>
+                      <td data-label="Тест">
                         <div className={styles.title}>{t.title}</div>
                         {t.courseTitle && <div className={styles.sub}>Курс «{t.courseTitle}»</div>}
                       </td>
-                      <td>{t.passingScore}%</td>
-                      <td>{t.people}</td>
-                      <td>{t.attempts}</td>
-                      <td>{t.passedPeople} ({pct(t.passedPeople, t.people)}%)</td>
-                      <td>{t.inReview}</td>
-                      <td>{t.avgScore !== null ? `${t.avgScore}%` : "—"}</td>
+                      <td data-label="Проходной балл">{t.passingScore}%</td>
+                      <td data-label="Участников">{t.people}</td>
+                      <td data-label="Попыток">{t.attempts}</td>
+                      <td data-label="Сдали">{t.passedPeople} ({pct(t.passedPeople, t.people)}%)</td>
+                      <td data-label="На проверке">{t.inReview}</td>
+                      <td data-label="Средний балл">{t.avgScore !== null ? `${t.avgScore}%` : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

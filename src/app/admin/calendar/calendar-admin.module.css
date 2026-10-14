@@ -37,3 +37,25 @@
   .controls input { flex: 1 1 100%; }
   .settingsLink { margin-left: 0; width: 100%; justify-content: center; text-align: center; }
 }
+
+@media (max-width: 640px) {
+  .tableWrap { box-shadow: none; overflow: visible; border-radius: 0; }
+  .table, .table tbody { display: block; background: transparent; border: none; }
+  .table thead { display: none; }
+  .table tr {
+    display: block; background: var(--color-white); border: 1px solid var(--color-border);
+    border-radius: 20px; padding: 6px 14px; margin-bottom: 10px; box-shadow: var(--shadow-card);
+  }
+  .table td {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: right;
+    padding: 9px 0; border-bottom: 1px solid var(--color-border); overflow-wrap: anywhere;
+  }
+  .table td:last-child { border-bottom: none; }
+  .table td::before {
+    content: attr(data-label); flex: none; text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted);
+  }
+  .table td[data-label=""]::before { display: none; }
+  .table td[colspan] { display: block; text-align: left; }
+  .table td[colspan]::before { display: none; }
+}
