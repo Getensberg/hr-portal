@@ -3,6 +3,7 @@ import { Providers } from "./providers";
 import { Nav } from "@/components/Nav";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Footer } from "@/components/Footer";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import "./globals.css";
 
 import "@fontsource/montserrat/400.css";
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <body>
         <Providers>
+          <ScrollToTop />
           <Nav />
           <Breadcrumbs />
           {children}
