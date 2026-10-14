@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useGetLearningReportQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
-import { Button } from "@/components/Button";
 import { EmployeeProgress } from "@/components/EmployeeProgress";
 import styles from "./learning-report.module.css";
 
@@ -53,9 +52,16 @@ export default function AdminLearningReportPage() {
 
       <div className={styles.tabs}>
         {([["courses", "Курсы"], ["tests", "Тесты"], ["employees", "Сотрудники"]] as const).map(([value, label]) => (
-          <Button key={value} size="sm" variant={tab === value ? "primary" : "secondary"} onClick={() => setTab(value)}>
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={tab === value}
+            className={`${styles.tab} ${tab === value ? styles.tabActive : ""}`}
+            onClick={() => setTab(value)}
+          >
             {label}
-          </Button>
+          </button>
         ))}
       </div>
 

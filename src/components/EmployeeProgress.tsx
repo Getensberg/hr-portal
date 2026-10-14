@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { ReportEmployee } from "@/store/api";
 import { Button } from "./Button";
 import { ProgressBar } from "./ProgressBar";
+import { Select } from "./Select";
 import { StatusPill } from "./LearningStatus";
 import styles from "./EmployeeProgress.module.css";
 
@@ -42,10 +43,13 @@ export function EmployeeProgress({ employees }: { employees: ReportEmployee[] })
           placeholder="Поиск по имени"
         />
         {departments.length > 1 && (
-          <select className={`input ${styles.select}`} value={department} onChange={(e) => setDepartment(e.target.value)}>
-            <option value="">Все отделы</option>
-            {departments.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+          <Select
+            className={styles.select}
+            value={department}
+            onChange={setDepartment}
+            ariaLabel="Отдел"
+            options={[{ value: "", label: "Все отделы" }, ...departments.map((d) => ({ value: d, label: d }))]}
+          />
         )}
       </div>
 
