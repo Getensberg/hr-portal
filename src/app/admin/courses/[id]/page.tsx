@@ -49,7 +49,7 @@ function MainSection({ course }: { course: CourseDetail }) {
 
   return (
     <section className={styles.section}>
-      <h2 className="text-h2">Основное</h2>
+      <h2 className={styles.h2}>Основное</h2>
       <div className={styles.statusRow}>
         <span className={`${styles.badge} ${course.status === "PUBLISHED" ? styles.published : styles.draft}`}>
           {course.status === "PUBLISHED" ? "Опубликован" : "Черновик"}
@@ -143,7 +143,7 @@ function LessonsSection({ course }: { course: CourseDetail }) {
 
   return (
     <section className={styles.section}>
-      <h2 className="text-h2">Уроки</h2>
+      <h2 className={styles.h2}>Уроки</h2>
       {course.lessons.map((l, i) => (
         <div key={l.id} className={styles.row}>
           <span className="text-s">
@@ -199,7 +199,7 @@ function TestsSection({ course }: { course: CourseDetail }) {
 
   return (
     <section className={styles.section}>
-      <h2 className="text-h2">Тесты курса</h2>
+      <h2 className={styles.h2}>Тесты курса</h2>
       <p className={styles.hint} style={{ marginBottom: 12 }}>
         Тестов может быть несколько, например промежуточный и итоговый. Курс считается пройденным, когда пройдены все уроки и сданы все тесты.
       </p>
@@ -277,7 +277,7 @@ async function grantDepartment() {
 
   return (
     <section className={styles.section}>
-      <h2 className="text-h2">Доступ</h2>
+      <h2 className={styles.h2}>Доступ</h2>
       <p className={styles.hint}>Курс виден только тем, кому выдан доступ.</p>
 
       <div className={styles.form} style={{ marginTop: 12 }}>
