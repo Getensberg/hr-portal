@@ -30,11 +30,9 @@
 .pillLilac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
 .pillMint { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
 
-.note { margin: 0 0 14px; font-size: 13px; color: var(--color-text-secondary); background: var(--tint-peach-bg); border-radius: 14px; padding: 10px 14px; }
 .muted { margin: 0; font-size: 14px; color: var(--color-text-muted); }
 .items { display: flex; flex-direction: column; gap: 10px; }
 .item { display: flex; align-items: center; gap: 12px; background: var(--color-white); border: 1px solid var(--color-border); border-radius: 18px; padding: 12px 16px; }
-.itemInfo { flex: 1; min-width: 0; }
 .itemTitle { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
 .dot { flex: none; width: 14px; height: 14px; border-radius: 50%; }
 .colorInput { width: 44px; height: 34px; border: 1px solid var(--color-border-strong); border-radius: 10px; padding: 2px; cursor: pointer; background: var(--color-white); }
