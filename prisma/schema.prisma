@@ -285,6 +285,24 @@ model Request {
   note        String?
   requestedAt DateTime     @default(now())
   completedAt DateTime?
+  bitrixTaskId String?     // id задачи в Битрикс24, созданной по этой заявке
+
+  @@index([bitrixTaskId])
+}
+
+// Подключение к Битрикс24 (локальное серверное приложение, OAuth). Всегда одна запись.
+// Токены хранятся в зашифрованном виде (ключ BITRIX_TOKEN_KEY в переменных окружения).
+model BitrixConnection {
+  id               String   @id @default("main")
+  memberId         String
+  domain           String
+  clientEndpoint   String
+  accessTokenEnc   String
+  refreshTokenEnc  String
+  expiresAt        DateTime
+  applicationToken String?
+  scope            String?
+  updatedAt        DateTime @updatedAt
 }
 
 enum RequestType {
