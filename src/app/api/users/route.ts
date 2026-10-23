@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { parseBody } from "@/lib/validate";
 import { userCreateSchema } from "@/lib/schemas";
 import bcrypt from "bcryptjs";
+import { randomInt } from "node:crypto";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -34,7 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Пользователь с таким email уже существует" }, { status: 409 });
   }
 
-  const tempPassword = Math.random().toString(36).slice(-10);
+  // Пароль из криптографически случайных символов (без похожих 0/O, 1/l/I)
+  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const tempPassword = Array.from({ length: 14 }, () => alphabet[randomInt(alphabet.length)]).join("");
   const passwordHash = await bcrypt.hash(tempPassword, 10);
 
   if (body.department) {

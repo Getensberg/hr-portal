@@ -3,23 +3,29 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseBody } from "@/lib/validate";
-import { contentSchema } from "@/lib/schemas";
+import { contentSchema, contentType } from "@/lib/schemas";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const type = searchParams.get("type");
-  const types = searchParams.get("types");
-  const category = searchParams.get("category");
-  const q = searchParams.get("q");
-  const limit = searchParams.get("limit");
+  // Параметры из адреса проверяем: неизвестные значения игнорируем, размер выборки ограничиваем
+  const typeParse = contentType.safeParse(searchParams.get("type"));
+  const type = typeParse.success ? typeParse.data : null;
+  const types = (searchParams.get("types") ?? "")
+    .split(",")
+    .map((t) => contentType.safeParse(t.trim()))
+    .flatMap((r) => (r.success ? [r.data] : []));
+  const category = (searchParams.get("category") ?? "").slice(0, 100);
+  const q = (searchParams.get("q") ?? "").slice(0, 100);
+  const limitNum = Number(searchParams.get("limit"));
+  const limit = Number.isFinite(limitNum) && limitNum > 0 ? Math.min(Math.floor(limitNum), 200) : null;
 
   const items = await prisma.contentItem.findMany({
     where: {
-      ...(type ? { type: type as any } : {}),
-      ...(types ? { type: { in: types.split(",") as any[] } } : {}),
+      ...(type ? { type } : {}),
+      ...(types.length ? { type: { in: types } } : {}),
       ...(category ? { category } : {}),
       ...(q
         ? {
@@ -31,7 +37,7 @@ export async function GET(req: NextRequest) {
         : {}),
     },
     orderBy: [{ isImportant: "desc" }, { createdAt: "desc" }],
-    ...(limit ? { take: Number(limit) } : {}),
+    ...(limit ? { take: limit } : {}),
   });
   return NextResponse.json(items);
 }

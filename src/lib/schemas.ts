@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseISODate } from "./vacation";
+import { isSafeFileUrl } from "./safeUrl";
 
 // ---------- Общие кирпичики ----------
 
@@ -21,6 +22,7 @@ const optionalEmail = z
 
 const optionalId = z
   .string()
+  .max(100, "Некорректный идентификатор")
   .nullish()
   .transform((v) => (v ? v : null));
 
@@ -75,18 +77,31 @@ export const userUpdateSchema = z.object({
 
 // ---------- Заявки ----------
 
-const fileRef = z.object({ url: z.string().min(1), name: z.string() });
+// Ссылки на файлы принимаем только https:// или путь внутри сайта (не javascript:, data: и т.п.)
+const safeFileUrl = z.string().trim().min(1, "Файл не загружен").max(2000).refine(isSafeFileUrl, "Недопустимая ссылка на файл");
+const safeOptionalUrl = z
+  .string()
+  .trim()
+  .max(2000)
+  .refine((v) => v === "" || isSafeFileUrl(v), "Недопустимая ссылка на файл")
+  .nullish();
+
+const fileRef = z.object({ url: safeFileUrl, name: z.string().max(300, "Слишком длинное имя файла") });
 
 export const requestTemplateSchema = z.object({
   requestType: z.enum(["DOCUMENT", "LEAVE", "BUSINESS_TRIP", "EQUIPMENT", "ACCESS"], { error: "Неизвестный тип заявки" }),
   title: z.string({ error: "Укажите название файла" }).trim().min(1, "Укажите название файла").max(300),
-  fileUrl: z.string({ error: "Файл не загружен" }).min(1, "Файл не загружен").max(2000),
+  fileUrl: safeFileUrl,
 });
 
 export const requestCreateSchema = z.object({
   type: z.enum(["DOCUMENT", "LEAVE", "BUSINESS_TRIP", "EQUIPMENT", "ACCESS"], { error: "Неизвестный тип заявки" }),
   // Содержимое зависит от шаблона заявки, поэтому проверяем только что это объект
-  payload: z.record(z.string(), z.any()).optional().default({}),
+  payload: z
+    .record(z.string(), z.any())
+    .refine((v) => JSON.stringify(v).length <= 10000, "Слишком большая заявка")
+    .optional()
+    .default({}),
   files: z.array(fileRef).max(20, "Слишком много файлов").nullish().transform((v) => v?.map((f) => ({ url: f.url, name: f.name }))),
   note: optionalText(2000),
 });
@@ -319,7 +334,7 @@ export const referralSchema = z.object({
 
 // ---------- База знаний ----------
 
-const contentType = z.enum(["KNOWLEDGE_ARTICLE", "NEWS_POST", "POLICY_DOCUMENT", "GALLERY_ALBUM"], { error: "Неизвестный тип материала" });
+export const contentType = z.enum(["KNOWLEDGE_ARTICLE", "NEWS_POST", "POLICY_DOCUMENT", "GALLERY_ALBUM"], { error: "Неизвестный тип материала" });
 
 const contentBase = {
   title: z.string({ error: "Укажите заголовок" }).trim().min(1, "Укажите заголовок").max(300, "Заголовок слишком длинный"),
@@ -331,9 +346,9 @@ const contentBase = {
     .max(100)
     .nullish()
     .transform((v) => v ?? null),
-  fileUrl: z.string().nullish().transform((v) => v ?? undefined),
+  fileUrl: safeOptionalUrl.transform((v) => v ?? undefined),
   fileName: z.string().nullish().transform((v) => v ?? undefined),
-  imageUrl: z.string().nullish().transform((v) => v ?? undefined),
+  imageUrl: safeOptionalUrl.transform((v) => v ?? undefined),
   isImportant: z.boolean().optional(),
   files: z.array(fileRef).max(30, "Слишком много файлов").nullish().transform((v) => v?.map((f) => ({ url: f.url, name: f.name }))),
 };
@@ -344,7 +359,7 @@ export const contentSchema = z.object(contentBase);
 export const orgDocumentSchema = z.object({
   title: z.string({ error: "Укажите название" }).trim().min(1, "Укажите название").max(300),
   description: optionalText(5000),
-  fileUrl: optionalText(2000),
+  fileUrl: optionalText(2000).refine((v) => v === null || isSafeFileUrl(v), "Недопустимая ссылка на файл"),
   fileName: optionalText(300),
 });
 

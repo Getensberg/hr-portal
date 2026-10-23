@@ -22,7 +22,11 @@ export default function LoginPage() {
     try {
       const res = await signIn("credentials", { email: email.trim(), password, redirect: false });
       if (res?.error) {
-        setError("Неверный email или пароль");
+        setError(
+          res.error === "RATE_LIMIT"
+            ? "Слишком много попыток входа. Подождите около 15 минут и попробуйте снова"
+            : "Неверный email или пароль"
+        );
         setLoading(false);
       } else {
         window.location.href = "/";
