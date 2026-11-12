@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
@@ -7,10 +8,12 @@ import {
   useGetLearningQuery,
   useGetMyVacationsQuery,
   useGetHolidaysQuery,
+  useGetBlockedPeriodsQuery,
   useGetActiveSurveysQuery,
   type SurveyItem,
 } from "@/store/api";
-import { VACATION_LIMITS, daysInYearExcludingHolidays } from "@/lib/vacation";
+import { VACATION_LIMITS, daysInYearExcludingHolidays, todayKey, formatRu } from "@/lib/vacation";
+import { FileTypeIcon } from "@/components/FileTypeIcon";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NewsSlider } from "@/components/NewsSlider";
 import buttonStyles from "@/components/Button.module.css";
@@ -108,6 +111,12 @@ export default function HomePage() {
   const { data: vacations } = useGetMyVacationsQuery(undefined, { skip });
   const { data: holidays } = useGetHolidaysQuery(undefined, { skip });
   const { data: surveys } = useGetActiveSurveysQuery(undefined, { skip });
+  const { data: blocked } = useGetBlockedPeriodsQuery(undefined, { skip });
+
+  // Вкладки блока слева: новости, документы, галерея. Документы и альбомы грузим, только когда вкладку открыли
+  const [tab, setTab] = useState<"news" | "docs" | "gallery">("news");
+  const { data: docs } = useGetContentQuery({ type: "POLICY_DOCUMENT", limit: 6 }, { skip: skip || tab !== "docs" });
+  const { data: albums } = useGetContentQuery({ type: "GALLERY_ALBUM", limit: 6 }, { skip: skip || tab !== "gallery" });
 
   if (!session) {
     return (
@@ -138,6 +147,28 @@ export default function HomePage() {
     .filter((e) => e.type === "VACATION")
     .reduce((sum, e) => sum + daysInYearExcludingHolidays(new Date(e.startDate), new Date(e.endDate), year, holidaySet), 0);
   const vacationLeft = Math.max(VACATION_LIMITS.VACATION - usedVacation, 0);
+
+  // Ближайший отпуск: сегодняшний или первый из будущих
+  const today0 = todayKey();
+  const nextVacation = (vacations ?? [])
+    .filter((e) => e.type === "VACATION" && e.endDate.slice(0, 10) >= today0)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
+  const daysToVacation = nextVacation
+    ? Math.round((Date.parse(nextVacation.startDate.slice(0, 10)) - Date.parse(today0)) / 86400000)
+    : null;
+  const vacationSub =
+    daysToVacation === null
+      ? `${vacationLeft} ${plural(vacationLeft, "день", "дня", "дней")} осталось`
+      : daysToVacation <= 0
+        ? "Сейчас в отпуске"
+        : `Через ${daysToVacation} ${plural(daysToVacation, "день", "дня", "дней")} · осталось ${vacationLeft}`;
+
+  // Ближайшие праздник и ограничение на отпуск
+  const nextHoliday = [...(holidays ?? [])].filter((h) => h.date.slice(0, 10) >= today0).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const nextBlocked = [...(blocked ?? [])].filter((x) => x.endDate.slice(0, 10) >= today0).sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
+
+  // Опрос, который ещё не пройден, показываем крупно под приветствием
+  const pendingSurvey = (surveys ?? []).find((x) => !x.completed && !x.isSuggestionBox);
 
   const courses = learning?.courses ?? [];
   const inProgress = courses.filter((c) => c.state === "IN_PROGRESS").length;
@@ -189,7 +220,7 @@ export default function HomePage() {
             <span className={`${styles.actionIcon} ${styles.tintMint}`}><IconCalendar /></span>
             <span className={styles.actionText}>
               <span className={styles.actionTitle}>Отпуск</span>
-              <span className={styles.actionSub}>{vacationLeft} {plural(vacationLeft, "день", "дня", "дней")} осталось</span>
+              <span className={styles.actionSub}>{vacationSub}</span>
             </span>
           </Link>
           <Link href="/learning" className={styles.action}>
@@ -204,14 +235,90 @@ export default function HomePage() {
         </div>
       </section>
 
+      {(pendingSurvey || nextHoliday || nextBlocked) && (
+        <section className={styles.infoRow}>
+          {pendingSurvey && (
+            <Link href="/surveys" className={styles.surveyBanner}>
+              <span className={styles.bannerIcon}><IconChart /></span>
+              <span className={styles.bannerBody}>
+                <span className={styles.bannerTitle}>{pendingSurvey.title}</span>
+                <span className={styles.bannerText}>{pendingSurvey.isAnonymous ? "Анонимный опрос" : "Опрос"} · вопросов: {pendingSurvey.questions.length}</span>
+              </span>
+              <span className={styles.bannerCta}>Пройти</span>
+            </Link>
+          )}
+          {nextHoliday && (
+            <Link href="/requests?view=calendar" className={`${styles.infoChip} ${styles.chipHoliday}`}>
+              <span className={styles.infoLabel}>Ближайший праздник</span>
+              <span className={styles.infoText}>{formatRu(nextHoliday.date)} · {nextHoliday.name}</span>
+            </Link>
+          )}
+          {nextBlocked && (
+            <Link href="/requests?view=calendar" className={`${styles.infoChip} ${styles.chipBlocked}`}>
+              <span className={styles.infoLabel}>Отпуск не рекомендуется</span>
+              <span className={styles.infoText}>{formatRu(nextBlocked.startDate)} – {formatRu(nextBlocked.endDate)} · {nextBlocked.reason}</span>
+            </Link>
+          )}
+        </section>
+      )}
+
       <section className={styles.columns}>
         {/* Новости */}
         <div className={styles.newsCol}>
           <div className={styles.colHeader}>
-            <h2 className={styles.colTitle}>Новости компании</h2>
-            <Link href="/news" className={styles.colLink}>Все новости</Link>
+            <div className={styles.tabs} role="tablist">
+              {([["news", "Новости"], ["docs", "Документы"], ["gallery", "Галерея"]] as const).map(([key, label]) => (
+                <button key={key} type="button" role="tab" aria-selected={tab === key} className={`${styles.tab} ${tab === key ? styles.tabActive : ""}`} onClick={() => setTab(key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <Link href={tab === "docs" ? "/documents" : tab === "gallery" ? "/gallery" : "/news"} className={styles.colLink}>
+              {tab === "docs" ? "Все документы" : tab === "gallery" ? "Вся галерея" : "Все новости"}
+            </Link>
           </div>
 
+          {tab === "docs" && (
+            <div className={styles.docList}>
+              {(docs ?? []).map((d) => {
+                const first = d.files?.[0] ?? (d.fileUrl ? { url: d.fileUrl, name: d.fileName || d.title } : null);
+                const body = (
+                  <>
+                    <FileTypeIcon name={first?.name ?? d.title} />
+                    <span className={styles.docBody}>
+                      <span className={styles.docTitle}>{d.title}</span>
+                      {d.category && <span className={styles.docMeta}>{d.category}</span>}
+                    </span>
+                  </>
+                );
+                return first ? (
+                  <a key={d.id} href={first.url} target="_blank" rel="noopener noreferrer" className={styles.docRow}>{body}</a>
+                ) : (
+                  <Link key={d.id} href="/documents" className={styles.docRow}>{body}</Link>
+                );
+              })}
+              {docs && docs.length === 0 && <div className={styles.emptyBox}>Пока нет документов</div>}
+            </div>
+          )}
+
+          {tab === "gallery" && (
+            <div className={styles.albumGrid}>
+              {(albums ?? []).map((a) => (
+                <a key={a.id} href={a.fileUrl ?? "/gallery"} target="_blank" rel="noopener noreferrer" className={styles.albumCard}>
+                  {a.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.imageUrl} alt="" className={styles.albumThumb} />
+                  ) : (
+                    <span className={styles.albumThumb} />
+                  )}
+                  <span className={styles.albumTitle}>{a.title}</span>
+                </a>
+              ))}
+              {albums && albums.length === 0 && <div className={styles.emptyBox}>Пока нет альбомов</div>}
+            </div>
+          )}
+
+          {tab === "news" && (<>
           {/* Десктоп */}
           <div className={styles.newsDesktop}>
             {featured ? (
@@ -250,6 +357,7 @@ export default function HomePage() {
           <div className={styles.newsMobile}>
             <NewsSlider items={sliderItems} />
           </div>
+          </>)}
         </div>
 
         {/* Опросы на телефоне идут между новостями и курсами */}

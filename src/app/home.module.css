@@ -152,8 +152,8 @@
 .colHeader {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  height: 30px;
+  align-items: center;
+  height: 46px;
 }
 .colTitle {
   margin: 0;
@@ -439,4 +439,44 @@
 
   .coursesCard { height: auto; padding: 20px; border-radius: 24px; gap: 20px; }
   .courseHead { font-size: 14px; }
+}
+
+
+/* Вкладки блока «Новости / Документы / Галерея» */
+.tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-pill); }
+.tab { border: none; background: transparent; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--color-text-tertiary); padding: 8px 18px; border-radius: var(--radius-pill); cursor: pointer; }
+.tab:hover { color: var(--color-accent); }
+.tabActive, .tabActive:hover { background: var(--color-accent); color: #fff; }
+.docList { display: flex; flex-direction: column; gap: 10px; }
+.docRow { display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--color-white); border: 1px solid var(--color-border); border-radius: 18px; text-decoration: none; color: inherit; box-shadow: var(--shadow-card); }
+.docRow:hover { border-color: var(--color-accent); }
+.docBody { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.docTitle { font-size: 15px; font-weight: 600; color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.docMeta { font-size: 13px; color: var(--color-text-tertiary); }
+.albumGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.albumCard { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; }
+.albumThumb { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 18px; background: var(--color-accent-soft); display: block; }
+.albumTitle { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+
+/* Полоса под приветствием: опрос, ближайший праздник и ограничение */
+.infoRow { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+.surveyBanner { flex: 1 1 100%; display: flex; align-items: center; gap: 16px; padding: 16px 22px; border-radius: 22px; background: var(--color-accent-soft); border: 1px solid #D9D6FF; text-decoration: none; color: inherit; }
+.surveyBanner:hover { border-color: var(--color-accent); }
+.bannerIcon { width: 44px; height: 44px; border-radius: 14px; background: var(--color-white); color: var(--color-accent); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.bannerBody { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bannerTitle { font-size: 16px; font-weight: 700; color: var(--color-text-primary); }
+.bannerText { font-size: 13px; color: var(--color-text-tertiary); }
+.bannerCta { flex-shrink: 0; font-size: 14px; font-weight: 700; color: #fff; background: var(--color-accent); padding: 10px 20px; border-radius: var(--radius-pill); }
+.infoChip { flex: 1 1 280px; display: flex; flex-direction: column; gap: 2px; padding: 12px 18px; border-radius: 18px; text-decoration: none; }
+.chipHoliday { background: var(--tint-rose-bg); color: var(--tint-rose-fg); }
+.chipBlocked { background: var(--tint-sand-bg); color: var(--tint-sand-fg); }
+.infoLabel { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.8; }
+.infoText { font-size: 14px; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .tab { padding: 7px 12px; font-size: 14px; }
+  .albumGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .infoRow { gap: 10px; margin-bottom: 18px; }
+  .surveyBanner { padding: 14px 16px; gap: 12px; }
+  .bannerCta { padding: 8px 14px; }
 }
