@@ -1,8 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { put } from "@vercel/blob";
+import { randomUUID } from "crypto";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { hit } from "@/lib/rateLimit";
+
+// Хранилище файлов: S3 (Timeweb Cloud или любое S3-совместимое). Если S3 не настроен, но есть токен Vercel Blob,
+// работает старый вариант, чтобы переезд можно было делать постепенно.
+const s3Configured = Boolean(process.env.S3_BUCKET && process.env.S3_ACCESS_KEY && process.env.S3_SECRET_KEY);
+
+let client: S3Client | null = null;
+function getClient() {
+  if (!client) {
+    client = new S3Client({
+      region: process.env.S3_REGION || "ru-1",
+      endpoint: process.env.S3_ENDPOINT,
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY as string,
+        secretAccessKey: process.env.S3_SECRET_KEY as string,
+      },
+    });
+  }
+  return client;
+}
+
+// Имя в хранилище: безопасные символы и случайный префикс, чтобы файлы с одинаковым именем не затирали друг друга
+function storageKey(name: string) {
+  const dot = name.lastIndexOf(".");
+  const ext = dot > 0 ? name.slice(dot).replace(/[^.\w]/g, "").slice(0, 12) : "";
+  const base = (dot > 0 ? name.slice(0, dot) : name).replace(/[^\w.-]+/g, "_").slice(0, 80) || "file";
+  return `uploads/${randomUUID()}-${base}${ext}`;
+}
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 МБ
 
@@ -108,7 +137,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Содержимое файла не соответствует его типу" }, { status: 400 });
   }
 
-  const blob = await put(name, file, { access: "public", addRandomSuffix: true, contentType });
+  if (s3Configured) {
+    const key = storageKey(name);
+    const body = Buffer.from(await file.arrayBuffer());
+    try {
+      await getClient().send(
+        new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+          ContentDisposition: "inline",
+          ACL: "public-read",
+        })
+      );
+    } catch (err) {
+      console.error("[upload] не удалось сохранить файл в S3:", err);
+      return NextResponse.json({ error: "Не удалось сохранить файл" }, { status: 500 });
+    }
+    const base = (process.env.S3_PUBLIC_URL || `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}`).replace(/\/$/, "");
+    return NextResponse.json({ url: `${base}/${key}`, name });
+  }
 
+  // Запасной вариант: Vercel Blob (только если нет настроек S3)
+  const { put } = await import("@vercel/blob");
+  const blob = await put(name, file, { access: "public", addRandomSuffix: true, contentType });
   return NextResponse.json({ url: blob.url, name });
 }
