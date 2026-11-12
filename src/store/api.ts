@@ -524,7 +524,8 @@ export const apiSlice = createApi({
     }),
     createRequest: builder.mutation<RequestItem, Partial<RequestItem>>({
       query: (body) => ({ url: "/requests", method: "POST", body }),
-      invalidatesTags: ["Request"],
+      // Отпуск, отгул и командировка создают период в календаре, поэтому обновляем и его
+      invalidatesTags: ["Request", "Vacation"],
     }),
     getAllRequests: builder.query<RequestItem[], void>({
       query: () => "/requests/admin",
@@ -539,7 +540,7 @@ export const apiSlice = createApi({
         method: "PATCH",
         body: { status },
       }),
-      invalidatesTags: ["Request"],
+      invalidatesTags: ["Request", "Vacation"],
     }),
 getContent: builder.query<ContentItem[], { type?: string; types?: string[]; category?: string; q?: string; limit?: number }>({
   query: (params) => {
@@ -710,7 +711,7 @@ createUser: builder.mutation<
     }),
     deleteRequest: builder.mutation<{ id: string }, string>({
       query: (id) => ({ url: `/requests/${id}`, method: "DELETE" }),
-      invalidatesTags: ["Request"],
+      invalidatesTags: ["Request", "Vacation"],
     }),
     deleteSurvey: builder.mutation<{ id: string }, string>({
       query: (id) => ({ url: `/surveys/${id}`, method: "DELETE" }),
@@ -748,7 +749,8 @@ createVacation: builder.mutation<VacationEntryItem, VacationInput>({
 }),
 deleteVacation: builder.mutation<{ id: string }, string>({
   query: (id) => ({ url: `/vacations/${id}`, method: "DELETE" }),
-  invalidatesTags: ["Vacation"],
+  // Если период создан заявкой, она удаляется вместе с ним
+  invalidatesTags: ["Vacation", "Request"],
 }),
 getAdminVacations: builder.query<AdminVacationItem[], number>({
   query: (year) => `/vacations/admin?year=${year}`,
