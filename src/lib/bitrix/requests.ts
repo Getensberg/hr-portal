@@ -25,8 +25,14 @@ async function groupId(): Promise<number | null> {
   if (process.env.BITRIX_GROUP_ID) return Number(process.env.BITRIX_GROUP_ID);
   if (groupCache !== undefined) return groupCache;
   const name = process.env.BITRIX_GROUP_NAME || "Заявки HR";
-  const groups = await bitrixCall<{ ID: string }[]>("sonet_group.get", { FILTER: { NAME: name } });
-  groupCache = groups?.[0]?.ID ? Number(groups[0].ID) : null;
+  try {
+    const groups = await bitrixCall<{ ID: string }[]>("sonet_group.get", { FILTER: { NAME: name } });
+    groupCache = groups?.[0]?.ID ? Number(groups[0].ID) : null;
+  } catch (err) {
+    // У приложения может не быть права на рабочие группы: создаём задачу без группы
+    console.warn("[bitrix] группа недоступна, задачи создаются без группы:", err instanceof Error ? err.message : err);
+    groupCache = null;
+  }
   return groupCache;
 }
 
