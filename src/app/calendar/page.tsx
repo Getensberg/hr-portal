@@ -269,7 +269,7 @@ function usedDays(kind: string) {
             {yearHolidays.length > 0 ? (
               <ul className={styles.holidayList}>
                 {yearHolidays.map((h) => (
-                  <li key={h.id}>{formatRu(h.date)} · {h.name}</li>
+                  <li key={`${h.id}-${h.date}`}>{formatRu(h.date)} · {h.name}</li>
                 ))}
               </ul>
             ) : (
