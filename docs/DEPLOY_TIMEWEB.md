@@ -20,7 +20,7 @@
 | `S3_REGION` | например `ru-1` |
 | `S3_BUCKET` | имя бакета |
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY` | ключи хранилища |
-| `S3_PUBLIC_URL` | необязательно: публичный адрес бакета, если отличается от `ENDPOINT/BUCKET` |
+| `S3_PUBLIC_URL` | больше не используется: файлы закрытые и отдаются через портал (`/api/files/...`) |
 | `BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`, `BITRIX_DOMAIN`, `BITRIX_HR_EMAIL`, `BITRIX_TOKEN_KEY` | интеграция с Битриксом (те же значения, что были в Vercel; ключ `BITRIX_TOKEN_KEY` менять нельзя) |
 | `BITRIX_GROUP_ID` | необязательно, ID группы «Заявки HR» |
 | `NEXT_PUBLIC_*` | ссылки на соцсети и чаты. Они нужны ещё при сборке, поэтому задайте их и как переменные сборки |

@@ -26,11 +26,11 @@ function getClient() {
 }
 
 // Имя в хранилище: безопасные символы и случайный префикс, чтобы файлы с одинаковым именем не затирали друг друга
-function storageKey(name: string) {
+function storageKey(name: string, scope: "requests" | "files") {
   const dot = name.lastIndexOf(".");
   const ext = dot > 0 ? name.slice(dot).replace(/[^.\w]/g, "").slice(0, 12) : "";
   const base = (dot > 0 ? name.slice(0, dot) : name).replace(/[^\w.-]+/g, "_").slice(0, 80) || "file";
-  return `uploads/${randomUUID()}-${base}${ext}`;
+  return `${scope}/${randomUUID()}-${base}${ext}`;
 }
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 МБ
@@ -138,7 +138,8 @@ export async function POST(req: NextRequest) {
   }
 
   if (s3Configured) {
-    const key = storageKey(name);
+    // Файлы закрытые: отдаются через портал только вошедшим (см. /api/files)
+    const key = storageKey(name, formData.get("scope") === "request" ? "requests" : "files");
     const body = Buffer.from(await file.arrayBuffer());
     try {
       await getClient().send(
@@ -148,15 +149,14 @@ export async function POST(req: NextRequest) {
           Body: body,
           ContentType: contentType,
           ContentDisposition: "inline",
-          ACL: "public-read",
+          ACL: "private",
         })
       );
     } catch (err) {
       console.error("[upload] не удалось сохранить файл в S3:", err);
       return NextResponse.json({ error: "Не удалось сохранить файл" }, { status: 500 });
     }
-    const base = (process.env.S3_PUBLIC_URL || `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}`).replace(/\/$/, "");
-    return NextResponse.json({ url: `${base}/${key}`, name });
+    return NextResponse.json({ url: `/api/files/${key}`, name });
   }
 
   // Запасной вариант: Vercel Blob (только если нет настроек S3)

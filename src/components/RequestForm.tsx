@@ -70,6 +70,7 @@ export function RequestForm({ initialType = "DOCUMENT", initialValues, onDone }:
         for (const f of files) {
           const fd = new FormData();
           fd.append("file", f);
+          fd.append("scope", "request");
           const res = await uploadFile(fd).unwrap();
           uploaded.push({ url: res.url, name: res.name });
         }

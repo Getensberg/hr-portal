@@ -70,7 +70,7 @@ export async function syncRequestToBitrix(requestId: string): Promise<void> {
     req.user.department ? `[B]Отдел:[/B] ${req.user.department}` : null,
     ...describePayload(req.type, payload).map((f) => `[B]${f.label}:[/B] ${f.value}`),
     req.note ? `[B]Примечание:[/B] ${req.note}` : null,
-    files.length ? `[B]Файлы:[/B]\n${files.map((f) => `[URL=${f.url}]${f.name}[/URL]`).join("\n")}` : null,
+    files.length ? `[B]Файлы:[/B]\n${files.map((f) => `[URL=${f.url.startsWith("/") ? portalBaseUrl() + f.url : f.url}]${f.name}[/URL]`).join("\n")}` : null,
     portalBaseUrl() ? `[B]Заявка в портале:[/B] [URL=${portalBaseUrl()}/admin/requests]открыть[/URL]` : null,
   ].filter(Boolean);
 
