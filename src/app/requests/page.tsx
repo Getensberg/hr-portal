@@ -1,99 +1,63 @@
 "use client";
-import { useState } from "react";
-import { useGetMyRequestsQuery, useCreateRequestMutation, useUploadFileMutation, useGetRequestTemplatesQuery } from "@/store/api";
+import { useMemo, useState } from "react";
+import { useGetMyRequestsQuery } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/Card";
-import { Button } from "@/components/Button";
 import { Select } from "@/components/Select";
-import { AttachButton } from "@/components/AttachButton";
 import { StatusBadge } from "@/components/StatusBadge";
+import { NewRequestButton } from "@/components/NewRequestButton";
+import buttonStyles from "@/components/Button.module.css";
+import { REQUEST_TYPE_LABELS, REQUEST_STATUS_LABELS, REQUEST_HOLDER_LABELS } from "@/lib/requestTypes";
+import { summarizePayload } from "@/lib/requestForms";
 import styles from "./requests.module.css";
-import { getErrorMessage } from "@/lib/errors";
-import { FormError } from "@/components/FormError";
 
-const TYPE_LABELS: Record<string, string> = {
-  DOCUMENT: "Справка",
-  LEAVE: "Отпуск/отгул",
-  BUSINESS_TRIP: "Командировка",
-  EQUIPMENT: "Техника",
-  ACCESS: "Доступ",
-};
-
-const TYPE_OPTIONS = Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label }));
+const ALL = "ALL";
+const STATUS_OPTIONS = [{ value: ALL, label: "Любой статус" }, ...Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => ({ value, label }))];
+const TYPE_OPTIONS = [{ value: ALL, label: "Все типы" }, ...Object.entries(REQUEST_TYPE_LABELS).map(([value, label]) => ({ value, label }))];
 
 export default function RequestsPage() {
   const { data: requests, isLoading } = useGetMyRequestsQuery();
-  const [createRequest, { isLoading: creating }] = useCreateRequestMutation();
-  const [uploadFile] = useUploadFileMutation();
-  const { data: templates } = useGetRequestTemplatesQuery();
-  const [type, setType] = useState("DOCUMENT");
-  const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState(ALL);
+  const [type, setType] = useState(ALL);
+  const [year, setYear] = useState(ALL);
 
-  const template = templates?.find((t) => t.requestType === type);
+  const yearOptions = useMemo(() => {
+    const years = Array.from(new Set((requests ?? []).map((r) => new Date(r.requestedAt).getFullYear()))).sort((a, b) => b - a);
+    return [{ value: ALL, label: "Все годы" }, ...years.map((y) => ({ value: String(y), label: String(y) }))];
+  }, [requests]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    try {
-    let uploadedFiles: { url: string; name: string }[] | undefined;
-    if (files && files.length > 0) {
-      uploadedFiles = [];
-      for (const f of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", f);
-        const uploaded = await uploadFile(formData).unwrap();
-        uploadedFiles.push({ url: uploaded.url, name: uploaded.name });
-      }
-    }
-
-    await createRequest({ type: type as any, payload: { description }, files: uploadedFiles }).unwrap();
-    setDescription("");
-    setFiles([]);
-    } catch (err) {
-      setError(getErrorMessage(err, "Не удалось отправить заявку"));
-    }
-  }
+  const filtered = (requests ?? []).filter(
+    (r) =>
+      (status === ALL || r.status === status) &&
+      (type === ALL || r.type === type) &&
+      (year === ALL || String(new Date(r.requestedAt).getFullYear()) === year)
+  );
 
   return (
-    <PageShell title="Мои заявки">
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <Select value={type} onChange={setType} options={TYPE_OPTIONS} ariaLabel="Тип заявки" />
-        {template && (
-          <div className={styles.template}>
-            <span className={styles.templateText}>
-              Для этой заявки есть бланк: скачайте, заполните и прикрепите к заявке.
-            </span>
-            <a href={template.fileUrl} target="_blank" rel="noopener noreferrer" download className={styles.templateLink}>
-              Скачать шаблон
-            </a>
-          </div>
-        )}
-        <textarea
-          className="textarea"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Детали заявки (например, даты отпуска)"
-          rows={3}
-        />
-        <FormError message={error} />
-        <div className={styles.formActions}>
-          <AttachButton files={files} onChange={setFiles} label="Прикрепить" />
-          <Button type="submit" disabled={creating} className={styles.submit}>Отправить заявку</Button>
-        </div>
-      </form>
+    <PageShell title="Заявки">
+      <div className={styles.top}>
+        <p className="text-s">Справки, отпуск, командировки, техника и доступы. После подтверждения HR отпуск и командировка попадают в календарь.</p>
+        <NewRequestButton className={`${buttonStyles.btn} ${buttonStyles.primary}`}>Новая заявка</NewRequestButton>
+      </div>
 
-      <h2 className="text-h2">История</h2>
+      <div className={styles.filters}>
+        <Select value={status} onChange={setStatus} options={STATUS_OPTIONS} ariaLabel="Статус" />
+        <Select value={type} onChange={setType} options={TYPE_OPTIONS} ariaLabel="Тип" />
+        <Select value={year} onChange={setYear} options={yearOptions} ariaLabel="Год" />
+      </div>
+
       {isLoading && <p className="text-s">Загрузка...</p>}
-      {requests?.map((r) => (
+      {filtered.map((r) => (
         <Card key={r.id}>
           <div className={styles.historyRow}>
             <span className="text-s">
-              <strong>{TYPE_LABELS[r.type]}</strong>
-              {r.payload?.description ? ` — ${r.payload.description}` : ""}
+              <strong>{REQUEST_TYPE_LABELS[r.type]}</strong>
+              {summarizePayload(r.type, r.payload) ? ` — ${summarizePayload(r.type, r.payload)}` : ""}
             </span>
             <StatusBadge status={r.status} />
+          </div>
+          <div className={styles.meta}>
+            {new Date(r.requestedAt).toLocaleDateString("ru-RU")} · {REQUEST_HOLDER_LABELS[r.status]}
           </div>
           {r.files && r.files.length > 0 && (
             <div className={styles.filesRow}>
@@ -104,6 +68,7 @@ export default function RequestsPage() {
           )}
         </Card>
       ))}
+      {!isLoading && requests && requests.length > 0 && filtered.length === 0 && <p className="text-s">По выбранным фильтрам заявок нет</p>}
       {requests?.length === 0 && <p className="text-s">Пока нет заявок</p>}
     </PageShell>
   );

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { REQUEST_TYPE_LABELS } from "@/lib/requestTypes";
 import { bitrixCall, bitrixEnabled, portalBaseUrl } from "./client";
+import { describePayload, requestPeriod, fmtIsoDay } from "@/lib/requestForms";
+import { setRequestStatus } from "@/lib/requestStatus";
 
 // Заявка из портала -> задача в Битрикс24 (в группе «Заявки HR», исполнитель HR, постановщик сотрудник).
 // Настройки (переменные окружения):
@@ -41,12 +43,6 @@ function shortName(fullName: string): string {
   return first ? `${last} ${first[0]}.` : last;
 }
 
-function fmtDay(v: unknown): string | null {
-  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(v)) return null;
-  const [y, m, d] = v.slice(0, 10).split("-");
-  return `${d}.${m}.${y}`;
-}
-
 export async function syncRequestToBitrix(requestId: string): Promise<void> {
   if (!bitrixEnabled()) return;
   const connected = await prisma.bitrixConnection.findUnique({ where: { id: "main" }, select: { id: true } });
@@ -61,8 +57,9 @@ export async function syncRequestToBitrix(requestId: string): Promise<void> {
   const payload = (req.payload ?? {}) as Record<string, unknown>;
   const files = (Array.isArray(req.files) ? req.files : []) as { url: string; name: string }[];
   const typeLabel = REQUEST_TYPE_LABELS[req.type] ?? req.type;
-  const start = fmtDay(payload.startDate);
-  const end = fmtDay(payload.endDate);
+  const range = requestPeriod(payload);
+  const start = range ? fmtIsoDay(range.start) : null;
+  const end = range ? fmtIsoDay(range.end) : null;
   const period = start ? (end && end !== start ? `${start} – ${end}` : start) : "";
 
   const title = `${typeLabel} — ${shortName(req.user.fullName)}${period ? ` (${period})` : ""}`;
@@ -71,8 +68,7 @@ export async function syncRequestToBitrix(requestId: string): Promise<void> {
     `[B]Тип заявки:[/B] ${typeLabel}`,
     `[B]Сотрудник:[/B] ${req.user.fullName}${req.user.position ? `, ${req.user.position}` : ""}`,
     req.user.department ? `[B]Отдел:[/B] ${req.user.department}` : null,
-    period ? `[B]Даты:[/B] ${period}` : null,
-    typeof payload.description === "string" && payload.description ? `[B]Комментарий сотрудника:[/B] ${payload.description}` : null,
+    ...describePayload(req.type, payload).map((f) => `[B]${f.label}:[/B] ${f.value}`),
     req.note ? `[B]Примечание:[/B] ${req.note}` : null,
     files.length ? `[B]Файлы:[/B]\n${files.map((f) => `[URL=${f.url}]${f.name}[/URL]`).join("\n")}` : null,
     portalBaseUrl() ? `[B]Заявка в портале:[/B] [URL=${portalBaseUrl()}/admin/requests]открыть[/URL]` : null,
@@ -123,10 +119,19 @@ export async function syncTaskStatusFromBitrix(taskId: string): Promise<void> {
   if (raw === undefined) return;
   const status = requestStatusFromBitrix(raw);
   if (status === req.status) return;
-  await prisma.request.update({
-    where: { id: req.id },
-    data: { status, completedAt: status === "DONE" ? new Date() : null },
-  });
+  await setRequestStatus(req.id, status);
+}
+
+// Статус заявки в портале -> задача в Битриксе (2 новая, 3 выполняется, 5 завершена)
+export async function pushStatusToBitrix(requestId: string, status: "PENDING" | "IN_PROGRESS" | "DONE"): Promise<void> {
+  if (!bitrixEnabled() || status === "PENDING") return;
+  const req = await prisma.request.findUnique({ where: { id: requestId }, select: { bitrixTaskId: true } });
+  if (!req?.bitrixTaskId) return;
+  const taskId = req.bitrixTaskId;
+  const current = await bitrixCall<{ task?: { status?: string | number } }>("tasks.task.get", { taskId, select: ["ID", "STATUS"] });
+  const now = Number(current?.task?.status);
+  if (status === "DONE" && now !== 5) await bitrixCall("tasks.task.complete", { taskId });
+  if (status === "IN_PROGRESS" && now !== 3 && now !== 4 && now !== 5) await bitrixCall("tasks.task.start", { taskId });
 }
 
 export async function bindTaskEvents(): Promise<void> {

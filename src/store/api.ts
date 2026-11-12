@@ -183,11 +183,12 @@ export interface DepartmentItem {
 
 export interface VacationEntryItem {
   id: string;
-  type: "VACATION" | "DAY_OFF";
+  type: "VACATION" | "DAY_OFF" | "BUSINESS_TRIP";
   startDate: string;
   endDate: string;
   status: "PLANNED" | "CONFIRMED";
   comment: string | null;
+  requestId?: string | null;
 }
 
 export interface AdminVacationItem extends VacationEntryItem {

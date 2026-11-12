@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { expandHolidayPeriods } from "@/lib/holidays";
-import { VACATION_LIMITS, parseISODate, rangesOverlap, daysInYearExcludingHolidays } from "@/lib/vacation";
+import { parseISODate } from "@/lib/vacation";
+import { checkPeriodRules } from "@/lib/vacationRules";
 import { parseBody } from "@/lib/validate";
 import { vacationCreateSchema } from "@/lib/schemas";
 
@@ -31,36 +31,8 @@ export async function POST(req: NextRequest) {
   const start = parseISODate(body.startDate)!;
   const end = parseISODate(body.endDate)!;
 
-  const [existing, holidays] = await Promise.all([
-    prisma.vacationEntry.findMany({ where: { userId: session.user.id } }),
-    prisma.companyHoliday.findMany(),
-  ]);
-  const holidaySet = new Set(expandHolidayPeriods(holidays).map((h) => h.date.toISOString().slice(0, 10)));
-
-  // Пересечение с любым уже внесённым периодом (отпуск и отгул нельзя брать в один день)
-  const clash = existing.find((e) => rangesOverlap(start, end, e.startDate, e.endDate));
-  if (clash) {
-    return NextResponse.json({ error: "Эти даты пересекаются с уже внесённым периодом" }, { status: 409 });
-  }
-
-  // Лимит проверяем отдельно по каждому году, которого касается период. Праздники внутри
-  // периода в счёт не идут — так же, как считаются календарные дни отпуска по ТК РФ.
-  const limit = VACATION_LIMITS[type];
-  for (let year = start.getUTCFullYear(); year <= end.getUTCFullYear(); year++) {
-    const newDays = daysInYearExcludingHolidays(start, end, year, holidaySet);
-    const used = existing
-      .filter((e) => e.type === type)
-      .reduce((sum, e) => sum + daysInYearExcludingHolidays(e.startDate, e.endDate, year, holidaySet), 0);
-
-    if (used + newDays > limit) {
-      return NextResponse.json(
-        {
-          error: `Превышен лимит на ${year} год: осталось ${Math.max(limit - used, 0)} дн. (праздники внутри периода не считаются), а в периоде ${newDays} дн.`,
-        },
-        { status: 409 }
-      );
-    }
-  }
+  const problem = await checkPeriodRules(session.user.id, type, start, end);
+  if (problem) return NextResponse.json({ error: problem }, { status: 409 });
 
   const created = await prisma.vacationEntry.create({
     data: {

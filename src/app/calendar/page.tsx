@@ -18,7 +18,7 @@ import { getErrorMessage } from "@/lib/errors";
 import { MonthGrid } from "@/components/MonthGrid";
 import styles from "./calendar.module.css";
 
-const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул" };
+const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул", BUSINESS_TRIP: "Командировка" };
 const TYPE_OPTIONS = [
   { value: "VACATION", label: "Отпуск" },
   { value: "DAY_OFF", label: "Отгул" },
@@ -231,7 +231,7 @@ function usedDays(kind: string) {
       <div className={styles.periods}>
         {yearEntries.map((e) => (
           <div key={e.id} className={styles.period}>
-            <span className={`${styles.dot} ${e.type === "VACATION" ? styles.dotVacation : styles.dotDayOff}`} aria-hidden="true" />
+            <span className={`${styles.dot} ${e.type === "VACATION" ? styles.dotVacation : e.type === "BUSINESS_TRIP" ? styles.dotTrip : styles.dotDayOff}`} aria-hidden="true" />
             <div className={styles.periodBody}>
               <div className={styles.periodTitle}>
                 {TYPE_LABELS[e.type]} · {formatRu(e.startDate)} – {formatRu(e.endDate)}

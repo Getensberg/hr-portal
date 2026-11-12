@@ -14,6 +14,7 @@ import { VACATION_LIMITS, daysInYearExcludingHolidays } from "@/lib/vacation";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NewsSlider } from "@/components/NewsSlider";
 import buttonStyles from "@/components/Button.module.css";
+import { NewRequestButton } from "@/components/NewRequestButton";
 import { ImportantMark } from "@/components/ImportantMark";
 import styles from "./home.module.css";
 
@@ -170,9 +171,7 @@ export default function HomePage() {
             <div className={styles.heroDate}>{today}</div>
             <h1 className={styles.heroTitle}>Привет, {firstName}!</h1>
           </div>
-          <Link href="/requests" className={`${buttonStyles.btn} ${buttonStyles.light} ${styles.heroCta}`}>
-            Создать заявку
-          </Link>
+          <NewRequestButton className={`${buttonStyles.btn} ${buttonStyles.light} ${styles.heroCta}`} />
         </div>
 
         <div className={styles.actions}>

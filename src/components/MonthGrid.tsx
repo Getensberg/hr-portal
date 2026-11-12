@@ -14,7 +14,7 @@ import { colors, entryClass } from "./calendarStyles";
 import { CalendarLegend } from "./CalendarLegend";
 import styles from "./MonthGrid.module.css";
 
-const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул" };
+const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул", BUSINESS_TRIP: "Командировка" };
 
 interface MonthGridProps {
   year: number;

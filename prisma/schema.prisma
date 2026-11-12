@@ -222,6 +222,7 @@ model TestAnswer {
 enum VacationType {
   VACATION
   DAY_OFF
+  BUSINESS_TRIP
 }
 
 enum VacationStatus {
@@ -239,6 +240,9 @@ model VacationEntry {
   status    VacationStatus @default(PLANNED)
   comment   String?
   createdAt DateTime       @default(now())
+  // Если период создан заявкой, ссылка на неё: подтверждение заявки подтверждает период
+  request   Request?       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId String?        @unique
 }
 
 model CompanyHoliday {
@@ -286,6 +290,7 @@ model Request {
   requestedAt DateTime     @default(now())
   completedAt DateTime?
   bitrixTaskId String?     // id задачи в Битрикс24, созданной по этой заявке
+  vacationEntry VacationEntry?
 
   @@index([bitrixTaskId])
 }

@@ -50,3 +50,11 @@
   .submit { width: 100%; }
   .historyRow { flex-wrap: wrap; }
 }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.top > p { flex: 1 1 260px; margin: 0; }
+.filters { display: grid; grid-template-columns: repeat(3, minmax(0, 220px)); gap: 12px; margin-bottom: 20px; }
+.meta { margin-top: 6px; font-size: 13px; color: var(--color-text-tertiary); }
+@media (max-width: 640px) {
+  .filters { grid-template-columns: 1fr; }
+}

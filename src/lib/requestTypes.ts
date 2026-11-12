@@ -13,3 +13,10 @@ export const REQUEST_STATUS_LABELS: Record<string, string> = {
 };
 
 export const REQUEST_STATUS_OPTIONS = Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => ({ value, label }));
+
+// У кого сейчас заявка: сотруднику должно быть понятно, к кому идти с вопросом
+export const REQUEST_HOLDER_LABELS: Record<string, string> = {
+  PENDING: "На рассмотрении у HR",
+  IN_PROGRESS: "В работе у HR",
+  DONE: "Выполнено",
+};

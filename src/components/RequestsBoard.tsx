@@ -4,6 +4,7 @@ import type { RequestItem } from "@/store/api";
 import { Select } from "./Select";
 import { Button } from "./Button";
 import { FileTypeIcon } from "./FileTypeIcon";
+import { summarizePayload } from "@/lib/requestForms";
 import { REQUEST_TYPE_LABELS, REQUEST_STATUS_LABELS, REQUEST_STATUS_OPTIONS } from "@/lib/requestTypes";
 import styles from "./RequestsBoard.module.css";
 
@@ -70,8 +71,8 @@ export function RequestsBoard({
               </span>
             </div>
 
-            <p className={styles.desc} title={r.payload?.description || undefined}>
-              {r.payload?.description || "Без описания"}
+            <p className={styles.desc} title={summarizePayload(r.type, r.payload) || undefined}>
+              {summarizePayload(r.type, r.payload) || "Без описания"}
             </p>
 
             <div className={styles.files}>

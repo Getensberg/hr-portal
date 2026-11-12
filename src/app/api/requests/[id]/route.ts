@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { getTeamUserIds } from "@/lib/team";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseBody } from "@/lib/validate";
 import { requestStatusSchema } from "@/lib/schemas";
+import { setRequestStatus } from "@/lib/requestStatus";
+import { pushStatusToBitrix } from "@/lib/bitrix/requests";
 
 export async function PATCH(
   req: NextRequest,
@@ -29,12 +31,15 @@ export async function PATCH(
   if (!parsed.ok) return parsed.response;
   const { status } = parsed.data;
 
-  const updated = await prisma.request.update({
-    where: { id },
-    data: {
-      status,
-      completedAt: status === "DONE" ? new Date() : null,
-    },
+  const updated = await setRequestStatus(id, status);
+
+  // Задача в Битриксе закрывается вместе с заявкой (после ответа, сбой Битрикса не мешает)
+  after(async () => {
+    try {
+      await pushStatusToBitrix(id, status);
+    } catch (err) {
+      console.error("[bitrix] не удалось обновить задачу по заявке", id, err);
+    }
   });
   return NextResponse.json(updated);
 }

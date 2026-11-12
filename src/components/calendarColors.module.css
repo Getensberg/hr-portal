@@ -6,6 +6,8 @@
 .vacationConfirmed { background: var(--color-accent); color: #FFFFFF; border: 1px solid var(--color-accent); }
 .dayOffPlanned { background: var(--tint-mint-bg); color: var(--tint-mint-fg); border: 1px dashed #2FA36B; }
 .dayOffConfirmed { background: #2FA36B; color: #FFFFFF; border: 1px solid #2FA36B; }
+.tripPlanned { background: #FFF1E0; color: #8A4B0F; border: 1px dashed #E08A2E; }
+.tripConfirmed { background: #E08A2E; color: #FFFFFF; border: 1px solid #E08A2E; }
 .today { outline: 2px solid var(--color-accent-hover); outline-offset: 2px; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; font-size: 13px; color: var(--color-text-secondary); }
