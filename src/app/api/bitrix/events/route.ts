@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
   };
 
   const event = get("event").toUpperCase();
+  console.log("[bitrix] events:", event || "(без названия)");
   const taskId = get("data[FIELDS_AFTER][ID]") || get("data[FIELDS_BEFORE][ID]");
   if (event !== "ONTASKUPDATE" || !taskId) return NextResponse.json({ ok: true });
 

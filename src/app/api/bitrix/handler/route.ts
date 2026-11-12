@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 // Страница-обработчик приложения. Интерфейса у приложения нет, поэтому просто отвечаем 200.
-function page() {
+function page(req: Request) {
+  console.log("[bitrix] handler:", req.method);
   return new NextResponse("<!doctype html><meta charset=\"utf-8\"><title>HR-портал</title><p>Приложение «HR-портал» подключено.</p>", {
     headers: { "Content-Type": "text/html; charset=utf-8" },
   });

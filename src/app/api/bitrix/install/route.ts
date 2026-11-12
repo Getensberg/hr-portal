@@ -33,7 +33,11 @@ function flatten(obj: unknown, prefix = "", out: Record<string, string> = {}) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!bitrixEnabled()) return NextResponse.json({ error: "Интеграция не настроена" }, { status: 503 });
+  console.log("[bitrix] install: запрос получен, content-type =", req.headers.get("content-type"));
+  if (!bitrixEnabled()) {
+    console.error("[bitrix] install: интеграция выключена — не заданы BITRIX_CLIENT_ID / BITRIX_CLIENT_SECRET / BITRIX_TOKEN_KEY / BITRIX_DOMAIN");
+    return NextResponse.json({ error: "Интеграция не настроена" }, { status: 503 });
+  }
 
   const f = await readFields(req);
   const accessToken = f["AUTH_ID"] || f["auth[access_token]"];
@@ -44,11 +48,13 @@ export async function POST(req: NextRequest) {
   const endpoint = f["auth[client_endpoint]"] || (domain ? `https://${domain}/rest/` : "");
 
   if (!accessToken || !refreshToken || !domain || !memberId) {
+    console.error("[bitrix] install: нет данных авторизации, пришли поля:", Object.keys(f).join(", ") || "(пусто)");
     return NextResponse.json({ error: "Нет данных авторизации" }, { status: 400 });
   }
 
   // Принимаем токены только от нашего Битрикса и только настоящие (проверяем у самого Битрикса)
   if (!(await verifyInstallToken(domain, accessToken))) {
+    console.error("[bitrix] install: токен не прошёл проверку, domain =", domain);
     return NextResponse.json({ error: "Токен не прошёл проверку" }, { status: 403 });
   }
 
@@ -63,8 +69,11 @@ export async function POST(req: NextRequest) {
     applicationToken: f["auth[application_token]"] || null,
   });
 
+  console.log("[bitrix] install: токены сохранены, domain =", domain);
+
   try {
     await bindTaskEvents();
+    console.log("[bitrix] install: подписка на события задач оформлена");
   } catch (err) {
     console.error("[bitrix] не удалось подписаться на события задач:", err);
   }
