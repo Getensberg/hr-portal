@@ -185,7 +185,7 @@ export default function HomePage() {
               <span className={styles.actionSub}>{activeRequests > 0 ? `${activeRequests} в работе` : "Справки, техника, доступы"}</span>
             </span>
           </Link>
-          <Link href="/calendar" className={styles.action}>
+          <Link href="/requests?view=calendar" className={styles.action}>
             <span className={`${styles.actionIcon} ${styles.tintMint}`}><IconCalendar /></span>
             <span className={styles.actionText}>
               <span className={styles.actionTitle}>Отпуск</span>

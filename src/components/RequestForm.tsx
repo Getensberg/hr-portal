@@ -41,7 +41,10 @@ export function RequestForm({ initialType = "DOCUMENT", initialValues, onDone }:
 
   function changeType(next: string) {
     setType(next);
-    setValues(emptyPayload(next));
+    // Даты и комментарий не теряем: сотрудник мог выбрать период в календаре и потом сменить тип
+    const keep: Record<string, string> = {};
+    for (const k of ["startDate", "endDate", "description"]) if (values[k]) keep[k] = values[k];
+    setValues({ ...emptyPayload(next), ...keep });
     setError("");
   }
 

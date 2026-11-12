@@ -47,6 +47,11 @@ export async function DELETE(
     }
   }
 
-  await prisma.vacationEntry.delete({ where: { id } });
+  // Период создан заявкой: удаляем заявку целиком (период уйдёт вместе с ней)
+  if (entry.requestId) {
+    await prisma.request.delete({ where: { id: entry.requestId } });
+  } else {
+    await prisma.vacationEntry.delete({ where: { id } });
+  }
   return NextResponse.json({ id, deleted: true });
 }

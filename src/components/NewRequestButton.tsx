@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Modal } from "@/components/Modal";
-import { RequestForm } from "@/components/RequestForm";
+import { RequestModal } from "@/components/RequestModal";
 
 type Props = {
   className?: string;
@@ -16,9 +15,7 @@ export function NewRequestButton({ className, children = "Создать зая�
   return (
     <>
       <button type="button" className={className} onClick={() => setOpen(true)}>{children}</button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Новая заявка">
-        <RequestForm initialType={initialType} initialValues={initialValues} onDone={() => setOpen(false)} />
-      </Modal>
+      <RequestModal open={open} onClose={() => setOpen(false)} initialType={initialType} initialValues={initialValues} />
     </>
   );
 }

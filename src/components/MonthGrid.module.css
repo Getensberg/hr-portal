@@ -12,10 +12,10 @@
   line-height: 1;
 }
 .navBtn:hover { background: #DEDBFF; }
-.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
 .weekday { text-align: center; font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--color-text-muted); padding-bottom: 6px; }
 .cell {
-  min-height: 48px;
+  min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;

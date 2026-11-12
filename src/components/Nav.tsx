@@ -13,8 +13,7 @@ type NavLink = { href: string; label: string };
 const PRIMARY_LINKS: NavLink[] = [
   { href: "/", label: "Главная" },
   { href: "/learning", label: "Обучение" },
-  { href: "/requests", label: "Заявки" },
-  { href: "/calendar", label: "Календарь" },
+  { href: "/requests", label: "Заявки и календарь" },
   { href: "/knowledge-base", label: "База знаний" },
 ];
 
