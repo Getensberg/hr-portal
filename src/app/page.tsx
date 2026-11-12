@@ -8,12 +8,12 @@ import {
   useGetLearningQuery,
   useGetMyVacationsQuery,
   useGetHolidaysQuery,
-  useGetBlockedPeriodsQuery,
   useGetActiveSurveysQuery,
   type SurveyItem,
 } from "@/store/api";
-import { VACATION_LIMITS, daysInYearExcludingHolidays, todayKey, formatRu } from "@/lib/vacation";
+import { VACATION_LIMITS, daysInYearExcludingHolidays, todayKey } from "@/lib/vacation";
 import { FileTypeIcon } from "@/components/FileTypeIcon";
+import { Modal } from "@/components/Modal";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NewsSlider } from "@/components/NewsSlider";
 import buttonStyles from "@/components/Button.module.css";
@@ -30,6 +30,16 @@ function plural(n: number, one: string, few: string, many: string) {
   if (mod10 === 1 && mod100 !== 11) return one;
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
   return many;
+}
+
+const NO_FOLDER = "Без категории";
+
+function IconFolder() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3.5 7a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7Z" />
+    </svg>
+  );
 }
 
 function formatDay(iso: string) {
@@ -111,11 +121,11 @@ export default function HomePage() {
   const { data: vacations } = useGetMyVacationsQuery(undefined, { skip });
   const { data: holidays } = useGetHolidaysQuery(undefined, { skip });
   const { data: surveys } = useGetActiveSurveysQuery(undefined, { skip });
-  const { data: blocked } = useGetBlockedPeriodsQuery(undefined, { skip });
 
   // Вкладки блока слева: новости, документы, галерея. Документы и альбомы грузим, только когда вкладку открыли
   const [tab, setTab] = useState<"news" | "docs" | "gallery">("news");
-  const { data: docs } = useGetContentQuery({ type: "POLICY_DOCUMENT", limit: 6 }, { skip: skip || tab !== "docs" });
+  const { data: docs } = useGetContentQuery({ type: "POLICY_DOCUMENT", limit: 200 }, { skip: skip || tab !== "docs" });
+  const [openFolder, setOpenFolder] = useState<string | null>(null);
   const { data: albums } = useGetContentQuery({ type: "GALLERY_ALBUM", limit: 6 }, { skip: skip || tab !== "gallery" });
 
   if (!session) {
@@ -163,12 +173,14 @@ export default function HomePage() {
         ? "Сейчас в отпуске"
         : `Через ${daysToVacation} ${plural(daysToVacation, "день", "дня", "дней")} · осталось ${vacationLeft}`;
 
-  // Ближайшие праздник и ограничение на отпуск
-  const nextHoliday = [...(holidays ?? [])].filter((h) => h.date.slice(0, 10) >= today0).sort((a, b) => a.date.localeCompare(b.date))[0];
-  const nextBlocked = [...(blocked ?? [])].filter((x) => x.endDate.slice(0, 10) >= today0).sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
-
-  // Опрос, который ещё не пройден, показываем крупно под приветствием
-  const pendingSurvey = (surveys ?? []).find((x) => !x.completed && !x.isSuggestionBox);
+  // Документы по папкам (категориям); «Без категории» в конце
+  const folderMap: Record<string, typeof docs> = {};
+  (docs ?? []).forEach((d) => {
+    const key = d.category || NO_FOLDER;
+    (folderMap[key] ??= []).push(d);
+  });
+  const folders = Object.entries(folderMap).sort(([a], [b]) => (a === NO_FOLDER ? 1 : b === NO_FOLDER ? -1 : a.localeCompare(b, "ru"))) as [string, NonNullable<typeof docs>][];
+  const folderDocs = openFolder ? (folderMap[openFolder] ?? []) : [];
 
   const courses = learning?.courses ?? [];
   const inProgress = courses.filter((c) => c.state === "IN_PROGRESS").length;
@@ -235,33 +247,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {(pendingSurvey || nextHoliday || nextBlocked) && (
-        <section className={styles.infoRow}>
-          {pendingSurvey && (
-            <Link href="/surveys" className={styles.surveyBanner}>
-              <span className={styles.bannerIcon}><IconChart /></span>
-              <span className={styles.bannerBody}>
-                <span className={styles.bannerTitle}>{pendingSurvey.title}</span>
-                <span className={styles.bannerText}>{pendingSurvey.isAnonymous ? "Анонимный опрос" : "Опрос"} · вопросов: {pendingSurvey.questions.length}</span>
-              </span>
-              <span className={styles.bannerCta}>Пройти</span>
-            </Link>
-          )}
-          {nextHoliday && (
-            <Link href="/requests?view=calendar" className={`${styles.infoChip} ${styles.chipHoliday}`}>
-              <span className={styles.infoLabel}>Ближайший праздник</span>
-              <span className={styles.infoText}>{formatRu(nextHoliday.date)} · {nextHoliday.name}</span>
-            </Link>
-          )}
-          {nextBlocked && (
-            <Link href="/requests?view=calendar" className={`${styles.infoChip} ${styles.chipBlocked}`}>
-              <span className={styles.infoLabel}>Отпуск не рекомендуется</span>
-              <span className={styles.infoText}>{formatRu(nextBlocked.startDate)} – {formatRu(nextBlocked.endDate)} · {nextBlocked.reason}</span>
-            </Link>
-          )}
-        </section>
-      )}
-
       <section className={styles.columns}>
         {/* Новости */}
         <div className={styles.newsCol}>
@@ -279,25 +264,17 @@ export default function HomePage() {
           </div>
 
           {tab === "docs" && (
-            <div className={styles.docList}>
-              {(docs ?? []).map((d) => {
-                const first = d.files?.[0] ?? (d.fileUrl ? { url: d.fileUrl, name: d.fileName || d.title } : null);
-                const body = (
-                  <>
-                    <FileTypeIcon name={first?.name ?? d.title} />
-                    <span className={styles.docBody}>
-                      <span className={styles.docTitle}>{d.title}</span>
-                      {d.category && <span className={styles.docMeta}>{d.category}</span>}
-                    </span>
-                  </>
-                );
-                return first ? (
-                  <a key={d.id} href={first.url} target="_blank" rel="noopener noreferrer" className={styles.docRow}>{body}</a>
-                ) : (
-                  <Link key={d.id} href="/documents" className={styles.docRow}>{body}</Link>
-                );
-              })}
-              {docs && docs.length === 0 && <div className={styles.emptyBox}>Пока нет документов</div>}
+            <div className={styles.folderGrid}>
+              {folders.map(([name, items]) => (
+                <button key={name} type="button" className={styles.folderCard} onClick={() => setOpenFolder(name)}>
+                  <span className={styles.folderIcon}><IconFolder /></span>
+                  <span className={styles.folderBody}>
+                    <span className={styles.folderName}>{name}</span>
+                    <span className={styles.folderCount}>{items.length} {plural(items.length, "документ", "документа", "документов")}</span>
+                  </span>
+                </button>
+              ))}
+              {docs && folders.length === 0 && <div className={styles.emptyBox}>Пока нет документов</div>}
             </div>
           )}
 
@@ -404,6 +381,24 @@ export default function HomePage() {
           )}
         </aside>
       </section>
+
+      <Modal open={openFolder !== null} onClose={() => setOpenFolder(null)} title={openFolder ?? ""}>
+        <div className={styles.docList}>
+          {folderDocs.flatMap((d) => {
+            const files = d.files?.length ? d.files : d.fileUrl ? [{ url: d.fileUrl, name: d.fileName || d.title }] : [];
+            return files.map((f, i) => (
+              <a key={`${d.id}-${i}`} href={f.url} target="_blank" rel="noopener noreferrer" className={styles.docRow} title={f.name}>
+                <FileTypeIcon name={f.name} />
+                <span className={styles.docBody}>
+                  <span className={styles.docTitle}>{d.title}</span>
+                  <span className={styles.docMeta}>{f.name}</span>
+                </span>
+              </a>
+            ));
+          })}
+          {folderDocs.length === 0 && <p className="text-s">В папке пока нет документов</p>}
+        </div>
+      </Modal>
     </div>
   );
 }
