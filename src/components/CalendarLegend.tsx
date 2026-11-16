@@ -5,6 +5,8 @@ const ITEMS = [
   { cls: colors.vacationPlanned, label: "Отпуск запланирован" },
   { cls: colors.dayOffConfirmed, label: "Отгул подтверждён" },
   { cls: colors.dayOffPlanned, label: "Отгул запланирован" },
+  { cls: colors.tripConfirmed, label: "Командировка подтверждена" },
+  { cls: colors.tripPlanned, label: "Командировка запланирована" },
   { cls: colors.holiday, label: "Праздник" },
   { cls: colors.blocked, label: "Не рекомендуется" },
   { cls: colors.weekend, label: "Выходной" },

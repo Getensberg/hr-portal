@@ -35,6 +35,11 @@
   margin: 0; flex: 1; font-size: 14px; line-height: 1.5; color: var(--color-text-secondary);
   overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
+.fields { margin: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.fieldRow { display: flex; gap: 8px; }
+.fieldRow dt { flex-shrink: 0; color: var(--color-text-tertiary); }
+.fieldRow dt::after { content: ":"; }
+.fieldRow dd { margin: 0; color: var(--color-text-primary); overflow-wrap: anywhere; }
 .files { display: flex; align-items: center; gap: 8px; height: 40px; overflow: hidden; }
 .file {
   display: inline-flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto;
