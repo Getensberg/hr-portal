@@ -45,6 +45,20 @@ model User {
   courseAccess    CourseAccess[]
   testAttempts    TestAttempt[]
   testAccess      TestAccess[]
+  passwordTokens  PasswordToken[]
+}
+
+// Одноразовые ссылки для установки и сброса пароля (хранится только хеш)
+model PasswordToken {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model OrgPerson {

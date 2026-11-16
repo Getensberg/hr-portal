@@ -40,6 +40,6 @@ export const config = {
   matcher: [
     "/api/:path*",
     // всё, кроме страницы входа, всех API-роутов и статики
-    "/((?!login|api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!login|set-password|api|_next/static|_next/image|favicon.ico).*)",
   ],
 };

@@ -4,8 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseBody } from "@/lib/validate";
 import { userCreateSchema } from "@/lib/schemas";
-import bcrypt from "bcryptjs";
-import { randomInt } from "node:crypto";
+import { createPasswordToken, passwordLink, unusablePasswordHash, TOKEN_TTL_DAYS } from "@/lib/passwordTokens";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -35,10 +34,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Пользователь с таким email уже существует" }, { status: 409 });
   }
 
-  // Пароль из криптографически случайных символов (без похожих 0/O, 1/l/I)
-  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const tempPassword = Array.from({ length: 14 }, () => alphabet[randomInt(alphabet.length)]).join("");
-  const passwordHash = await bcrypt.hash(tempPassword, 10);
+  // Пароль сотрудник задаёт сам по одноразовой ссылке; до этого войти нельзя
+  const passwordHash = await unusablePasswordHash();
 
   if (body.department) {
     await prisma.department.upsert({
@@ -61,5 +58,6 @@ export async function POST(req: NextRequest) {
     select: { id: true, fullName: true, email: true, role: true, department: true, position: true, phone: true },
   });
 
-  return NextResponse.json({ user: created, tempPassword }, { status: 201 });
+  const link = passwordLink(await createPasswordToken(created.id));
+  return NextResponse.json({ user: created, link, days: TOKEN_TTL_DAYS }, { status: 201 });
 }

@@ -51,3 +51,6 @@
   .rowActions { width: 100%; }
   .rowActions > * { flex: 1; }
 }
+
+.linkBox { margin: 8px 0 0 !important; padding: 10px 12px; background: var(--color-white); border-radius: 12px; font-size: 13px; word-break: break-all; user-select: all; }
+.linkActions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }

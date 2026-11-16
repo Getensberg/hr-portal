@@ -605,11 +605,14 @@ getUsers: builder.query<UserOption[], void>({
   providesTags: ["User"],
 }), 
 createUser: builder.mutation<
-  { user: UserOption; tempPassword: string },
+  { user: UserOption; link: string; days: number },
   { fullName: string; email: string; department?: string; position?: string; phone?: string; role: string; managerId?: string | null }
 >({
   query: (body) => ({ url: "/users", method: "POST", body }),
   invalidatesTags: ["User","Department"],
+}),
+createResetLink: builder.mutation<{ link: string; days: number }, string>({
+  query: (id) => ({ url: `/users/${id}/reset-link`, method: "POST" }),
 }),
 
     getOnboardingAdmin: builder.query<OnboardingPlanItem[], void>({
@@ -1031,6 +1034,7 @@ export const {
   useUploadFileMutation,
   useGetContentByIdQuery,
   useCreateUserMutation,
+  useCreateResetLinkMutation,
   useGetMyVacationsQuery, 
   useCreateVacationMutation,
   useDeleteVacationMutation,

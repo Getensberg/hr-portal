@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "reset-link": "tsx --env-file=.env scripts/reset-link.ts",
     "start:prod": "prisma migrate deploy && next start -H 0.0.0.0 -p ${PORT:-3000}"
   },
   "prisma": {

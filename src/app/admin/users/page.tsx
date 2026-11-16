@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useGetUsersQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation } from "@/store/api";
+import { useGetUsersQuery, useCreateUserMutation, useCreateResetLinkMutation, useUpdateUserMutation, useDeleteUserMutation } from "@/store/api";
 import { PageShell } from "@/components/PageShell";
 import { FormError } from "@/components/FormError";
 import { getErrorMessage } from "@/lib/errors";
@@ -35,6 +35,7 @@ export default function AdminUsersPage() {
 
   const { data: users } = useGetUsersQuery();
   const [createUser, { isLoading: creating }] = useCreateUserMutation();
+  const [createResetLink] = useCreateResetLinkMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
@@ -45,7 +46,8 @@ export default function AdminUsersPage() {
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("EMPLOYEE");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [lastCreated, setLastCreated] = useState<{ email: string; tempPassword: string } | null>(null);
+  const [lastCreated, setLastCreated] = useState<{ email: string; link: string; days: number } | null>(null);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [managerId, setManagerId] = useState("");
   const [search, setSearch] = useState("");
@@ -68,11 +70,38 @@ export default function AdminUsersPage() {
         resetForm();
       } else {
         const result = await createUser({ fullName, email, department, position, phone, role, managerId: managerId || null }).unwrap();
-        setLastCreated({ email: result.user.email, tempPassword: result.tempPassword });
+        showLink(result.user.email, result.link, result.days);
         resetForm();
       }
     } catch (err) {
       setError(getErrorMessage(err, "Не удалось сохранить"));
+    }
+  }
+
+  function fullLink(link: string) {
+    return link.startsWith("/") ? window.location.origin + link : link;
+  }
+  function showLink(emailTo: string, link: string, days: number) {
+    setCopied(false);
+    setLastCreated({ email: emailTo, link: fullLink(link), days });
+  }
+  async function handleResetLink(u: { id: string; email: string }) {
+    setError("");
+    try {
+      const r = await createResetLink(u.id).unwrap();
+      showLink(u.email, r.link, r.days);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось создать ссылку"));
+    }
+  }
+  async function copyLink() {
+    if (!lastCreated) return;
+    try {
+      await navigator.clipboard.writeText(lastCreated.link);
+      setCopied(true);
+    } catch {
+      /* копирование недоступно: ссылку можно выделить вручную */
     }
   }
 
@@ -153,10 +182,14 @@ export default function AdminUsersPage() {
 
       {lastCreated && (
         <div className={styles.created}>
-          <div className={styles.createdTitle}>Аккаунт создан</div>
-          <p>Email: <strong>{lastCreated.email}</strong></p>
-          <p>Временный пароль: <strong className={styles.pass}>{lastCreated.tempPassword}</strong></p>
-          <p className={styles.createdNote}>Передайте эти данные сотруднику лично: здесь они больше не сохраняются и не показываются повторно.</p>
+          <div className={styles.createdTitle}>Ссылка для установки пароля</div>
+          <p>Сотрудник: <strong>{lastCreated.email}</strong></p>
+          <p className={styles.linkBox}>{lastCreated.link}</p>
+          <div className={styles.linkActions}>
+            <Button size="sm" onClick={copyLink}>{copied ? "Скопировано" : "Скопировать ссылку"}</Button>
+            <Button size="sm" variant="secondary" onClick={() => setLastCreated(null)}>Скрыть</Button>
+          </div>
+          <p className={styles.createdNote}>Передайте ссылку сотруднику лично. Она одноразовая, действует {lastCreated.days} дн. и больше не показывается: если потеряете, создайте новую кнопкой «Ссылка для пароля» в списке.</p>
         </div>
       )}
 
@@ -181,6 +214,7 @@ export default function AdminUsersPage() {
             </div>
             <div className={styles.rowActions}>
               <Button size="sm" variant="secondary" onClick={() => startEdit(u)}>Изменить</Button>
+              <Button size="sm" variant="secondary" onClick={() => handleResetLink(u)}>Ссылка для пароля</Button>
               <Button size="sm" variant="danger" onClick={() => handleDelete(u)}>Удалить</Button>
             </div>
           </div>

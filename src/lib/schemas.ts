@@ -55,6 +55,14 @@ export const orgPersonSchema = z.object({
 
 const roleEnum = z.enum(["EMPLOYEE", "MANAGER", "HR_ADMIN"], { error: "Неизвестная роль" });
 
+export const passwordSetSchema = z.object({
+  token: z.string({ error: "Нет ссылки" }).min(20, "Ссылка недействительна").max(100, "Ссылка недействительна"),
+  password: z
+    .string({ error: "Введите пароль" })
+    .min(8, "Пароль должен быть не короче 8 символов")
+    .max(100, "Пароль слишком длинный"),
+});
+
 export const userCreateSchema = z.object({
   fullName: requiredName,
   email: requiredEmail,
