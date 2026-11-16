@@ -14,18 +14,22 @@ import styles from "./RequestForm.module.css";
 const TYPE_OPTIONS = Object.entries(REQUEST_TYPE_LABELS).map(([value, label]) => ({ value, label }));
 
 type Props = {
+  /** Какие типы можно выбрать (по умолчанию все). В календаре — только отпуск, отгул и командировка */
+  types?: string[];
   initialType?: string;
   initialValues?: Record<string, string>;
   onDone: () => void;
 };
 
 // Форма заявки: набор полей зависит от выбранного типа
-export function RequestForm({ initialType = "DOCUMENT", initialValues, onDone }: Props) {
+export function RequestForm({ types, initialType, initialValues, onDone }: Props) {
+  const typeOptions = types ? TYPE_OPTIONS.filter((o) => types.includes(o.value)) : TYPE_OPTIONS;
+  const startType = initialType && typeOptions.some((o) => o.value === initialType) ? initialType : typeOptions[0]?.value ?? "DOCUMENT";
   const [createRequest, { isLoading: creating }] = useCreateRequestMutation();
   const [uploadFile] = useUploadFileMutation();
   const { data: templates } = useGetRequestTemplatesQuery();
-  const [type, setType] = useState(initialType);
-  const [values, setValues] = useState<Record<string, string>>({ ...emptyPayload(initialType), ...initialValues });
+  const [type, setType] = useState(startType);
+  const [values, setValues] = useState<Record<string, string>>({ ...emptyPayload(startType), ...initialValues });
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
 
@@ -89,7 +93,7 @@ export function RequestForm({ initialType = "DOCUMENT", initialValues, onDone }:
     <form onSubmit={submit} className={styles.form}>
       <label className={styles.field}>
         <span className={styles.label}>Тип заявки</span>
-        <Select value={type} onChange={changeType} options={TYPE_OPTIONS} ariaLabel="Тип заявки" />
+        <Select value={type} onChange={changeType} options={typeOptions} ariaLabel="Тип заявки" />
       </label>
 
       {form?.hint && <p className={styles.hint}>{form.hint}</p>}
@@ -128,7 +132,7 @@ export function RequestForm({ initialType = "DOCUMENT", initialValues, onDone }:
         </label>
       ))}
 
-      {days !== null && <p className={styles.days}>Календарных дней в периоде: <strong>{days}</strong></p>}
+      {days !== null && fields.some((f) => f.key === "startDate") && <p className={styles.days}>Календарных дней в периоде: <strong>{days}</strong></p>}
 
       <FormError message={error} />
       <div className={styles.actions}>

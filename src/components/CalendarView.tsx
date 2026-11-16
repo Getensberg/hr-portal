@@ -242,6 +242,7 @@ export function CalendarView() {
       <RequestModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); reset(); }}
+        types={["LEAVE", "BUSINESS_TRIP"]}
         initialType="LEAVE"
         initialValues={selStart && selEnd ? { startDate: selStart, endDate: selEnd } : undefined}
       />
