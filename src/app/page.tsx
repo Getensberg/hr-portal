@@ -14,6 +14,7 @@ import {
 import { VACATION_LIMITS, daysInYearExcludingHolidays, todayKey } from "@/lib/vacation";
 import { FileTypeIcon } from "@/components/FileTypeIcon";
 import { Modal } from "@/components/Modal";
+import { useIsMobile } from "@/lib/useIsMobile";
 import { ProgressBar } from "@/components/ProgressBar";
 import { NewsSlider } from "@/components/NewsSlider";
 import buttonStyles from "@/components/Button.module.css";
@@ -126,6 +127,8 @@ export default function HomePage() {
   const [tab, setTab] = useState<"news" | "docs" | "gallery">("news");
   const { data: docs } = useGetContentQuery({ type: "POLICY_DOCUMENT", limit: 200 }, { skip: skip || tab !== "docs" });
   const [openFolder, setOpenFolder] = useState<string | null>(null);
+  const [folderPage, setFolderPage] = useState(0);
+  const isMobile = useIsMobile();
   const { data: albums } = useGetContentQuery({ type: "GALLERY_ALBUM", limit: 6 }, { skip: skip || tab !== "gallery" });
 
   if (!session) {
@@ -180,6 +183,11 @@ export default function HomePage() {
     (folderMap[key] ??= []).push(d);
   });
   const folders = Object.entries(folderMap).sort(([a], [b]) => (a === NO_FOLDER ? 1 : b === NO_FOLDER ? -1 : a.localeCompare(b, "ru"))) as [string, NonNullable<typeof docs>][];
+  // Папок на странице: 4 на телефоне (одна колонка), 6 на компьютере (две колонки по три)
+  const folderPageSize = isMobile ? 4 : 6;
+  const folderPages = Math.max(1, Math.ceil(folders.length / folderPageSize));
+  const currentFolderPage = Math.min(folderPage, folderPages - 1);
+  const shownFolders = folders.slice(currentFolderPage * folderPageSize, (currentFolderPage + 1) * folderPageSize);
   const folderDocs = openFolder ? (folderMap[openFolder] ?? []) : [];
 
   const courses = learning?.courses ?? [];
@@ -265,7 +273,7 @@ export default function HomePage() {
 
           {tab === "docs" && (
             <div className={styles.folderGrid}>
-              {folders.map(([name, items]) => (
+              {shownFolders.map(([name, items]) => (
                 <button key={name} type="button" className={styles.folderCard} onClick={() => setOpenFolder(name)}>
                   <span className={styles.folderIcon}><IconFolder /></span>
                   <span className={styles.folderBody}>
@@ -275,6 +283,14 @@ export default function HomePage() {
                 </button>
               ))}
               {docs && folders.length === 0 && <div className={styles.emptyBox}>Пока нет документов</div>}
+            </div>
+          )}
+
+          {tab === "docs" && folderPages > 1 && (
+            <div className={styles.pager}>
+              <button type="button" className={styles.pagerBtn} onClick={() => setFolderPage(currentFolderPage - 1)} disabled={currentFolderPage === 0} aria-label="Предыдущая страница">‹</button>
+              <span className={styles.pagerInfo}>{currentFolderPage + 1} из {folderPages}</span>
+              <button type="button" className={styles.pagerBtn} onClick={() => setFolderPage(currentFolderPage + 1)} disabled={currentFolderPage >= folderPages - 1} aria-label="Следующая страница">›</button>
             </div>
           )}
 

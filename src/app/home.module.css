@@ -460,6 +460,11 @@
 .folderBody { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .folderName { font-size: 15px; font-weight: 600; color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .folderCount { font-size: 13px; color: var(--color-text-tertiary); }
+.pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 14px; }
+.pagerBtn { width: 38px; height: 38px; border: none; border-radius: 50%; background: var(--color-accent-soft); color: var(--color-accent); font-size: 20px; line-height: 1; cursor: pointer; }
+.pagerBtn:hover:not(:disabled) { background: #DEDBFF; }
+.pagerBtn:disabled { opacity: 0.4; cursor: default; }
+.pagerInfo { font-size: 14px; font-weight: 600; color: var(--color-text-secondary); min-width: 64px; text-align: center; }
 .albumGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .albumCard { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; }
 .albumThumb { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 18px; background: var(--color-accent-soft); display: block; }
