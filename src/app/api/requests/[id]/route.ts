@@ -52,14 +52,14 @@ export async function DELETE(
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const target = await prisma.request.findUnique({ where: { id }, select: { userId: true, status: true, bitrixTaskId: true } });
+  const target = await prisma.request.findUnique({ where: { id }, select: { userId: true, status: true, bitrixTaskId: true, archivedAt: true } });
   if (!target) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let allowed = session.user.role === "HR_ADMIN";
   // Сотрудник может удалить свою заявку, пока её не взяли в работу
   if (!allowed && target.userId === session.user.id) {
-    if (target.status !== "PENDING") {
-      return NextResponse.json({ error: "Заявку уже взяли в работу, удалить её может только HR" }, { status: 403 });
+    if (target.status !== "PENDING" && !target.archivedAt) {
+      return NextResponse.json({ error: "Заявку уже взяли в работу, удалить её может только HR (из архива можно удалять самому)" }, { status: 403 });
     }
     allowed = true;
   }

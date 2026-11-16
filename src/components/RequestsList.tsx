@@ -98,6 +98,9 @@ export function RequestsList({ archive = false }: { archive?: boolean }) {
               <Button size="sm" variant="secondary" onClick={() => handleArchive(r.id, !r.archivedAt)}>
                 {r.archivedAt ? "Вернуть из архива" : "В архив"}
               </Button>
+              {r.archivedAt && (
+                <Button size="sm" variant="danger" onClick={() => handleDelete(r.id)}>Удалить</Button>
+              )}
             </div>
           )}
           {r.files && r.files.length > 0 && (
