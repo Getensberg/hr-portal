@@ -43,6 +43,32 @@ function shortName(fullName: string): string {
   return first ? `${last} ${first[0]}.` : last;
 }
 
+// Создание задачи с запоминанием результата: при сбое ошибка и число попыток сохраняются, а фоновая задача пробует снова
+export async function trySyncRequest(requestId: string): Promise<boolean> {
+  try {
+    await syncRequestToBitrix(requestId);
+    await prisma.request.updateMany({ where: { id: requestId, bitrixError: { not: null } }, data: { bitrixError: null } });
+    return true;
+  } catch (err) {
+    const message = (err instanceof Error ? err.message : String(err)).slice(0, 300);
+    console.error("[bitrix] не удалось создать задачу по заявке", requestId, err);
+    await prisma.request
+      .update({ where: { id: requestId }, data: { bitrixError: message, bitrixAttempts: { increment: 1 } } })
+      .catch(() => {});
+    return false;
+  }
+}
+
+// Заявку удалили: задача в Битриксе тоже убирается, чтобы HR не работал по несуществующей заявке
+export async function deleteBitrixTask(taskId: string | null | undefined): Promise<void> {
+  if (!taskId || !bitrixEnabled()) return;
+  try {
+    await bitrixCall("tasks.task.delete", { taskId });
+  } catch (err) {
+    console.error("[bitrix] не удалось удалить задачу", taskId, err);
+  }
+}
+
 export async function syncRequestToBitrix(requestId: string): Promise<void> {
   if (!bitrixEnabled()) return;
   const connected = await prisma.bitrixConnection.findUnique({ where: { id: "main" }, select: { id: true } });

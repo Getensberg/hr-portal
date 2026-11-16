@@ -1,6 +1,8 @@
 "use client";
 import { useMemo, useState } from "react";
-import { useGetMyRequestsQuery } from "@/store/api";
+import { useGetMyRequestsQuery, useDeleteRequestMutation } from "@/store/api";
+import { Button } from "@/components/Button";
+import { getErrorMessage } from "@/lib/errors";
 import { Card } from "@/components/Card";
 import { Select } from "@/components/Select";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -11,7 +13,12 @@ import { summarizePayload } from "@/lib/requestForms";
 import styles from "@/app/requests/requests.module.css";
 
 const ALL = "ALL";
-const STATUS_OPTIONS = [{ value: ALL, label: "Любой статус" }, ...Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => ({ value, label }))];
+const ARCHIVE = "ARCHIVE";
+const STATUS_OPTIONS = [
+  { value: ALL, label: "Любой статус" },
+  ...Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => ({ value, label })),
+  { value: ARCHIVE, label: "Архив" },
+];
 const TYPE_OPTIONS = [{ value: ALL, label: "Все типы" }, ...Object.entries(REQUEST_TYPE_LABELS).map(([value, label]) => ({ value, label }))];
 
 export function RequestsList() {
@@ -19,6 +26,18 @@ export function RequestsList() {
   const [status, setStatus] = useState(ALL);
   const [type, setType] = useState(ALL);
   const [year, setYear] = useState(ALL);
+  const [deleteRequest] = useDeleteRequestMutation();
+  const [error, setError] = useState("");
+
+  async function handleDelete(id: string) {
+    if (!confirm("Удалить заявку? Это нельзя отменить.")) return;
+    setError("");
+    try {
+      await deleteRequest(id).unwrap();
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось удалить заявку"));
+    }
+  }
 
   const yearOptions = useMemo(() => {
     const years = Array.from(new Set((requests ?? []).map((r) => new Date(r.requestedAt).getFullYear()))).sort((a, b) => b - a);
@@ -27,7 +46,7 @@ export function RequestsList() {
 
   const filtered = (requests ?? []).filter(
     (r) =>
-      (status === ALL || r.status === status) &&
+      (status === ARCHIVE ? Boolean(r.archivedAt) : !r.archivedAt && (status === ALL || r.status === status)) &&
       (type === ALL || r.type === type) &&
       (year === ALL || String(new Date(r.requestedAt).getFullYear()) === year)
   );
@@ -45,6 +64,7 @@ export function RequestsList() {
         <Select value={year} onChange={setYear} options={yearOptions} ariaLabel="Год" />
       </div>
 
+      {error && <p className={styles.error}>{error}</p>}
       {isLoading && <p className="text-s">Загрузка...</p>}
       {filtered.map((r) => (
         <Card key={r.id}>
@@ -56,8 +76,13 @@ export function RequestsList() {
             <StatusBadge status={r.status} />
           </div>
           <div className={styles.meta}>
-            {new Date(r.requestedAt).toLocaleDateString("ru-RU")} · {REQUEST_HOLDER_LABELS[r.status]}
+            {new Date(r.requestedAt).toLocaleDateString("ru-RU")} · {r.archivedAt ? "В архиве" : REQUEST_HOLDER_LABELS[r.status]}
           </div>
+          {r.status === "PENDING" && !r.archivedAt && (
+            <div className={styles.cardActions}>
+              <Button size="sm" variant="danger" onClick={() => handleDelete(r.id)}>Удалить заявку</Button>
+            </div>
+          )}
           {r.files && r.files.length > 0 && (
             <div className={styles.filesRow}>
               {r.files.map((f, i) => (

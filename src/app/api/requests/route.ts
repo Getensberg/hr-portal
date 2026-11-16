@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseBody } from "@/lib/validate";
 import { requestCreateSchema } from "@/lib/schemas";
-import { syncRequestToBitrix } from "@/lib/bitrix/requests";
+import { trySyncRequest } from "@/lib/bitrix/requests";
 import { validateRequestPayload, requestPeriod } from "@/lib/requestForms";
 import { checkPeriodRules, type PeriodType } from "@/lib/vacationRules";
 import { parseISODate } from "@/lib/vacation";
@@ -16,6 +16,7 @@ export async function GET() {
   const requests = await prisma.request.findMany({
     where: { userId: session.user.id },
     orderBy: { requestedAt: "desc" },
+    omit: { bitrixError: true, bitrixAttempts: true },
   });
   return NextResponse.json(requests);
 }
@@ -61,11 +62,7 @@ export async function POST(req: NextRequest) {
 
   // Задача в Битриксе создаётся после ответа сотруднику: сбой Битрикса не должен мешать подать заявку
   after(async () => {
-    try {
-      await syncRequestToBitrix(created.id);
-    } catch (err) {
-      console.error("[bitrix] не удалось создать задачу по заявке", created.id, err);
-    }
+    await trySyncRequest(created.id);
   });
 
   return NextResponse.json(created, { status: 201 });

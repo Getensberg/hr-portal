@@ -18,20 +18,27 @@ export function RequestsBoard({
   requests,
   onStatus,
   onDelete,
+  onRetry,
   emptyText = "Заявок пока нет",
 }: {
   requests: RequestItem[];
   onStatus: (id: string, status: string) => void;
   onDelete?: (id: string) => void;
+  /** Создать задачу в Битриксе заново (только для HR) */
+  onRetry?: (id: string) => void;
   emptyText?: string;
 }) {
   const [filter, setFilter] = useState("ALL");
-  const count = (s: string) => requests.filter((r) => r.status === s).length;
-  const shown = filter === "ALL" ? requests : requests.filter((r) => r.status === filter);
+  // Выполненные заявки старше нескольких месяцев уходят в архив и видны только на своей вкладке
+  const active = requests.filter((r) => !r.archivedAt);
+  const archived = requests.filter((r) => r.archivedAt);
+  const count = (s: string) => active.filter((r) => r.status === s).length;
+  const shown = filter === "ARCHIVE" ? archived : filter === "ALL" ? active : active.filter((r) => r.status === filter);
 
   const tabs = [
-    { value: "ALL", label: "Все", n: requests.length },
+    { value: "ALL", label: "Все", n: active.length },
     ...REQUEST_STATUS_OPTIONS.map((o) => ({ ...o, n: count(o.value) })),
+    { value: "ARCHIVE", label: "Архив", n: archived.length },
   ];
 
   return (
@@ -94,6 +101,21 @@ export function RequestsBoard({
               {(r.files?.length ?? 0) > 2 && <span className={styles.more}>+{(r.files?.length ?? 0) - 2}</span>}
               {(r.files?.length ?? 0) === 0 && <span className={styles.noFiles}>Без файлов</span>}
             </div>
+
+            {onRetry && (
+              <div className={styles.bitrix}>
+                {r.bitrixTaskId ? (
+                  <span>Задача в Битриксе №{r.bitrixTaskId}</span>
+                ) : (
+                  <>
+                    <span className={styles.bitrixWarn} title={r.bitrixError || undefined}>
+                      Задача в Битриксе не создана{r.bitrixError ? `: ${r.bitrixError}` : ""}
+                    </span>
+                    <Button size="sm" variant="secondary" onClick={() => onRetry(r.id)}>Создать задачу</Button>
+                  </>
+                )}
+              </div>
+            )}
 
             <div className={styles.controls}>
               <Select

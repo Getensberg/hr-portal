@@ -17,6 +17,7 @@ export async function GET() {
     where: { userId: { in: teamIds } },
     orderBy: { requestedAt: "desc" },
     include: { user: { select: { fullName: true, email: true, department: true } } },
+    omit: { bitrixError: true, bitrixAttempts: true },
   });
   return NextResponse.json(requests);
 }

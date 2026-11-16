@@ -305,8 +305,12 @@ model Request {
   completedAt DateTime?
   bitrixTaskId String?     // id задачи в Битрикс24, созданной по этой заявке
   vacationEntry VacationEntry?
+  bitrixError    String? // последняя ошибка создания задачи в Битриксе
+  bitrixAttempts Int      @default(0)
+  archivedAt     DateTime? // выполненные заявки старше нескольких месяцев уходят в архив
 
   @@index([bitrixTaskId])
+  @@index([archivedAt])
 }
 
 // Подключение к Битрикс24 (локальное серверное приложение, OAuth). Всегда одна запись.

@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseBody } from "@/lib/validate";
 import { vacationStatusSchema } from "@/lib/schemas";
+import { setRequestStatus } from "@/lib/requestStatus";
+import { pushStatusToBitrix } from "@/lib/bitrix/requests";
 
 export async function PATCH(
   req: NextRequest,
@@ -18,12 +20,26 @@ export async function PATCH(
   const parsed = await parseBody(req, vacationStatusSchema);
   if (!parsed.ok) return parsed.response;
 
-  try {
-    const updated = await prisma.vacationEntry.update({ where: { id }, data: { status: parsed.data.status } });
-    return NextResponse.json(updated);
-  } catch {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const entry = await prisma.vacationEntry.findUnique({ where: { id } });
+  if (!entry) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Период создан заявкой: подтверждение периода и статус заявки меняются вместе (и задача в Битриксе закрывается)
+  if (entry.requestId) {
+    const requestId = entry.requestId;
+    const confirmed = parsed.data.status === "CONFIRMED";
+    await setRequestStatus(requestId, confirmed ? "DONE" : "PENDING");
+    after(async () => {
+      try {
+        await pushStatusToBitrix(requestId, confirmed ? "DONE" : "PENDING");
+      } catch (err) {
+        console.error("[bitrix] не удалось обновить задачу по заявке", requestId, err);
+      }
+    });
+    return NextResponse.json(await prisma.vacationEntry.findUnique({ where: { id } }));
   }
+
+  const updated = await prisma.vacationEntry.update({ where: { id }, data: { status: parsed.data.status } });
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(

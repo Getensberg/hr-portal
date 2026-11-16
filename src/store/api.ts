@@ -23,6 +23,9 @@ export interface RequestItem {
   note: string | null;
   requestedAt: string;
   completedAt: string | null;
+  bitrixTaskId?: string | null;
+  bitrixError?: string | null; // только для HR
+  archivedAt?: string | null;
   user?: { fullName: string; email: string; department: string | null };
 }
 
@@ -527,6 +530,10 @@ export const apiSlice = createApi({
       // Отпуск, отгул и командировка создают период в календаре, поэтому обновляем и его
       invalidatesTags: ["Request", "Vacation"],
     }),
+    retryBitrixTask: builder.mutation<{ ok: boolean }, string>({
+      query: (id) => ({ url: `/requests/${id}/bitrix`, method: "POST" }),
+      invalidatesTags: ["Request"],
+    }),
     getAllRequests: builder.query<RequestItem[], void>({
       query: () => "/requests/admin",
       providesTags: ["Request"],
@@ -999,6 +1006,7 @@ updateTestQuestion: builder.mutation<
 export const {
   useGetMyRequestsQuery,
   useCreateRequestMutation,
+  useRetryBitrixTaskMutation,
   useGetAllRequestsQuery,
   useUpdateRequestStatusMutation,
   useGetContentQuery,

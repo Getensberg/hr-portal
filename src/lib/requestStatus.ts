@@ -7,7 +7,8 @@ type Status = "PENDING" | "IN_PROGRESS" | "DONE";
 export async function setRequestStatus(id: string, status: Status) {
   const updated = await prisma.request.update({
     where: { id },
-    data: { status, completedAt: status === "DONE" ? new Date() : null },
+    // Если заявку вернули из «Готово», она снова появляется в списках (убирается из архива)
+    data: { status, completedAt: status === "DONE" ? new Date() : null, ...(status !== "DONE" ? { archivedAt: null } : {}) },
   });
   await prisma.vacationEntry.updateMany({
     where: { requestId: id },

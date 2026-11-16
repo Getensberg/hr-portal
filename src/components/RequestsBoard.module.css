@@ -40,6 +40,8 @@
 .fieldRow dt { flex-shrink: 0; color: var(--color-text-tertiary); }
 .fieldRow dt::after { content: ":"; }
 .fieldRow dd { margin: 0; color: var(--color-text-primary); overflow-wrap: anywhere; }
+.bitrix { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--color-text-tertiary); }
+.bitrixWarn { color: var(--tint-rose-fg); overflow-wrap: anywhere; }
 .files { display: flex; align-items: center; gap: 8px; height: 40px; overflow: hidden; }
 .file {
   display: inline-flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto;
