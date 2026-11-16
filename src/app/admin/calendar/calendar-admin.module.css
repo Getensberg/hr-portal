@@ -31,6 +31,7 @@
 .settingsLink { margin-left: auto; }
 .type { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-pill); white-space: nowrap; }
 .typeVac { background: var(--tint-lilac-bg); color: var(--tint-lilac-fg); }
+.typeTrip { background: #FFF1E0; color: #8A4B0F; }
 .typeOff { background: var(--tint-mint-bg); color: var(--tint-mint-fg); }
 @media (max-width: 640px) {
   .filter { flex: 1 1 100%; }

@@ -19,7 +19,7 @@ import { TeamGrid } from "@/components/TeamGrid";
 import buttonStyles from "@/components/Button.module.css";
 import styles from "./calendar-admin.module.css";
 
-const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул" };
+const TYPE_LABELS: Record<string, string> = { VACATION: "Отпуск", DAY_OFF: "Отгул", BUSINESS_TRIP: "Командировка" };
 
 export default function AdminCalendarPage() {
   const { data: session, status } = useSession();
@@ -155,7 +155,7 @@ function usedDays(userId: string, kind: string) {
               <tr key={e.id}>
                 <td data-label="Сотрудник">{e.user.fullName}</td>
                 <td data-label="Отдел">{e.user.department ?? "—"}</td>
-                <td data-label="Тип"><span className={`${styles.type} ${e.type === "VACATION" ? styles.typeVac : styles.typeOff}`}>{TYPE_LABELS[e.type]}</span></td>
+                <td data-label="Тип"><span className={`${styles.type} ${e.type === "VACATION" ? styles.typeVac : e.type === "BUSINESS_TRIP" ? styles.typeTrip : styles.typeOff}`}>{TYPE_LABELS[e.type]}</span></td>
                 <td data-label="Период">{formatRu(e.startDate)} – {formatRu(e.endDate)}</td>
                 <td data-label="Дней">{countDays(new Date(e.startDate), new Date(e.endDate))}</td>
                 <td data-label="Комментарий">{e.comment ?? "—"}</td>
