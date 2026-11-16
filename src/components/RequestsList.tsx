@@ -13,15 +13,10 @@ import { summarizePayload } from "@/lib/requestForms";
 import styles from "@/app/requests/requests.module.css";
 
 const ALL = "ALL";
-const ARCHIVE = "ARCHIVE";
-const STATUS_OPTIONS = [
-  { value: ALL, label: "Любой статус" },
-  ...Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => ({ value, label })),
-  { value: ARCHIVE, label: "Архив" },
-];
+const STATUS_OPTIONS = [{ value: ALL, label: "Любой статус" }, ...Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => ({ value, label }))];
 const TYPE_OPTIONS = [{ value: ALL, label: "Все типы" }, ...Object.entries(REQUEST_TYPE_LABELS).map(([value, label]) => ({ value, label }))];
 
-export function RequestsList() {
+export function RequestsList({ archive = false }: { archive?: boolean }) {
   const { data: requests, isLoading } = useGetMyRequestsQuery();
   const [status, setStatus] = useState(ALL);
   const [type, setType] = useState(ALL);
@@ -56,7 +51,8 @@ export function RequestsList() {
 
   const filtered = (requests ?? []).filter(
     (r) =>
-      (status === ARCHIVE ? Boolean(r.archivedAt) : !r.archivedAt && (status === ALL || r.status === status)) &&
+      Boolean(r.archivedAt) === archive &&
+      (status === ALL || r.status === status) &&
       (type === ALL || r.type === type) &&
       (year === ALL || String(new Date(r.requestedAt).getFullYear()) === year)
   );
@@ -64,8 +60,12 @@ export function RequestsList() {
   return (
     <>
       <div className={styles.top}>
-        <p className="text-s">Справки, отпуск, командировки, техника и доступы. После подтверждения HR отпуск и командировка попадают в календарь.</p>
-        <NewRequestButton className={`${buttonStyles.btn} ${buttonStyles.primary}`}>Новая заявка</NewRequestButton>
+        <p className="text-s">
+          {archive
+            ? "Выполненные заявки, которые вы отправили в архив или которым больше трёх месяцев. Из архива заявку можно вернуть."
+            : "Справки, отпуск, командировки, техника и доступы. После подтверждения HR отпуск и командировка попадают в календарь."}
+        </p>
+        {!archive && <NewRequestButton className={`${buttonStyles.btn} ${buttonStyles.primary}`}>Новая заявка</NewRequestButton>}
       </div>
 
       <div className={styles.filters}>
@@ -109,8 +109,10 @@ export function RequestsList() {
           )}
         </Card>
       ))}
-      {!isLoading && requests && requests.length > 0 && filtered.length === 0 && <p className="text-s">По выбранным фильтрам заявок нет</p>}
-      {requests?.length === 0 && <p className="text-s">Пока нет заявок</p>}
+      {!isLoading && filtered.length === 0 && requests?.some((r) => Boolean(r.archivedAt) === archive) && <p className="text-s">По выбранным фильтрам заявок нет</p>}
+      {!isLoading && requests && filtered.length === 0 && requests.every((r) => Boolean(r.archivedAt) !== archive) && (
+        <p className="text-s">{archive ? "В архиве пока ничего нет" : "Пока нет заявок"}</p>
+      )}
     </>
   );
 }
