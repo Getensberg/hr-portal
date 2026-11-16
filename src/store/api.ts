@@ -530,6 +530,10 @@ export const apiSlice = createApi({
       // Отпуск, отгул и командировка создают период в календаре, поэтому обновляем и его
       invalidatesTags: ["Request", "Vacation"],
     }),
+    archiveRequest: builder.mutation<{ id: string; archived: boolean }, { id: string; archived: boolean }>({
+      query: ({ id, archived }) => ({ url: `/requests/${id}/archive`, method: "POST", body: { archived } }),
+      invalidatesTags: ["Request"],
+    }),
     retryBitrixTask: builder.mutation<{ ok: boolean }, string>({
       query: (id) => ({ url: `/requests/${id}/bitrix`, method: "POST" }),
       invalidatesTags: ["Request"],
@@ -1007,6 +1011,7 @@ export const {
   useGetMyRequestsQuery,
   useCreateRequestMutation,
   useRetryBitrixTaskMutation,
+  useArchiveRequestMutation,
   useGetAllRequestsQuery,
   useUpdateRequestStatusMutation,
   useGetContentQuery,

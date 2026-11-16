@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { useGetMyRequestsQuery, useDeleteRequestMutation } from "@/store/api";
+import { useGetMyRequestsQuery, useDeleteRequestMutation, useArchiveRequestMutation } from "@/store/api";
 import { Button } from "@/components/Button";
 import { getErrorMessage } from "@/lib/errors";
 import { Card } from "@/components/Card";
@@ -27,7 +27,17 @@ export function RequestsList() {
   const [type, setType] = useState(ALL);
   const [year, setYear] = useState(ALL);
   const [deleteRequest] = useDeleteRequestMutation();
+  const [archiveRequest] = useArchiveRequestMutation();
   const [error, setError] = useState("");
+
+  async function handleArchive(id: string, archived: boolean) {
+    setError("");
+    try {
+      await archiveRequest({ id, archived }).unwrap();
+    } catch (err) {
+      setError(getErrorMessage(err, "Не удалось изменить заявку"));
+    }
+  }
 
   async function handleDelete(id: string) {
     if (!confirm("Удалить заявку? Это нельзя отменить.")) return;
@@ -81,6 +91,13 @@ export function RequestsList() {
           {r.status === "PENDING" && !r.archivedAt && (
             <div className={styles.cardActions}>
               <Button size="sm" variant="danger" onClick={() => handleDelete(r.id)}>Удалить заявку</Button>
+            </div>
+          )}
+          {r.status === "DONE" && (
+            <div className={styles.cardActions}>
+              <Button size="sm" variant="secondary" onClick={() => handleArchive(r.id, !r.archivedAt)}>
+                {r.archivedAt ? "Вернуть из архива" : "В архив"}
+              </Button>
             </div>
           )}
           {r.files && r.files.length > 0 && (
